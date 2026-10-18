@@ -192,7 +192,7 @@ test('offline restore uses the cached viewer, but an expired session clears it',
 			}
 		},
 		async () => {
-			if (offline) throw new TypeError('Network request failed');
+			if (offline) throw new Error('fetch failed: Network connection lost');
 			return json({ error: 'unauthorized' }, 401);
 		}
 	);

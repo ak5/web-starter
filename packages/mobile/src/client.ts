@@ -34,9 +34,8 @@ export function createClient(baseUrl: string, storage: SessionStorage, transport
 			const headers = new Headers(init?.headers);
 			if (token) headers.set('Cookie', `${COOKIE_TOKEN}=${token}`);
 			const response = await transport(input, { ...init, headers, credentials: 'omit' }).catch(
-				(cause: unknown) => {
-					if (cause instanceof TypeError) throw new NetworkError('Network request failed');
-					throw cause;
+				() => {
+					throw new NetworkError('Network request failed');
 				}
 			);
 			const cookie = response.headers.get('set-cookie');

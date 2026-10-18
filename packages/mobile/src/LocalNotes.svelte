@@ -24,7 +24,7 @@
 			disableDevtools: true,
 			adapter: makePersistedAdapter({
 				storage: { subDirectory: 'ak5-notes' },
-				sync: notesSync(`${apiUrl}/sync`, { Cookie: cookie })
+				sync: notesSync(new URL('/sync', apiUrl).href, { Cookie: cookie })
 			})
 		})
 			.then((opened) => {
