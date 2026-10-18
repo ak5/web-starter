@@ -1,0 +1,48 @@
+name: email-delivery
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: GitHub Environment with Cloudflare Email Sending enabled.
+        required: true
+        type: choice
+        default: Staging Cloudflare
+        options:
+          - Staging Cloudflare
+          - Prod Cloudflare
+      to:
+        description: Recipient address for the test email.
+        required: true
+        type: string
+      from:
+        description: Verified sender address for this app.
+        required: true
+        type: string
+      app_url:
+        description: Base URL used inside the test email link.
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: ${{ inputs.environment }}
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      TEST_EMAIL_TO: ${{ inputs.to }}
+      PUBLIC_EMAIL_FROM: ${{ inputs.from }}
+      PUBLIC_APP_URL: ${{ inputs.app_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v2
+      - run: pnpm install --frozen-lockfile
+      - name: Send one Cloudflare REST diagnostic email
+        run: nice -n 10 pnpm email:test --real --to "$TEST_EMAIL_TO" --from "$PUBLIC_EMAIL_FROM" --app-url "$PUBLIC_APP_URL"
+      - name: Require inbox confirmation
+        run: echo "REST acceptance is diagnostic only. Verify an application-generated email in the intended inbox before approving a release."

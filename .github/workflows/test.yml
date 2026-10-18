@@ -1,0 +1,148 @@
+name: test
+
+on:
+  workflow_call:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # The required status check. Keep this green to merge.
+  quality-gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v2
+      - run: nice -n 10 pnpm install --frozen-lockfile
+      - run: nice -n 10 pnpm -w run build:libs
+      - run: nice -n 10 pnpm format:check
+      - run: nice -n 10 pnpm --workspace-concurrency=1 -r lint:nofmt
+      - run: nice -n 10 pnpm audit:split
+      - run: nice -n 10 pnpm -w run check:docs
+      - run: nice -n 10 pnpm --workspace-concurrency=1 -r check
+      - run: nice -n 10 pnpm -w run test:unit
+      - run: nice -n 10 pnpm --workspace-concurrency=1 -r build
+
+  mobile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v2
+      - run: nice -n 10 pnpm install --frozen-lockfile
+      - run: nice -n 10 pnpm -w run build:libs
+      - run: nice -n 10 pnpm check:mobile
+      - run: nice -n 10 pnpm build:mobile
+
+  # Is a Neon project wired up? (secrets are empty on fork PRs.) Gates the
+  # DB-backed jobs so forks/unconfigured repos skip them instead of failing.
+  guard:
+    runs-on: ubuntu-latest
+    outputs:
+      neon: ${{ steps.c.outputs.neon }}
+    steps:
+      - id: c
+        env:
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+          NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
+        run: |
+          if [ -n "$NEON_API_KEY" ] && [ -n "$NEON_PROJECT_ID" ]; then
+            echo "neon=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "neon=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::NEON_API_KEY / NEON_PROJECT_ID not configured — skipping DB-backed jobs."
+          fi
+
+  # DB-backed api integration tests against an EPHEMERAL Neon branch, created
+  # and deleted per run (parallel-safe, no shared test branch). Runs the real
+  # route -> lib -> Postgres path (src/routes/items.test.ts), which skips when
+  # no DATABASE_URL is set.
+  db-tests:
+    needs: [quality-gates, guard]
+    if: ${{ needs.guard.outputs.neon == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v2
+      - run: nice -n 10 pnpm install --frozen-lockfile
+      - run: nice -n 10 pnpm -w run build:libs
+      - name: Create ephemeral Neon branch
+        id: branch
+        uses: neondatabase/create-branch-action@v6
+        with:
+          project_id: ${{ vars.NEON_PROJECT_ID }}
+          branch_name: ci-${{ github.run_id }}-${{ github.run_attempt }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+      - name: Migrate the branch + run DB-backed api tests
+        env:
+          DATABASE_URL: ${{ steps.branch.outputs.db_url }}
+        run: |
+          pnpm --filter @ak5/api db:migrate
+          pnpm --filter @ak5/api test:unit
+      - name: Delete ephemeral Neon branch
+        if: always()
+        uses: neondatabase/delete-branch-action@v3
+        with:
+          project_id: ${{ vars.NEON_PROJECT_ID }}
+          branch: ci-${{ github.run_id }}-${{ github.run_attempt }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+
+  # Playwright e2e (api + web + admin) against the live dev stack, on an
+  # ephemeral Neon branch. Gated on a configured Neon project (forks skip it).
+  e2e:
+    needs: [quality-gates, guard]
+    if: ${{ needs.guard.outputs.neon == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v2
+      - run: nice -n 10 pnpm install --frozen-lockfile
+      - run: nice -n 10 pnpm -w run build:libs
+      - run: nice -n 10 pnpm test:install
+      - name: Create ephemeral Neon branch
+        id: branch
+        uses: neondatabase/create-branch-action@v6
+        with:
+          project_id: ${{ vars.NEON_PROJECT_ID }}
+          branch_name: ci-e2e-${{ github.run_id }}-${{ github.run_attempt }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+      # Map *.ak5.localhost to 127.0.0.1 so Caddy routing works in CI.
+      - run: |
+          echo "127.0.0.1 api.ak5.localhost web.ak5.localhost admin.ak5.localhost mock.ak5.localhost preview.ak5.localhost" | sudo tee -a /etc/hosts
+      # Scaffold .env files. dev:init generates one shared JWT_SECRET and writes
+      # it to all three workers (they must match to issue/verify cookies); only
+      # DB + provider secrets are api-only. The ephemeral DATABASE_URL is wired
+      # in below.
+      - run: nice -n 10 pnpm -w run dev:init
+      # Point the running api worker at the ephemeral branch.
+      - name: Wire the branch into the api .env
+        run: |
+          grep -v '^DATABASE_URL=' packages/api/.env > packages/api/.env.tmp || true
+          echo "DATABASE_URL=${{ steps.branch.outputs.db_url }}" >> packages/api/.env.tmp
+          mv packages/api/.env.tmp packages/api/.env
+      - run: nice -n 10 pnpm --filter @ak5/api db:migrate
+        env:
+          DATABASE_URL: ${{ steps.branch.outputs.db_url }}
+      - run: nice -n 10 pnpm -w run dev &
+      - run: nice -n 10 pnpm test:preflight
+      - run: nice -n 10 pnpm test --workers=1
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+      - name: Delete ephemeral Neon branch
+        if: always()
+        uses: neondatabase/delete-branch-action@v3
+        with:
+          project_id: ${{ vars.NEON_PROJECT_ID }}
+          branch: ci-e2e-${{ github.run_id }}-${{ github.run_attempt }}
+          api_key: ${{ secrets.NEON_API_KEY }}

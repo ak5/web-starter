@@ -1,0 +1,68 @@
+pre-commit:
+  jobs:
+    - group:
+        piped: true
+        jobs:
+          - name: format
+            group:
+              parallel: true
+              jobs:
+                - name: web
+                  root: packages/web/src/
+                  glob: '**/*.{ts,js,svelte}'
+                  run: pnpm exec prettier --write {staged_files}
+                  stage_fixed: true
+                - name: shared
+                  root: packages/shared/
+                  glob: '**/*.ts'
+                  run: pnpm exec prettier --write {staged_files}
+                  stage_fixed: true
+                - name: email
+                  root: packages/email/
+                  glob: '**/*.{ts,tsx}'
+                  run: pnpm exec prettier --write {staged_files}
+                  stage_fixed: true
+                - name: webui
+                  root: packages/webui/
+                  glob: '**/*.{ts,js,svelte}'
+                  run: pnpm exec prettier --write {staged_files}
+                  stage_fixed: true
+                - name: api
+                  root: packages/api/
+                  glob: '**/*.ts'
+                  run: pnpm exec prettier --write {staged_files}
+                  stage_fixed: true
+                - name: admin
+                  root: packages/admin/
+                  glob: '**/*.{ts,js,svelte}'
+                  run: pnpm exec prettier --write {staged_files}
+                  stage_fixed: true
+                - name: cli
+                  root: packages/cli/
+                  glob: '**/*.ts'
+                  run: pnpm exec prettier --write {staged_files}
+                  stage_fixed: true
+                - name: mobile
+                  root: packages/mobile/
+                  glob: '**/*.{ts,js,cjs,mjs,svelte}'
+                  run: pnpm exec prettier --write {staged_files}
+                  stage_fixed: true
+                - name: root
+                  exclude: '^packages/'
+                  run: pnpm exec prettier --write --ignore-unknown {staged_files}
+                  stage_fixed: true
+          - name: lint
+            run: pnpm -r lint:nofmt
+          - name: audit-split
+            run: pnpm audit:split
+          - name: check
+            run: pnpm check
+
+# Tests run before sharing, not on every commit (keeps commits fast). The fast
+# suites only: pure unit tests + the api integration tests, which SKIP when no
+# DATABASE_URL(_TEST) is set, so a DB-less push stays quick. The Playwright e2e
+# (`pnpm test`) is NOT here — it needs the running dev stack and runs in CI.
+pre-push:
+  jobs:
+    - name: unit-tests
+      run: pnpm test:unit

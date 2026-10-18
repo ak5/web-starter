@@ -1,0 +1,68 @@
+{
+	"name": "@ak5/api",
+	"private": true,
+	"version": "0.0.1",
+	"type": "module",
+	"main": "./dist/client-runtime.js",
+	"types": "./dist/client.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/client.d.ts",
+			"import": "./dist/client-runtime.js"
+		}
+	},
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"dev": "wrangler dev --ip ${DEV_HOST:-localhost} --port ${AK5_API_PORT:-8350} --env-file .env",
+		"dev:cron": "wrangler dev --test-scheduled --ip ${DEV_HOST:-localhost} --port ${AK5_API_PORT:-8350} --env-file .env",
+		"build": "tsc -p tsconfig.client.json && cp src/client-runtime.ts dist/client-runtime.js && sed -i.bak 's/: () => void//; s/: string//' dist/client-runtime.js && rm dist/client-runtime.js.bak",
+		"check": "tsc --noEmit && tsc -p tsconfig.scripts.json --noEmit",
+		"test:unit": "node --test --import tsx 'src/**/*.test.ts'",
+		"format": "prettier --write .",
+		"format:check": "prettier --check .",
+		"lint": "prettier --check . && eslint --cache .",
+		"lint:nofmt": "eslint --cache .",
+		"lint:fix": "prettier --write . && eslint --cache --fix .",
+		"lint:fix:nofmt": "eslint --cache --fix .",
+		"db:generate": "drizzle-kit generate --config drizzle.config.ts",
+		"db:migrate": "drizzle-kit migrate --config drizzle.config.ts",
+		"db:check": "drizzle-kit check --config drizzle.config.ts",
+		"db:studio": "drizzle-kit studio --config drizzle.config.ts",
+		"db:functions": "dotenv -- bash -c 'psql \"$DATABASE_URL\" -f src/db/functions.sql'",
+		"db:psql": "dotenv -- bash -c 'psql \"$DATABASE_URL\" \"$@\"' --",
+		"db:reset": "tsx scripts/reset-branch.ts",
+		"db:reset:test": "tsx scripts/reset-test-db.ts",
+		"neon:verify": "tsx scripts/verify-neon-parity.ts",
+		"create:admin": "tsx scripts/create-admin.ts",
+		"gen": "wrangler types --env-file .env.example",
+		"cf-typegen": "pnpm gen"
+	},
+	"dependencies": {
+		"@ak5/email": "workspace:*",
+		"@ak5/shared": "workspace:*",
+		"@hono/zod-validator": "^0.7.6",
+		"@neondatabase/serverless": "^1.2.0",
+		"drizzle-orm": "^0.45.4",
+		"hono": "^4.13.13",
+		"nanoid": "^5.1.16",
+		"worker-password-auth": "^1.0.0",
+		"zod": "^4.6.7"
+	},
+	"devDependencies": {
+		"@cloudflare/workers-types": "^5.20261015.1",
+		"@eslint/js": "^9.39.5",
+		"@types/node": "^24.19.2",
+		"dotenv-cli": "^8.0.0",
+		"drizzle-kit": "^0.31.11",
+		"eslint": "^9.39.5",
+		"eslint-config-prettier": "^10.1.8",
+		"globals": "^16.5.0",
+		"prettier": "^3.9.10",
+		"tsx": "^4.23.15",
+		"typescript": "^5.9.3",
+		"typescript-eslint": "^8.71.2",
+		"wrangler": "^4.151.0"
+	}
+}

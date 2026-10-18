@@ -1,0 +1,15 @@
+node_modules/
+ios/Pods/
+ios/build/
+ios/.xcode.env.local
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+*.keystore
+**/xcuserdata/
+.bundle/
+android/app/.cxx/
+android/.cxx/
+android/.kotlin/
+vendor/bundle/

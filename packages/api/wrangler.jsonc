@@ -1,0 +1,58 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "ak5-api",
+	"main": "src/worker.ts",
+	"compatibility_date": "2025-03-19",
+	"compatibility_flags": ["nodejs_compat"],
+	"observability": { "enabled": true },
+	// Enable Cloudflare version preview URLs.
+	"preview_urls": true,
+	// Replace with your Cloudflare account id (or set CLOUDFLARE_ACCOUNT_ID).
+	// "account_id": "",
+	"routes": [{ "pattern": "api.__PROD_DOMAIN__", "custom_domain": true }],
+	"vars": {
+		"PUBLIC_API_URL": "https://api.__PROD_DOMAIN__",
+		"PUBLIC_APP_URL": "https://www.__PROD_DOMAIN__",
+		"PUBLIC_ADMIN_URL": "https://admin.__PROD_DOMAIN__",
+		"PUBLIC_EMAIL_FROM": "__EMAIL_FROM__",
+		"PUBLIC_R2_URL": "https://cdn.__PROD_DOMAIN__",
+		"COOKIE_ORIGIN": ".__PROD_DOMAIN__",
+		"DISCORD_CLIENT_ID": ""
+	},
+	"send_email": [{ "name": "EMAIL", "allowed_sender_addresses": ["__EMAIL_FROM__"] }],
+	"r2_buckets": [{ "binding": "R2", "bucket_name": "ak5" }],
+	"kv_namespaces": [{ "binding": "KV", "id": "REPLACE_WITH_KV_NAMESPACE_ID" }],
+	// Hourly tick drives the expired-token purge in src/cron/jobs.ts.
+	"triggers": { "crons": ["0 * * * *"] },
+	// Secrets (set via `wrangler secret put`): DATABASE_URL, JWT_SECRET,
+	// DISCORD_CLIENT_SECRET, TOKEN_ENCRYPTION_KEY,
+	// NEON_API_KEY, CLOUDFLARE_API_TOKEN.
+	//
+	// Staging (deployed after main CI; PRs use separate Workers with staging data).
+	// IMPORTANT: named envs do NOT inherit kv_namespaces / r2_buckets / triggers
+	// from the top level (wrangler warns about this) — they must be re-declared
+	// here. We override the name (workers.dev only), drop the custom-domain
+	// routes, point the public URLs at *-stg hosts, and re-declare the KV/R2
+	// bindings (the KV id placeholder is filled by deploy.yml just like the
+	// top-level one). COOKIE_ORIGIN is empty so staging issues host-only Secure
+	// cookies (workers.dev is on the Public Suffix List — siblings can't share a
+	// cookie domain). Cron is intentionally omitted on staging.
+	"env": {
+		"staging": {
+			"name": "ak5-api-stg",
+			"routes": [],
+			"vars": {
+				"PUBLIC_API_URL": "https://ak5-api-stg.ak5.workers.dev",
+				"PUBLIC_APP_URL": "https://ak5-web-stg.ak5.workers.dev",
+				"PUBLIC_ADMIN_URL": "https://ak5-admin-stg.ak5.workers.dev",
+				"PUBLIC_EMAIL_FROM": "__EMAIL_FROM__",
+				"PUBLIC_R2_URL": "https://cdn.__PROD_DOMAIN__",
+				"COOKIE_ORIGIN": "",
+				"DISCORD_CLIENT_ID": ""
+			},
+			"send_email": [{ "name": "EMAIL", "allowed_sender_addresses": ["__EMAIL_FROM__"] }],
+			"r2_buckets": [{ "binding": "R2", "bucket_name": "ak5" }],
+			"kv_namespaces": [{ "binding": "KV", "id": "REPLACE_WITH_KV_NAMESPACE_ID" }]
+		}
+	}
+}

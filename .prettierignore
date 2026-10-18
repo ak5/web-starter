@@ -1,0 +1,24 @@
+# Package Managers
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# Build artifacts
+**/.svelte-kit/
+**/.wrangler/
+**/dist/
+**/build/
+**/static/
+
+# Packages handle their own formatting via pnpm -r format and lefthook package jobs.
+packages/
+
+# Generated
+**/worker-configuration.d.ts
+
+# Tooling
+.cursor
+.claude
+.playwright-mcp/
+test-results/
+node_modules/

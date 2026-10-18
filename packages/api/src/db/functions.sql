@@ -1,0 +1,13 @@
+-- ==========================================================================
+-- Postgres functions & non-Drizzle indexes
+-- ==========================================================================
+-- Run AFTER `pnpm db:migrate` whenever this file changes:
+--
+--   pnpm db:functions
+--
+-- These are NOT managed by Drizzle (it doesn't generate GIN/IVFFlat indexes or
+-- plpgsql). Currently empty. Add CREATE OR REPLACE FUNCTION definitions, GIN
+-- index statements, or any other SQL Drizzle can't express. Every statement
+-- MUST be idempotent (CREATE INDEX IF NOT EXISTS, CREATE OR REPLACE FUNCTION,
+-- DROP FUNCTION IF EXISTS before a signature change).
+-- ==========================================================================

@@ -1,0 +1,11 @@
+packages:
+  - packages/*
+onlyBuiltDependencies:
+  - esbuild
+  - workerd
+ignoredBuiltDependencies:
+  - sharp
+
+publicHoistPattern:
+  - '*react-native*'
+  - 'expo-*'

@@ -1,0 +1,15 @@
+[tools]
+lefthook = "latest"
+node = "22.21.0"
+pnpm = "10.32.1"
+caddy = "latest"
+# Used by `pnpm audit:split` (scripts/audit-split-boundaries.sh greps the tree).
+ripgrep = "latest"
+
+[env]
+# Keep corepack from auto-pinning the packageManager field — mise owns the pnpm version.
+COREPACK_ENABLE_AUTO_PIN = "0"
+# Per-worktree CLI identity store (used by @ak5/cli).
+XDG_CONFIG_HOME = "{{config_root}}/.ak5-config"
+# Auto-load the current dev slot's generated port + URL env vars.
+_.file = ".env.dev-slot"

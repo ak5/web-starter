@@ -1,0 +1,89 @@
+name: migrate-check
+
+# PR gate: prove pending Drizzle migrations apply cleanly against a throwaway
+# copy of REAL production data before they can merge. Neon branches are
+# copy-on-write, so this is instant and catches data-dependent failures
+# (NOT NULL on populated tables, unique-constraint violations on existing dupes,
+# locking ALTERs) that an empty staging DB would never surface.
+#
+# The job ALWAYS runs and succeeds (so `migrate-check` can be a required check):
+# it short-circuits when a PR touches no migration/schema files, or when Neon
+# isn't configured (e.g. fork PRs, where secrets are withheld).
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: migrate-check-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  migrate-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      BRANCH_NAME: ci-migrate-pr-${{ github.event.pull_request.number }}-${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Run the branch test only when schema/migration files changed AND Neon is
+      # wired up (api key is empty on fork PRs). Otherwise succeed immediately.
+      - name: Decide whether to test migrations
+        id: gate
+        env:
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+          NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
+        run: |
+          git fetch origin "$GITHUB_BASE_REF" --depth=1
+          if ! git diff --name-only "origin/${GITHUB_BASE_REF}...HEAD" \
+                 | grep -qE '^packages/api/(drizzle/|src/db/)'; then
+            echo "run=false" >>"$GITHUB_OUTPUT"
+            echo "No changes under packages/api/drizzle or src/db — skipping branch test."
+          elif [ -z "$NEON_API_KEY" ] || [ -z "$NEON_PROJECT_ID" ]; then
+            echo "run=false" >>"$GITHUB_OUTPUT"
+            echo "::notice::Schema changed but Neon is not configured — skipping branch test."
+          else
+            echo "run=true" >>"$GITHUB_OUTPUT"
+            echo "Migration/schema files changed — testing against a Neon branch."
+          fi
+
+      - uses: jdx/mise-action@v2
+        if: steps.gate.outputs.run == 'true'
+      - run: nice -n 10 pnpm install --frozen-lockfile
+        if: steps.gate.outputs.run == 'true'
+
+      # Fork an ephemeral branch off production (parent = NEON_PROD_BRANCH).
+      - name: Create ephemeral Neon branch off production
+        id: branch
+        if: steps.gate.outputs.run == 'true'
+        uses: neondatabase/create-branch-action@v6
+        with:
+          project_id: ${{ vars.NEON_PROJECT_ID }}
+          parent: ${{ vars.NEON_PROD_BRANCH }}
+          branch_name: ${{ env.BRANCH_NAME }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+
+      - name: Apply migrations against the branch
+        if: steps.gate.outputs.run == 'true'
+        env:
+          DATABASE_URL: ${{ steps.branch.outputs.db_url }}
+        run: nice -n 10 pnpm --filter @ak5/api db:migrate
+
+      - name: Verify schema matches code (no drift after migrate)
+        if: steps.gate.outputs.run == 'true'
+        env:
+          DATABASE_URL: ${{ steps.branch.outputs.db_url }}
+        run: nice -n 10 pnpm --filter @ak5/api run db:check
+
+      - name: Delete ephemeral Neon branch
+        if: ${{ always() && steps.gate.outputs.run == 'true' }}
+        uses: neondatabase/delete-branch-action@v3
+        with:
+          project_id: ${{ vars.NEON_PROJECT_ID }}
+          branch: ${{ env.BRANCH_NAME }}
+          api_key: ${{ secrets.NEON_API_KEY }}

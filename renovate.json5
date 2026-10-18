@@ -1,0 +1,25 @@
+{
+	$schema: 'https://docs.renovatebot.com/renovate-schema.json',
+	extends: ['config:recommended', 'helpers:pinGitHubActionDigests'],
+	baseBranchPatterns: ['main'],
+	dependencyDashboard: true,
+	automerge: false,
+	prConcurrentLimit: 5,
+	branchConcurrentLimit: 8,
+	packageRules: [
+		{
+			matchManagers: ['npm'],
+			matchUpdateTypes: ['patch', 'minor'],
+			groupName: 'JavaScript dependencies'
+		},
+		{
+			matchManagers: ['github-actions'],
+			matchUpdateTypes: ['digest', 'patch', 'minor'],
+			groupName: 'GitHub Actions'
+		},
+		{
+			matchUpdateTypes: ['major'],
+			dependencyDashboardApproval: true
+		}
+	]
+}

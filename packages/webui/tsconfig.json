@@ -1,0 +1,15 @@
+{
+	"compilerOptions": {
+		"rewriteRelativeImportExtensions": true,
+		"sourceMap": true,
+		"strict": true,
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+		"target": "ES2022",
+		"lib": ["ES2022", "DOM"],
+		"allowJs": true,
+		"checkJs": true,
+		"skipLibCheck": true
+	},
+	"include": ["src"]
+}
