@@ -14,18 +14,19 @@ update this index in the **same PR**.
 
 ## architecture/ — how it's built
 
-| File                                      | One-liner                                     |
-| ----------------------------------------- | --------------------------------------------- |
-| [overview.md](architecture/overview.md)   | The split-monorepo shape, end to end          |
-| [auth.md](architecture/auth.md)           | Identity tables, tokens, JWT, the route split |
-| [database.md](architecture/database.md)   | Tables, Drizzle, migration policy             |
-| [rpc.md](architecture/rpc.md)             | The typed Hono client contract                |
-| [security.md](architecture/security.md)   | Public IDs, rate limits, secrets, cookies     |
-| [api/](architecture/api/index.md)         | How API routes are organized                  |
-| [cron.md](architecture/cron.md)           | Scheduled-handler pattern, adding a job       |
-| [platforms.md](architecture/platforms.md) | OAuth login provider integration              |
-| [testing.md](architecture/testing.md)     | Playwright + test-DB isolation strategy       |
-| [adr/](architecture/adr/README.md)        | Architecture decision records                 |
+| File                                          | One-liner                                        |
+| --------------------------------------------- | ------------------------------------------------ |
+| [overview.md](architecture/overview.md)       | The split-monorepo shape, end to end             |
+| [auth.md](architecture/auth.md)               | Identity tables, tokens, JWT, the route split    |
+| [local-first.md](architecture/local-first.md) | LiveStore, local SQLite, D1 sync, offline limits |
+| [database.md](architecture/database.md)       | Tables, Drizzle, migration policy                |
+| [rpc.md](architecture/rpc.md)                 | The typed Hono client contract                   |
+| [security.md](architecture/security.md)       | Public IDs, rate limits, secrets, cookies        |
+| [api/](architecture/api/index.md)             | How API routes are organized                     |
+| [cron.md](architecture/cron.md)               | Scheduled-handler pattern, adding a job          |
+| [platforms.md](architecture/platforms.md)     | OAuth login provider integration                 |
+| [testing.md](architecture/testing.md)         | Playwright + test-DB isolation strategy          |
+| [adr/](architecture/adr/README.md)            | Architecture decision records                    |
 
 ## development/ — how to run it locally
 

@@ -10,7 +10,8 @@ const defaultConfig = getDefaultConfig(projectRoot);
 const config = {
 	watchFolders: [
 		path.resolve(projectRoot, '../../node_modules'),
-		path.resolve(projectRoot, '../shared')
+		path.resolve(projectRoot, '../shared'),
+		path.resolve(projectRoot, '../sync')
 	],
 	maxWorkers: 1,
 	transformer: {

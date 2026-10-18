@@ -57,13 +57,14 @@ export default defineConfig({
 			csp: {
 				directives: {
 					'default-src': ['self'],
-					'script-src': ['self'],
+					'script-src': ['self', 'wasm-unsafe-eval'],
 					'style-src': ['self', 'unsafe-inline'],
 					'img-src': ['self', 'blob:', 'data:', 'https://cdn.ak5web.com'],
 					'font-src': ['self'],
 					// Web pages call the api worker on its own origin via the hc client.
 					'connect-src': ['self', ...apiOrigins],
 					'frame-src': ['none'],
+					'worker-src': ['self', 'blob:'],
 					'object-src': ['none'],
 					'base-uri': ['self'],
 					// OAuth-login forms may 303 to the api origin to start the provider flow.
@@ -72,7 +73,16 @@ export default defineConfig({
 			}
 		})
 	],
-	server: { allowedHosts: true, strictPort: true },
+	server: {
+		allowedHosts: true,
+		strictPort: true,
+		headers: {
+			'Cross-Origin-Opener-Policy': 'same-origin',
+			'Cross-Origin-Embedder-Policy': 'credentialless'
+		}
+	},
+	worker: { format: 'es' },
+	optimizeDeps: { exclude: ['@livestore/wa-sqlite'] },
 	ssr: {
 		// Workspace packages ship TS source with `.js` import specifiers
 		// (exports → src/, resolved by the bundler). Vite must transform them

@@ -1,12 +1,19 @@
-import { hc } from 'hono/client';
+import { hc, type InferResponseType } from 'hono/client';
 import type { WebApiType } from '@ak5/api';
 import { COOKIE_TOKEN } from '@ak5/shared/cookie';
 
+type Api = ReturnType<typeof hc<WebApiType>>;
+export type SessionUser = InferResponseType<Api['auth']['me']['$get'], 200>;
+
 export interface SessionStorage {
+	getViewer(): Promise<SessionUser | null>;
+	setViewer(user: SessionUser): Promise<void>;
 	get(): Promise<string | null>;
 	set(token: string): Promise<void>;
 	clear(): Promise<void>;
 }
+
+class NetworkError extends Error {}
 
 export class InputError extends Error {}
 
@@ -26,7 +33,12 @@ export function createClient(baseUrl: string, storage: SessionStorage, transport
 		fetch: async (input: RequestInfo | URL, init?: RequestInit) => {
 			const headers = new Headers(init?.headers);
 			if (token) headers.set('Cookie', `${COOKIE_TOKEN}=${token}`);
-			const response = await transport(input, { ...init, headers, credentials: 'omit' });
+			const response = await transport(input, { ...init, headers, credentials: 'omit' }).catch(
+				(cause: unknown) => {
+					if (cause instanceof TypeError) throw new NetworkError('Network request failed');
+					throw cause;
+				}
+			);
 			const cookie = response.headers.get('set-cookie');
 			const next = cookie?.match(new RegExp(`(?:^|[,;]\\s*)${COOKIE_TOKEN}=([^;]*)`));
 			if (next) {
@@ -53,26 +65,54 @@ export function createClient(baseUrl: string, storage: SessionStorage, transport
 		return body as Exclude<Awaited<ReturnType<R['json']>>, { error: string }>;
 	}
 
+	async function viewer() {
+		try {
+			const user = await read(await api.auth.me.$get());
+			await storage.setViewer(user);
+			return user;
+		} catch (cause) {
+			if (cause instanceof ApiError && cause.status === 403) {
+				await storage.clear();
+				token = null;
+			}
+			throw cause;
+		}
+	}
+
 	return {
+		sessionCookie: () => (token ? `${COOKIE_TOKEN}=${token}` : ''),
 		async restore() {
 			token = await storage.get();
 			if (!token) return null;
-			return read(await api.auth.me.$get());
+			try {
+				return await viewer();
+			} catch (cause) {
+				// Only a network failure permits local access; server rejections stay authoritative.
+				if (cause instanceof NetworkError) {
+					const cached = await storage.getViewer();
+					if (cached) return cached;
+				}
+				throw cause;
+			}
 		},
 		async login(email: string, password: string) {
+			await storage.clear();
+			token = null;
 			await read(await api.auth.login.$post({ json: { email, password } }));
 			if (!token) throw new ApiError(502, 'The server did not return a session. Please retry.');
-			return read(await api.auth.me.$get());
+			return viewer();
 		},
 		async register(email: string, password: string, username: string, legalAcceptance: boolean) {
 			if (!legalAcceptance) throw new InputError('Accept the policies before creating an account.');
+			await storage.clear();
+			token = null;
 			const result = await read(
 				await api.auth.register.$post({
 					json: { email, password, username, legalAcceptance: true }
 				})
 			);
 			if (!token) throw new ApiError(502, 'The server did not return a session. Please sign in.');
-			return { result, user: await read(await api.auth.me.$get()) };
+			return { result, user: await viewer() };
 		},
 		async logout() {
 			try {
@@ -85,7 +125,7 @@ export function createClient(baseUrl: string, storage: SessionStorage, transport
 		},
 		async verify(pin: string) {
 			await read(await api.auth['verify-email'].$post({ json: { pin } }));
-			return read(await api.auth.me.$get());
+			return viewer();
 		},
 		async resend() {
 			return read(await api.auth['resend-verification'].$post());

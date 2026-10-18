@@ -10,14 +10,18 @@ auth wiring.
 
 ## Routes
 
-| Route             | Auth   | Purpose                              |
-| ----------------- | ------ | ------------------------------------ |
-| `/`               | public | Starter overview and author credit   |
-| `/login`          | guest  | Sign in (email + password)           |
-| `/register`       | guest  | Create an account                    |
-| `/account/verify` | user   | Enter verification code or resend    |
-| `/dashboard`      | user   | Authed example dashboard (protected) |
-| `/logout`         | user   | Clear the session (POST) → `/`       |
+| Route             | Auth   | Purpose                                |
+| ----------------- | ------ | -------------------------------------- |
+| `/`               | public | Starter overview and author credit     |
+| `/login`          | guest  | Sign in (email + password)             |
+| `/register`       | guest  | Create an account                      |
+| `/account/verify` | user   | Enter verification code or resend      |
+| `/dashboard`      | user   | Authed example dashboard (protected)   |
+| `/notes`          | user   | Local SQLite notes with LiveStore sync |
+| `/sync`           | user   | POST proxy to the API sync service     |
+| `/logout`         | user   | Clear the session (POST) → `/`         |
 
 Protected prefixes and auth-page redirects live in `src/hooks.server.ts`. Add a
 route under `src/routes/` and update this table in the same PR.
+
+See [local-first notes](../../docs/architecture/local-first.md) for browser requirements and device data retention.

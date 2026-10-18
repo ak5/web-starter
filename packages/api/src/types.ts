@@ -6,6 +6,7 @@ import type { Database } from './db';
 export interface Env {
 	// Bindings
 	DB: D1Database;
+	NOTES_SYNC: DurableObjectNamespace;
 	R2: R2Bucket;
 	KV: KVNamespace;
 

@@ -80,3 +80,7 @@ the same type-only `WebApiType` and pure shared contracts; browser components
 from `@ak5/webui` remain specific to SvelteKit. Metro resolves the compiled
 `@ak5/shared/cookie` entry after `pnpm build:libs`. Encrypted session persistence uses
 Symbiote secure-store. See [mobile setup](../../packages/mobile/README.md).
+
+Web and native offline notes share `@ak5/sync`. LiveStore materializes local
+SQLite and synchronizes events through the API's Durable Object to D1; see
+[local-first notes](local-first.md).

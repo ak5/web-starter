@@ -54,3 +54,11 @@ provider console.
 | `GOOGLE_CLIENT_SECRET`  | api   | Google OAuth client secret |
 
 Provider secrets are api-only. If you drop the OAuth overlay, drop these keys too.
+
+## LiveStore
+
+LiveStore is the local SQLite and sync library for offline notes. Its Cloudflare
+provider stores the event log in D1 and uses SQLite Durable Objects to coordinate
+stores. Provision these bindings in your own account; no hosted LiveStore account
+or token is required. Include D1 and Durable Object usage in cost planning. See
+[local-first notes](../architecture/local-first.md).

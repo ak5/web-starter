@@ -1,4 +1,38 @@
 PODS:
+  - EXApplication (57.0.2):
+    - ExpoModulesCore
+  - EXConstants (57.0.22):
+    - ExpoModulesCore
+  - Expo (57.0.14):
+    - ExpoModulesCore
+    - ExpoModulesJSI
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTAppDelegate
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactAppDependencyProvider
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
+  - ExpoAsset (57.0.20):
+    - ExpoModulesCore
+  - ExpoCrypto (57.0.1):
+    - ExpoModulesCore
   - ExpoModulesCore (57.0.20):
     - ExpoModulesJSI
     - hermes-engine
@@ -30,6 +64,8 @@ PODS:
     - ExpoModulesCore
     - ExpoModulesJSI
   - ExpoSecureStore (57.0.1):
+    - ExpoModulesCore
+  - ExpoSQLite (57.0.1):
     - ExpoModulesCore
   - FBLazyVector (0.86.0)
   - hermes-engine (250829098.0.14):
@@ -1880,10 +1916,16 @@ PODS:
   - Yoga (0.0.0)
 
 DEPENDENCIES:
+  - "EXApplication (from `../../../node_modules/.pnpm/expo-application@57.0.2_expo@57.0.14/node_modules/expo-application/ios`)"
+  - "EXConstants (from `../../../node_modules/.pnpm/expo-constants@57.0.22_expo@57.0.14_react-native@0.86.0_@babel+core@7.29.7_@react-nativ_e1bcf8a8dbd0270aa016e891feafa426/node_modules/expo-constants/ios`)"
+  - "Expo (from `../../../node_modules/.pnpm/expo@57.0.14_@babel+core@7.29.7_@expo+dom-webview@57.0.1_react-dom@19.1.0_react@19.2.3__3775e585dc5a35e3d3e3f834e8ea7bb2/node_modules/expo`)"
+  - "ExpoAsset (from `../../../node_modules/.pnpm/expo-asset@57.0.20_expo@57.0.14_react-native@0.86.0_@babel+core@7.29.7_@react-native-co_93a95f8db3b34fcda3750a17b64c9aa1/node_modules/expo-asset/ios`)"
+  - "ExpoCrypto (from `../../../node_modules/.pnpm/expo-crypto@57.0.1_expo@57.0.14/node_modules/expo-crypto/ios`)"
   - "ExpoModulesCore (from `../../../node_modules/.pnpm/expo-modules-core@57.0.20_react-native@0.86.0_@babel+core@7.29.7_@react-native-communit_157d70f54ef6a60ee2502cad95fd1f14/node_modules/expo-modules-core`)"
   - "ExpoModulesJSI (from `../../../node_modules/.pnpm/expo-modules-jsi@57.1.2_react-native@0.86.0_@babel+core@7.29.7_@react-native-community+_672a7f69e08848e9073629a3fde59b6e/node_modules/expo-modules-jsi/apple`)"
   - "ExpoModulesWorklets (from `../../../node_modules/.pnpm/expo-modules-core@57.0.20_react-native@0.86.0_@babel+core@7.29.7_@react-native-communit_157d70f54ef6a60ee2502cad95fd1f14/node_modules/expo-modules-core`)"
   - "ExpoSecureStore (from `../../../node_modules/.pnpm/expo-secure-store@57.0.1_expo@57.0.14/node_modules/expo-secure-store/ios`)"
+  - "ExpoSQLite (from `../../../node_modules/.pnpm/expo-sqlite@57.0.1_expo@57.0.14_react-native@0.86.0_@babel+core@7.29.7_@react-native-co_9190db0ace5acd80abb252f80acdab7c/node_modules/expo-sqlite/ios`)"
   - FBLazyVector (from `../node_modules/react-native/Libraries/FBLazyVector`)
   - hermes-engine (from `../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
   - RCTDeprecation (from `../node_modules/react-native/ReactApple/Libraries/RCTFoundation/RCTDeprecation`)
@@ -1963,6 +2005,16 @@ DEPENDENCIES:
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
 EXTERNAL SOURCES:
+  EXApplication:
+    :path: "../../../node_modules/.pnpm/expo-application@57.0.2_expo@57.0.14/node_modules/expo-application/ios"
+  EXConstants:
+    :path: "../../../node_modules/.pnpm/expo-constants@57.0.22_expo@57.0.14_react-native@0.86.0_@babel+core@7.29.7_@react-nativ_e1bcf8a8dbd0270aa016e891feafa426/node_modules/expo-constants/ios"
+  Expo:
+    :path: "../../../node_modules/.pnpm/expo@57.0.14_@babel+core@7.29.7_@expo+dom-webview@57.0.1_react-dom@19.1.0_react@19.2.3__3775e585dc5a35e3d3e3f834e8ea7bb2/node_modules/expo"
+  ExpoAsset:
+    :path: "../../../node_modules/.pnpm/expo-asset@57.0.20_expo@57.0.14_react-native@0.86.0_@babel+core@7.29.7_@react-native-co_93a95f8db3b34fcda3750a17b64c9aa1/node_modules/expo-asset/ios"
+  ExpoCrypto:
+    :path: "../../../node_modules/.pnpm/expo-crypto@57.0.1_expo@57.0.14/node_modules/expo-crypto/ios"
   ExpoModulesCore:
     :path: "../../../node_modules/.pnpm/expo-modules-core@57.0.20_react-native@0.86.0_@babel+core@7.29.7_@react-native-communit_157d70f54ef6a60ee2502cad95fd1f14/node_modules/expo-modules-core"
   ExpoModulesJSI:
@@ -1971,6 +2023,8 @@ EXTERNAL SOURCES:
     :path: "../../../node_modules/.pnpm/expo-modules-core@57.0.20_react-native@0.86.0_@babel+core@7.29.7_@react-native-communit_157d70f54ef6a60ee2502cad95fd1f14/node_modules/expo-modules-core"
   ExpoSecureStore:
     :path: "../../../node_modules/.pnpm/expo-secure-store@57.0.1_expo@57.0.14/node_modules/expo-secure-store/ios"
+  ExpoSQLite:
+    :path: "../../../node_modules/.pnpm/expo-sqlite@57.0.1_expo@57.0.14_react-native@0.86.0_@babel+core@7.29.7_@react-native-co_9190db0ace5acd80abb252f80acdab7c/node_modules/expo-sqlite/ios"
   FBLazyVector:
     :path: "../node_modules/react-native/Libraries/FBLazyVector"
   hermes-engine:
@@ -2126,10 +2180,16 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
 SPEC CHECKSUMS:
+  EXApplication: bbd517d50878ca1d121fb3843392beb210181e28
+  EXConstants: 8a0eb5e2553569c0e6710b73a8d90d1ce358c153
+  Expo: 74ca681cd7a77385ac0ba805ba9b188cc8dd81c3
+  ExpoAsset: 2581425f9b581b4fce3c83ffc9f28528d1c4ee68
+  ExpoCrypto: 366380ffafeb22cc9795438cddcbfa299e1aaf42
   ExpoModulesCore: c94975c83c43a8e6f95dda76c7537a4f24eeffff
   ExpoModulesJSI: b767422763350d2b248fb218f71bbb286fd2ee77
   ExpoModulesWorklets: 40d29262efc034e4357f2713e6037a41a27218d6
   ExpoSecureStore: 94793113049a2d7478dfe1a13aa15081e9f61755
+  ExpoSQLite: ddd65ed74bdebcff20f6766e682f9321ecb28ab8
   FBLazyVector: b3e7ad108f0d882e30445c5527d774e3fd432f3d
   hermes-engine: e6403e4390013ec6030b4134f71214b5c2e216d7
   RCTDeprecation: 2a74a2c57675e64419bd89078efde81f7c1de90b

@@ -18,5 +18,5 @@ receive database credentials. Development uses local Wrangler persistence.
 - Migrations are committed SQL and run before the API deploys. Local CI needs no
   provider account. D1 row, storage, query and execution limits shape capacity;
   measure queries and index access paths before scaling.
-- The binding is server-side storage. Offline mobile replication is a separate
-  product feature and is not part of this starter.
+- The binding is server-side storage. [LiveStore notes](../local-first.md)
+  synchronize local web/native SQLite through a D1 event log and Durable Object.

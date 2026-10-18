@@ -48,7 +48,12 @@
 	},
 	"dependencies": {
 		"@ak5/webui": "workspace:*",
-		"@lucide/svelte": "^0.525.0"
+		"@lucide/svelte": "^0.525.0",
+		"@livestore/livestore": "0.5.0",
+		"@livestore/adapter-web": "0.5.0",
+		"@livestore/peer-deps": "0.5.0",
+		"@ak5/sync": "workspace:*",
+		"@livestore/wa-sqlite": "0.5.0"
 	},
 	"imports": {
 		"#lib": "./src/lib/index.js",

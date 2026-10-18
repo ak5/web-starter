@@ -28,7 +28,7 @@
 				<div class="mb-6 flex flex-col items-center">
 					<a href="/" class="flex flex-col items-center">
 						<div class="relative mb-2 h-16 w-16">
-							<img src="/logo.png" alt="ak5-web Icon" class="object-contain" />
+							<img src="/favicon.svg" alt="ak5-web Icon" class="object-contain" />
 						</div>
 						<span
 							class="text-3xl font-bold text-secondary transition-all duration-300 hover:text-primary"

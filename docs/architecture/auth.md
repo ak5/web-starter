@@ -151,3 +151,11 @@ See [mobile setup](../../packages/mobile/README.md).
 A failed native secure-storage removal leaves sign-out available for retry.
 Successful sign-out and unauthorized sessions discard cached item views before
 another account can sign in.
+
+## Local-first notes
+
+Sync checks the session and active user on every HTTP push/pull and restricts
+access to that user's exact notes store. Native offline restore can use a securely
+cached viewer after a network failure; a server rejection clears the session.
+[Local-first notes](local-first.md) describes the trust boundary and retained
+local data after sign out.

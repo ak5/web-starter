@@ -1,10 +1,19 @@
 packages:
   - packages/*
+ignoredBuiltDependencies:
+  - sharp
 onlyBuiltDependencies:
   - esbuild
   - workerd
-ignoredBuiltDependencies:
-  - sharp
+patchedDependencies:
+  '@livestore/adapter-expo@0.5.0': patches/@livestore__adapter-expo@0.5.0.patch
+
+# LiveStore uses the same synchronous SQLite/Application APIs provided by Expo 57.
+# Native build and persistence tests verify this host combination.
+peerDependencyRules:
+  allowedVersions:
+    '@livestore/adapter-expo>expo-application': '57.0.2'
+    '@livestore/adapter-expo>expo-sqlite': '57.0.1'
 
 publicHoistPattern:
   - '*react-native*'

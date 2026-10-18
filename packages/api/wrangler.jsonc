@@ -3,7 +3,9 @@
 	"name": "ak5-api",
 	"main": "src/worker.ts",
 	"compatibility_date": "2025-03-19",
-	"compatibility_flags": ["nodejs_compat"],
+	"compatibility_flags": ["nodejs_compat", "enable_request_signal"],
+	"durable_objects": { "bindings": [{ "name": "NOTES_SYNC", "class_name": "NotesSync" }] },
+	"migrations": [{ "tag": "v1-notes-sync", "new_sqlite_classes": ["NotesSync"] }],
 	"observability": { "enabled": true },
 	// Enable Cloudflare version preview URLs.
 	"preview_urls": true,
@@ -37,6 +39,7 @@
 		"staging": {
 			"name": "ak5-api-stg",
 			"routes": [],
+			"durable_objects": { "bindings": [{ "name": "NOTES_SYNC", "class_name": "NotesSync" }] },
 			"vars": {
 				"PUBLIC_API_URL": "https://ak5-api-stg.ak5.workers.dev",
 				"PUBLIC_APP_URL": "https://ak5-web-stg.ak5.workers.dev",

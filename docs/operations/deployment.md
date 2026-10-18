@@ -134,3 +134,14 @@ read/written reflect the intended access path. Review current
 [Time Travel](https://developers.cloudflare.com/d1/reference/time-travel/).
 Worker rollback does not roll back the database schema. Keep forward-compatible
 migrations and a separate database recovery plan.
+
+## LiveStore sync
+
+The API binds `NOTES_SYNC` to the exported SQLite Durable Object `NotesSync` and
+registers its migration. Its event storage uses the API's `DB` D1 binding. No
+additional runtime credential is needed. Deployment tokens need permission to
+manage the Worker's Durable Object bindings in addition to D1/Worker deployment.
+Provision staging before PR previews: previews bind to staging's `NotesSync`
+script as well as its database, keeping one ordering authority per store. Never
+point a second independent sync namespace at the same stores in D1. Production
+keeps its own namespace and D1 database. See [local-first notes](../architecture/local-first.md).

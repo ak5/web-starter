@@ -85,3 +85,12 @@ and regenerate CocoaPods before rebuilding.
 For physical-device hot reload, start the React Native CLI with a reachable host
 and the selected Metro port. A signed release build embeds JavaScript and needs
 only a reachable HTTPS API.
+
+## Local-first notes
+
+Offline notes use LiveStore with Expo SQLite and the same schema as web.
+The host includes Expo Application and Crypto as well as SQLite; rerun pods and
+rebuild native hosts after dependency updates. Notes open from cached authenticated
+identity when the device is offline. Server authorization still applies to every
+sync request. See [local-first notes](../../docs/architecture/local-first.md) for
+sync setup, account isolation, and retained device data after sign out.

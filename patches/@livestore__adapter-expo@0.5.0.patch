@@ -1,0 +1,93 @@
+diff --git a/dist/make-sqlite-db.js b/dist/make-sqlite-db.js
+index 94c96e9d76e96c3822c1446c47b4859cc40b32d9..884d7708ef28c7b1e19873b9820e29b70ceb2db9 100644
+--- a/dist/make-sqlite-db.js
++++ b/dist/make-sqlite-db.js
+@@ -3,6 +3,7 @@ import { EventSequenceNumber } from '@livestore/common/schema';
+ import { ensureUint8ArrayBuffer, shouldNeverHappen } from '@livestore/utils';
+ import { Effect } from '@livestore/utils/effect';
+ import * as SQLite from 'expo-sqlite';
++const nativeDatabases = new WeakMap();
+ export const makeSqliteDb = (input) => Effect.gen(function* () {
+     // console.log('makeSqliteDb', input)
+     if (input._tag === 'in-memory') {
+@@ -112,15 +113,18 @@ const makeSqliteDb_ = ({ db, metadata, }) => {
+             }
+         },
+         import: (data) => {
+-            if (!(data instanceof Uint8Array)) {
+-                throw new TypeError('importing from an existing database is not yet supported in expo');
+-            }
++            let temporary;
+             try {
+-                const tmpDb = SQLite.deserializeDatabaseSync(data);
+-                SQLite.backupDatabaseSync({ sourceDatabase: tmpDb, destDatabase: db });
+-                tmpDb.closeSync();
+-            }
+-            catch (cause) {
++                const source = data instanceof Uint8Array
++                    ? (temporary = SQLite.deserializeDatabaseSync(data))
++                    : nativeDatabases.get(data);
++                if (!source) throw new TypeError('Unsupported SQLite source');
++                try {
++                    SQLite.backupDatabaseSync({ sourceDatabase: source, destDatabase: db });
++                } finally {
++                    temporary?.closeSync();
++                }
++            } catch (cause) {
+                 throw new SqliteError({
+                     cause,
+                     note: `Error importing database ${metadata.input._tag === 'file' ? metadata.input.databaseName : 'in-memory'}`,
+@@ -150,6 +154,7 @@ const makeSqliteDb_ = ({ db, metadata, }) => {
+             };
+         },
+     };
++    nativeDatabases.set(sqliteDb, db);
+     return sqliteDb;
+ };
+ //# sourceMappingURL=make-sqlite-db.js.map
+\ No newline at end of file
+diff --git a/src/make-sqlite-db.ts b/src/make-sqlite-db.ts
+index 1682591f1062078ec7bcc892f74cb534176d15e6..0bc805669f639425c0091d144eeda5d85820c322 100644
+--- a/src/make-sqlite-db.ts
++++ b/src/make-sqlite-db.ts
+@@ -11,6 +11,8 @@ import { ensureUint8ArrayBuffer, shouldNeverHappen } from '@livestore/utils'
+ import { Effect } from '@livestore/utils/effect'
+ import * as SQLite from 'expo-sqlite'
+ 
++const nativeDatabases = new WeakMap<SqliteDb, SQLite.SQLiteDatabase>()
++
+ type Metadata = {
+   _tag: 'file'
+   dbPointer: number
+@@ -149,14 +151,17 @@ const makeSqliteDb_ = <TMetadata extends Metadata>({
+       }
+     },
+     import: (data) => {
+-      if (!(data instanceof Uint8Array)) {
+-        throw new TypeError('importing from an existing database is not yet supported in expo')
+-      }
+-
++      let temporary: SQLite.SQLiteDatabase | undefined
+       try {
+-        const tmpDb = SQLite.deserializeDatabaseSync(data)
+-        SQLite.backupDatabaseSync({ sourceDatabase: tmpDb, destDatabase: db })
+-        tmpDb.closeSync()
++        const source = data instanceof Uint8Array
++          ? (temporary = SQLite.deserializeDatabaseSync(data))
++          : nativeDatabases.get(data)
++        if (!source) throw new TypeError('Unsupported SQLite source')
++        try {
++          SQLite.backupDatabaseSync({ sourceDatabase: source, destDatabase: db })
++        } finally {
++          temporary?.closeSync()
++        }
+       } catch (cause) {
+         throw new SqliteError({
+           cause,
+@@ -188,5 +193,6 @@ const makeSqliteDb_ = <TMetadata extends Metadata>({
+     },
+   } satisfies SqliteDb
+ 
++  nativeDatabases.set(sqliteDb, db)
+   return sqliteDb
+ }

@@ -5,8 +5,10 @@ An opinionated, MIT-licensed starter for web and native apps: **SvelteKit 3**,
 **Cloudflare Workers**.
 
 One typed API serves a public web app, an admin portal, and iOS/Android apps.
-The database is **Cloudflare D1 with Drizzle**. Mobile accesses it through the
-typed Hono API. Offline database replication is not included.
+The database is **Cloudflare D1 with Drizzle**. **LiveStore** gives web and native
+notes local SQLite storage with offline edits and sync to D1. Identity and the
+online items example use the typed Hono API. See [local-first notes](docs/architecture/local-first.md)
+for storage, authentication, and offline limits.
 
 ## Why Cloudflare?
 
@@ -27,6 +29,8 @@ for your application's read, write, storage, and CPU usage.
 - Cloudflare Workers, KV, R2, and native Cloudflare Email Sending, with a local
   email mock and template preview.
 - Svelte 5 native screens on Symbiote Native and React Native for iOS/Android.
+- LiveStore local SQLite on web and mobile, with a Cloudflare D1 event log and
+  Durable Object sync coordination.
 - Drizzle migrations, unit tests, API integration tests, and Playwright tests.
 - PR previews sharing staging data, automatic staging on `main`, and manual
   production promotion of a commit already deployed to staging.
@@ -108,6 +112,7 @@ app. Native development is separate from the web stack.
 | `@ak5/web`    | SvelteKit public app                                    |
 | `@ak5/admin`  | SvelteKit admin portal                                  |
 | `@ak5/mobile` | Svelte / Symbiote Native / React Native app             |
+| `@ak5/sync`   | Shared LiveStore schema, events, and HTTP sync client   |
 | `@ak5/shared` | Shared contracts and utilities                          |
 | `@ak5/webui`  | Shared web components and SvelteKit helpers             |
 | `@ak5/email`  | Email templates, Cloudflare transport, mock and preview |

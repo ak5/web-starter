@@ -1,27 +1,34 @@
 import { spawnSync } from 'node:child_process';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { ApiError, InputError, createClient, parseItemData } from '../src/client';
+import { ApiError, InputError, createClient, parseItemData, type SessionUser } from '../src/client';
 import { COOKIE_TOKEN } from '@ak5/shared/cookie';
 
-function fixture(responses: Response[], initial: string | null = null) {
+function fixture(responses: (Response | Error)[], initial: string | null = null) {
 	let saved = initial;
+	let cached: SessionUser | null = null;
 	const requests: { url: string; headers: Headers }[] = [];
 	const client = createClient(
 		'https://api.example.test',
 		{
 			get: async () => saved,
+			getViewer: async () => cached,
+			setViewer: async (value) => {
+				cached = value;
+			},
 			set: async (value) => {
 				saved = value;
 			},
 			clear: async () => {
 				saved = null;
+				cached = null;
 			}
 		},
 		async (input, init) => {
 			requests.push({ url: String(input), headers: new Headers(init?.headers) });
 			const response = responses.shift();
 			assert.ok(response, 'Unexpected request');
+			if (response instanceof Error) throw response;
 			return response;
 		}
 	);
@@ -32,7 +39,16 @@ const json = (body: unknown, status = 200, cookie?: string) =>
 		status,
 		headers: cookie ? { 'set-cookie': `${COOKIE_TOKEN}=${cookie}; HttpOnly; Path=/` } : {}
 	});
-const user = { sub: 'u-example', emailConfirmed: false };
+const user: SessionUser = {
+	sub: 'u-example',
+	emailConfirmed: false,
+	email: 'user@example.test',
+	name: 'User',
+	type: 'user' as const,
+	hasPassword: true,
+	recentAuthAt: 1,
+	impersonatedBy: undefined
+};
 
 test('keeps an unconfirmed signup session when verification delivery fails', async () => {
 	const f = fixture([json({ ok: true, verificationEmailSent: false }, 200, 'session'), json(user)]);
@@ -135,6 +151,8 @@ test('logout reports a failed secure-storage removal so the user can retry', asy
 		'https://api.example.test',
 		{
 			get: async () => saved,
+			getViewer: async () => null,
+			setViewer: async () => {},
 			set: async (value) => {
 				saved = value;
 			},
@@ -151,4 +169,81 @@ test('logout reports a failed secure-storage removal so the user can retry', asy
 	fail = false;
 	await client.logout();
 	assert.equal(saved, null);
+});
+
+test('offline restore uses the cached viewer, but an expired session clears it', async () => {
+	let cached: SessionUser | null = user;
+	let token: string | null = 'saved';
+	let offline = true;
+	const client = createClient(
+		'https://api.example.test',
+		{
+			get: async () => token,
+			set: async (value) => {
+				token = value;
+			},
+			getViewer: async () => cached,
+			setViewer: async (value) => {
+				cached = value;
+			},
+			clear: async () => {
+				token = null;
+				cached = null;
+			}
+		},
+		async () => {
+			if (offline) throw new TypeError('Network request failed');
+			return json({ error: 'unauthorized' }, 401);
+		}
+	);
+	assert.deepEqual(await client.restore(), user);
+	assert.equal(client.sessionCookie(), `${COOKIE_TOKEN}=saved`);
+	offline = false;
+	await assert.rejects(client.restore(), ApiError);
+	assert.equal(cached, null);
+	assert.equal(client.sessionCookie(), '');
+});
+
+test('a disabled account cannot retain an offline viewer after the server rejects restore', async () => {
+	const f = fixture([json(user), json({ error: 'user_disabled' }, 403)], 'saved');
+	await f.client.restore();
+	await assert.rejects(f.client.restore(), ApiError);
+	assert.equal(f.saved(), null);
+	assert.equal(f.client.sessionCookie(), '');
+});
+
+test('offline restore does not hide a secure-storage failure behind a cached viewer', async () => {
+	const client = createClient(
+		'https://api.example.test',
+		{
+			get: async () => 'saved',
+			set: async () => {},
+			clear: async () => {},
+			getViewer: async () => user,
+			setViewer: async () => {
+				throw new TypeError('Storage locked');
+			}
+		},
+		async () => json(user)
+	);
+	await assert.rejects(client.restore(), /Storage locked/);
+});
+
+test('refreshing a session keeps offline access, while a new sign-in clears the previous viewer', async () => {
+	const f = fixture(
+		[
+			json(user),
+			json({ items: [], pagination: {} }, 200, 'renewed'),
+			new TypeError('offline'),
+			json({ error: 'invalid_credentials' }, 401),
+			new TypeError('offline')
+		],
+		'saved'
+	);
+	await f.client.restore();
+	await f.client.list();
+	assert.equal((await f.client.restore())?.sub, user.sub);
+	assert.equal(f.saved(), 'renewed');
+	await assert.rejects(f.client.login('other@example.test', 'wrong'), ApiError);
+	assert.equal(await f.client.restore(), null);
 });

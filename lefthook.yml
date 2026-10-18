@@ -5,61 +5,66 @@ pre-commit:
         jobs:
           - name: format
             group:
-              parallel: true
+              parallel: false
               jobs:
                 - name: web
                   root: packages/web/src/
                   glob: '**/*.{ts,js,svelte}'
-                  run: pnpm exec prettier --write {staged_files}
+                  run: nice -n 10 pnpm exec prettier --write {staged_files}
                   stage_fixed: true
                 - name: shared
                   root: packages/shared/
                   glob: '**/*.ts'
-                  run: pnpm exec prettier --write {staged_files}
+                  run: nice -n 10 pnpm exec prettier --write {staged_files}
                   stage_fixed: true
                 - name: email
                   root: packages/email/
                   glob: '**/*.{ts,tsx}'
-                  run: pnpm exec prettier --write {staged_files}
+                  run: nice -n 10 pnpm exec prettier --write {staged_files}
                   stage_fixed: true
                 - name: webui
                   root: packages/webui/
                   glob: '**/*.{ts,js,svelte}'
-                  run: pnpm exec prettier --write {staged_files}
+                  run: nice -n 10 pnpm exec prettier --write {staged_files}
                   stage_fixed: true
                 - name: api
                   root: packages/api/
                   glob: '**/*.ts'
-                  run: pnpm exec prettier --write {staged_files}
+                  run: nice -n 10 pnpm exec prettier --write {staged_files}
                   stage_fixed: true
                 - name: admin
                   root: packages/admin/
                   glob: '**/*.{ts,js,svelte}'
-                  run: pnpm exec prettier --write {staged_files}
+                  run: nice -n 10 pnpm exec prettier --write {staged_files}
                   stage_fixed: true
                 - name: cli
                   root: packages/cli/
                   glob: '**/*.ts'
-                  run: pnpm exec prettier --write {staged_files}
+                  run: nice -n 10 pnpm exec prettier --write {staged_files}
+                  stage_fixed: true
+                - name: sync
+                  root: packages/sync/
+                  glob: '**/*.ts'
+                  run: nice -n 10 pnpm exec prettier --write {staged_files}
                   stage_fixed: true
                 - name: mobile
                   root: packages/mobile/
                   glob: '**/*.{ts,js,cjs,mjs,svelte}'
-                  run: pnpm exec prettier --write {staged_files}
+                  run: nice -n 10 pnpm exec prettier --write {staged_files}
                   stage_fixed: true
                 - name: root
                   exclude: '^packages/'
-                  run: pnpm exec prettier --write --ignore-unknown {staged_files}
+                  run: nice -n 10 pnpm exec prettier --write --ignore-unknown {staged_files}
                   stage_fixed: true
           - name: lint
-            run: pnpm -r lint:nofmt
+            run: nice -n 10 pnpm --workspace-concurrency=1 -r lint:nofmt
           - name: audit-split
-            run: pnpm audit:split
+            run: nice -n 10 pnpm audit:split
           - name: check
-            run: pnpm check
+            run: nice -n 10 pnpm --workspace-concurrency=1 -r check
 
 # Fast unit suites run before sharing; D1 integration and browser suites run in CI.
 pre-push:
   jobs:
     - name: unit-tests
-      run: pnpm test:unit
+      run: nice -n 10 pnpm test:unit

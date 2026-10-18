@@ -8,6 +8,10 @@ export function configurePreview(config, number) {
 	const api = staging.vars.PUBLIC_API_URL;
 	assert.ok(api.startsWith('https://') && api.includes('-api-stg.'), 'Expected staging API URL');
 	const previewName = (name) => name.replace(/-stg$/, `-pr-${number}`);
+	for (const binding of staging.durable_objects?.bindings ?? []) {
+		// Shared D1 needs a single ordering authority across staging and previews.
+		binding.script_name = staging.name;
+	}
 	staging.name = previewName(staging.name);
 	for (const key of ['PUBLIC_API_URL', 'PUBLIC_APP_URL', 'PUBLIC_ADMIN_URL']) {
 		if (key in staging.vars)
@@ -50,6 +54,7 @@ if (process.argv[2] === '--test') {
 		const preview = configurePreview(config, '42').env.staging;
 		assert.equal(JSON.stringify(preview.d1_databases), bindings);
 		assert.ok(preview.name.endsWith(`-${app}-pr-42`));
+		if (app === 'api') assert.equal(preview.durable_objects.bindings[0].script_name, 'ak5-api-stg');
 		assert.ok(preview.vars.PUBLIC_API_URL.includes('-api-pr-42.'));
 	}
 	console.log('Preview configuration checks passed');

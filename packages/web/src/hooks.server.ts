@@ -18,7 +18,7 @@ import {
  * All data fetching/mutations go through `#lib/api.js` → the api worker.
  */
 
-const PROTECTED_PREFIXES = ['/dashboard', '/account'];
+const PROTECTED_PREFIXES = ['/dashboard', '/account', '/notes', '/sync'];
 const AUTH_PAGE_PATHS = ['/login', '/register'];
 
 const jwtAuth = createSvelteKitHandle({
@@ -38,7 +38,13 @@ const jwtAuth = createSvelteKitHandle({
 
 const gdpr = createGdprHandle({ force: dev });
 
-export const handle = sequence(jwtAuth, gdpr, securityHeadersHandle);
+const isolation: import('@sveltejs/kit/hooks').Handle = async ({ event, resolve }) => {
+	const response = await resolve(event);
+	response.headers.set('Cross-Origin-Opener-Policy', 'same-origin');
+	response.headers.set('Cross-Origin-Embedder-Policy', 'credentialless');
+	return response;
+};
+export const handle = sequence(jwtAuth, gdpr, securityHeadersHandle, isolation);
 
 export const handleError: import('@sveltejs/kit/hooks').HandleServerError = ({
 	kind,

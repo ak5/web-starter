@@ -56,3 +56,10 @@ committed SQL and exercises constraints, rollback, JSON/date mapping, token race
 email failure and item ownership. It never connects to an account or a deployed
 database. Playwright uses the local stack's persistent D1; use an isolated checkout
 for a completely disposable browser-test database.
+
+## LiveStore event log
+
+Local-first notes persist events to this D1 database through a per-store Durable
+Object. LiveStore owns its `eventlog_*` tables; Drizzle owns the identity and
+online item tables. See [local-first notes](local-first.md) for ordering, client
+materialization, and account data retention.

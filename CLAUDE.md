@@ -110,6 +110,9 @@ deployed to staging. Deploy through GitHub Actions; see
   issuance. Cloudflare D1 + Drizzle. Exports `WebApiType` / `AdminApiType`.
 - **`@ak5/web`** — SvelteKit on CF Workers. Public app surface. Port 8351.
 - **`@ak5/admin`** — SvelteKit on CF Workers. Admin portal. Port 8352.
+- **`@ak5/sync`** — LiveStore notes schema, materializers, and HTTP sync client.
+  Web uses OPFS, native uses Expo SQLite; the API coordinates sync through
+  `NotesSync` with a D1 event log. See `docs/architecture/local-first.md`.
 - **`@ak5/shared`** — Core cross-package contracts and pure utilities (cookie,
   jwt, pagination, public-id, generic types). Built to `dist/` via `tsc`.
   Web/admin runtime code reaches shared behavior through `@ak5/webui`, not direct

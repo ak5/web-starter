@@ -1,4 +1,5 @@
 <script lang="ts">
+	import LocalNotes from './src/LocalNotes.svelte';
 	import { onMount } from 'svelte';
 	import type { ISymbioteEvent } from '@symbiote-native/engine';
 	import { FlatList } from '@symbiote-native/svelte';
@@ -12,6 +13,7 @@
 	type User = NonNullable<Awaited<ReturnType<typeof client.restore>>>;
 	let user = $state<User | null>(null);
 	let ready = $state(false);
+	let showNotes = $state(true);
 	let busy = $state(false);
 	let error = $state('');
 	let notice = $state('');
@@ -84,14 +86,14 @@
 					notice = 'Account created. Email could not be sent. Use Resend code to retry.';
 			} else user = await client.login(email.trim(), password);
 			password = '';
-			if (user?.emailConfirmed) await load();
+			showNotes = true;
 		});
 	}
 
 	onMount(() => {
 		void run(async () => {
 			user = await client.restore();
-			if (user?.emailConfirmed) await load();
+			showNotes = true;
 		}).finally(() => {
 			ready = true;
 		});
@@ -217,6 +219,8 @@
 						})
 				)}
 			</scroll-view>
+		{:else if showNotes}
+			{#key user.sub}<LocalNotes publicId={user.sub} cookie={client.sessionCookie()} />{/key}
 		{:else if !user.emailConfirmed}
 			<text class="heading">Verify your email</text>
 			<text class="body">Enter the code from your email. If it did not arrive, resend it.</text>
@@ -322,7 +326,12 @@
 			</view>
 			{@render button('Refresh', () => void run(() => load(page)))}
 		{/if}
-		{#if user}{@render button(
+		{#if user}
+			{@render button(showNotes ? 'Online items / verify email' : 'Offline notes', () => {
+				showNotes = !showNotes;
+				if (!showNotes && user?.emailConfirmed) void run(() => load());
+			})}
+			{@render button(
 				'Sign out',
 				() =>
 					void run(async () => {

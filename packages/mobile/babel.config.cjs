@@ -14,6 +14,15 @@ function inlineFlags({ types: t }) {
 	return {
 		name: 'inline-flags',
 		visitor: {
+			// Effect also reads import.meta?.env, which the Vite-env plugin does not transform.
+			OptionalMemberExpression(path) {
+				if (
+					t.isMetaProperty(path.node.object) &&
+					t.isIdentifier(path.node.property, { name: 'env' })
+				) {
+					path.replaceWith(t.memberExpression(t.identifier('process'), t.identifier('env')));
+				}
+			},
 			MemberExpression(path) {
 				for (const [name, value] of Object.entries(flags)) {
 					if (path.matchesPattern(name)) path.replaceWith(t.stringLiteral(value));
@@ -22,4 +31,12 @@ function inlineFlags({ types: t }) {
 		}
 	};
 }
-module.exports = { presets: ['module:@react-native/babel-preset'], plugins: [inlineFlags] };
+module.exports = {
+	presets: ['module:@react-native/babel-preset'],
+	plugins: [
+		'@babel/plugin-transform-export-namespace-from',
+		'@babel/plugin-transform-dynamic-import',
+		'babel-plugin-transform-vite-meta-env',
+		inlineFlags
+	]
+};

@@ -37,3 +37,22 @@ the baseline locally, then applies it again to prove repeat safety.
 These jobs run without database or deployment secrets, including approved fork
 PRs. Only trusted same-repository previews receive staging deployment credentials.
 Preview and production smoke tests are separate from the local test suites.
+
+## Local-first notes
+
+D1 integration tests cover sync ownership, session expiry, deleted/banned users,
+and event validation. The web notes Playwright test uses separate browser
+contexts to check offline writes, OPFS persistence after reload, reconnection,
+cross-device updates/deletion, and account isolation through the real sync
+endpoint. See [local-first notes](local-first.md).
+
+Commit hooks format packages sequentially, including `@ak5/sync`, and run checks
+with reduced CPU priority and one workspace job at a time.
+
+`pnpm build:mobile` bundles both platforms and compiles each result with the
+React Native-matched Hermes compiler. This catches syntax that Metro accepts
+but the device runtime cannot execute.
+
+Native module tests resolve the installed Expo graph for Apple and Android and
+require SQLite, authentication, and their runtime modules to be linked. Merely
+installing a JavaScript package does not guarantee its native module is available.

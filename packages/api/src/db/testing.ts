@@ -5,7 +5,7 @@ import { getPlatformProxy } from 'wrangler';
 /** A disposable, real local D1 binding; never connects to an account or live database. */
 export async function createTestDatabase() {
 	const runtime = await getPlatformProxy<{ DB: D1Database }>({
-		configPath: fileURLToPath(new URL('../../wrangler.jsonc', import.meta.url)),
+		configPath: fileURLToPath(new URL('../../wrangler.test.jsonc', import.meta.url)),
 		persist: false,
 		envFiles: [],
 		remoteBindings: false

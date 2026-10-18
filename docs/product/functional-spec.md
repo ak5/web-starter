@@ -57,3 +57,10 @@ operating the platform:
 
 This whole admin spine is platform infrastructure — keep it and extend it with
 your domain's admin needs rather than rebuilding it.
+
+## Offline notes
+
+Authenticated users can add, edit, and delete private notes on web and native.
+Edits apply to local SQLite immediately and sync across devices when connected.
+Concurrent edits use accepted event order. Device storage and offline launch
+limits are described in [local-first notes](../architecture/local-first.md).

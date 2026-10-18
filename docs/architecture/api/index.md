@@ -59,3 +59,11 @@ forgot-password responses do not disclose account existence or delivery failure.
 `POST /admin/invite` returns `503 {error: "invitation_delivery_failed"}` if mail
 fails after the account, token, and creation audit commit. Do not repeat creation;
 the recipient can request a password reset. See [auth](../auth.md).
+
+## LiveStore sync
+
+`POST /sync?storeId=notes-v1-<user-public-id>&transport=http` accepts the official
+LiveStore HTTP RPC protocol. It uses the same user session cookie, validates
+store ownership and note events, and delegates to `NotesSync`. Web calls its
+same-origin proxy; native supplies a cookie header. WebSockets and client auth
+payloads are disabled. See [local-first notes](../local-first.md).

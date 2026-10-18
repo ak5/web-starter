@@ -1,4 +1,6 @@
 import { app } from './app';
+import { syncRequest } from './sync';
+export { NotesSync } from './sync';
 import { runAllCronJobs, type JobDeps } from './cron/jobs';
 import { db as makeDb } from './db';
 import { Logger } from './lib/logger';
@@ -26,6 +28,7 @@ export function runScheduledCron(
 
 export default {
 	async fetch(req, env, ctx): Promise<Response> {
+		if (new URL(req.url).pathname.replace(/\/$/, '') === '/sync') return syncRequest(req, env, ctx);
 		return app.fetch(req, env, ctx);
 	},
 
