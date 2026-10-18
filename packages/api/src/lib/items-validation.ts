@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 /**
  * Validation for the example `items` resource. `data` is a free-form JSON
- * object stored verbatim in a `jsonb` column — the API does not constrain its
+ * object stored verbatim in a `JSON` column — the API does not constrain its
  * shape, so swap this for your real domain schema when you replace `items`.
  */
 export const itemDataSchema = z.record(z.string(), z.unknown());

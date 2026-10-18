@@ -4,21 +4,13 @@ The external services the platform depends on, and the env keys that wire them u
 All data-touching keys live **only** in the api package's environment (see
 [deployment.md](deployment.md)); web/admin never hold them.
 
-## Postgres (Neon)
+## Cloudflare D1
 
-The api persists to a [Neon](https://neon.tech) serverless Postgres database via
-Drizzle. Provision two branches:
-
-- a **production** branch — the live database.
-- a **test** branch — wiped and re-migrated by the e2e suite, so it must be a
-  separate branch from production.
-
-| Env key             | Where  | Purpose                                   |
-| ------------------- | ------ | ----------------------------------------- |
-| `DATABASE_URL`      | api    | production connection string              |
-| `DATABASE_URL_TEST` | api/CI | test-branch connection string (e2e wipes) |
-
-Run forward-only migrations with `pnpm db:migrate`.
+The API uses a native D1 binding with Drizzle's SQLite schema. Development and CI
+use local Wrangler storage without account credentials. Deployed staging and
+production have separate D1 databases. Set the selected environment's
+`D1_DATABASE_ID` before deployment; the runtime does not need a database API token.
+See [database](../architecture/database.md) and [deployment](deployment.md).
 
 ## Transactional email
 

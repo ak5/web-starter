@@ -21,7 +21,7 @@ logger) and dispatches to a single runner, wrapping the work in
 
 ```ts
 async scheduled(controller, env, ctx) {
-  const db = makeDb(env.DATABASE_URL);
+  const db = makeDb(env.DB);
   ctx.waitUntil(runAllCronJobs(controller.cron, { db, kv: env.KV, logger }));
 }
 ```

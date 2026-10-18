@@ -17,13 +17,13 @@ Use a **single `tokens` table** with two nullable foreign keys — `user_id` and
 `admin_id` — guarded by an **exclusive-arc `CHECK` constraint**:
 
 ```sql
-CHECK (num_nonnulls(user_id, admin_id) = 1)
+CHECK ((user_id IS NOT NULL) + (admin_id IS NOT NULL) = 1)
 ```
 
 Exactly one of the two columns is non-null on every row; the database rejects any
-row that sets both or neither. A `token_purpose` enum
+row that sets both or neither. A checked `purpose` value
 (`verify_email` / `reset_password` / `magic_login` / …) discriminates the flow.
-One table, one set of issue/consume/expire logic, integrity enforced by Postgres.
+One table, one set of issue/consume/expire logic, integrity enforced by D1 CHECK constraints.
 
 ## Consequences
 
@@ -31,7 +31,7 @@ One table, one set of issue/consume/expire logic, integrity enforced by Postgres
   application code that could drift.
 - All token lifecycle logic — issuance, single-use consumption, expiry, cleanup —
   lives in one place and serves both identities and every purpose.
-- Adding a new token purpose is a new enum value, not a new table.
+- Adding a new token purpose is a new checked value, not a new table.
 - Cost: two nullable FK columns where a tidier-looking design might want one. Code
   that reads a token must branch on which column is set. This is a small, local
   cost and the `CHECK` makes the branch total.

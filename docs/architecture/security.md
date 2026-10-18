@@ -46,7 +46,7 @@ subrequests) closes the classic CSRF vector without per-form tokens.
 
 ## Secret ownership
 
-- `@ak5/api` owns **every data-touching secret**: `DATABASE_URL`, OAuth provider
+- `@ak5/api` owns **every data-touching secret**: OAuth provider
   secrets, encryption keys.
 - `@ak5/web` / `@ak5/admin` hold **only `JWT_SECRET`**, and only to **verify**
   cookies — they can never write data even if compromised.

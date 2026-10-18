@@ -46,7 +46,7 @@ reasoning that was true at the time.
 
 | ADR                                      | Title                                        | Status   |
 | ---------------------------------------- | -------------------------------------------- | -------- |
-| [0001](0001-postgres-over-sqlite.md)     | Postgres over edge SQLite/KV                 | Accepted |
+| [0001](0001-d1-binding.md)               | D1 through a Worker binding                  | Accepted |
 | [0002](0002-jwt-over-server-sessions.md) | Stateless JWT over server-side sessions      | Accepted |
 | [0003](0003-split-workers.md)            | Split workers per surface                    | Accepted |
 | [0004](0004-exclusive-arc-tokens.md)     | One tokens table with an exclusive-arc check | Accepted |

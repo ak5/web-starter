@@ -2,7 +2,7 @@
 
 Hono API on Cloudflare Workers — the only package that touches the database.
 Owns auth, JWT issuance, OAuth login callbacks, the cron handler, and the
-OpenAPI surface. Neon Postgres via Drizzle.
+OpenAPI surface. Cloudflare D1 via Drizzle.
 
 It exports **types only** to the frontends: `WebApiType` and `AdminApiType` from
 `src/app.ts`, consumed via `hc<…ApiType>()` (see `@ak5/webui`'s
@@ -12,9 +12,9 @@ It exports **types only** to the frontends: `WebApiType` and `AdminApiType` from
 ## Layout
 
 - `src/app.ts` — scoped sub-routers (`webApi` / `adminApi`) + the combined `app`.
-- `src/routes/` — `auth/`, `me`, `users`, `admin`, `oauth/` (Discord login), `dev/`.
+- `src/routes/` — `auth/`, `me`, `users`, `admin`, `oauth/` (Discord login).
 - `src/lib/` — auth workflows, tokens, password hashing, OAuth, admin tooling.
-- `src/db/` — Drizzle schema (`schema.ts`), connection (`index.ts`), `functions.sql`.
+- `src/db/` — Drizzle schema (`schema.ts`), D1 adapter (`index.ts`), integration fixtures (`testing.ts`).
 - `src/middleware/` — `withDb`, `withAuth`, `requireAuth`, `requireRecentAuth`,
   rate limiting, email config.
 - `src/cron/` — scheduled jobs (ships with expired-token purge).

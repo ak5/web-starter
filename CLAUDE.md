@@ -57,7 +57,7 @@ attributes on auth cookies. Three dev shapes plus prod:
 
 The api uses `COOKIE_ORIGIN`; the SvelteKit apps use `PUBLIC_COOKIE_ORIGIN`. See
 `packages/shared/src/cookie.ts`. **The api owns every data-touching secret**
-(`DATABASE_URL`, provider secrets, encryption keys); web/admin hold only
+(provider secrets, encryption keys); web/admin hold only
 `JWT_SECRET`, and only to verify cookies — never to write data.
 
 ## Dev ports
@@ -107,7 +107,7 @@ deployed to staging. Deploy through GitHub Actions; see
 ## Packages
 
 - **`@ak5/api`** — Hono on CF Workers. Auth, DB, cron, OAuth callbacks, JWT
-  issuance. Neon Postgres + Drizzle. Exports `WebApiType` / `AdminApiType`.
+  issuance. Cloudflare D1 + Drizzle. Exports `WebApiType` / `AdminApiType`.
 - **`@ak5/web`** — SvelteKit on CF Workers. Public app surface. Port 8351.
 - **`@ak5/admin`** — SvelteKit on CF Workers. Admin portal. Port 8352.
 - **`@ak5/shared`** — Core cross-package contracts and pure utilities (cookie,
@@ -188,12 +188,12 @@ doc-link validation, `scripts/check-doc-links.sh`), and `svelte-check` /
 
 Three layers — full treatment in `docs/architecture/testing.md`:
 
-- **Unit** (pure, no DB/server): `pnpm test:unit` — runs on the lefthook
-  **pre-push** hook and in CI; DB-backed api tests (`src/**/*.test.ts`) skip
-  without a `DATABASE_URL`.
-- **Integration** (api, in-process Hono app vs. Postgres) and **e2e** (Playwright
-  vs. the running stack, `pnpm test`) run in CI against an **ephemeral Neon
-  branch**. `pnpm test` is **not** a git hook — it needs the live stack.
+- **Unit** (pure, no DB/server): `pnpm test:unit` runs before push and in CI.
+- **Integration**: `pnpm test:db` runs the real Hono app and D1 driver against
+  disposable local Wrangler bindings, including constraints and atomic batches.
+- **End-to-end**: `pnpm test --workers=1` runs Playwright against the local stack.
+  CI provisions local D1 from migrations; no database credentials are needed.
+  Browser tests are not Git hooks.
 
 Push coverage down: unit if it can, integration if it needs the DB, e2e only for
 what needs the whole stack.

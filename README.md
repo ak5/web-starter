@@ -5,8 +5,18 @@ An opinionated, MIT-licensed starter for web and native apps: **SvelteKit 3**,
 **Cloudflare Workers**.
 
 One typed API serves a public web app, an admin portal, and iOS/Android apps.
-The database is **Neon Postgres with Drizzle**. Mobile uses the API directly;
-there is no offline database replication or D1 sync layer.
+The database is **Cloudflare D1 with Drizzle**. Mobile accesses it through the
+typed Hono API. Offline database replication is not included.
+
+## Why Cloudflare?
+
+We think Cloudflare is the best deal in the hosting and tech space for this kind
+of app. Workers, D1, KV, R2, and Email Sending keep the backend on one platform,
+with local development through Wrangler and no separately hosted database server.
+That is an opinion, not a promise about every workload: index your queries and
+check the current [Workers](https://developers.cloudflare.com/workers/platform/pricing/)
+and [D1 pricing](https://developers.cloudflare.com/d1/platform/pricing/) and limits
+for your application's read, write, storage, and CPU usage.
 
 ## What's included
 
@@ -46,8 +56,8 @@ pnpm dev:init
 Discord login overlay, or skip rebranding to keep the defaults. It deletes its
 own initializer after running.
 
-Set `DATABASE_URL` in `packages/api/.env` to your own Neon Postgres connection
-string, then apply the schema and launch:
+Apply the schema to local D1 and launch. Local database development needs no
+Cloudflare account or database credentials:
 
 ```sh
 pnpm db:migrate
@@ -108,17 +118,18 @@ app. Native development is separate from the web stack.
 ```sh
 nice -n 10 pnpm check:all
 nice -n 10 pnpm test:unit
-nice -n 10 pnpm test --workers=1  # requires a running stack and dedicated test DB
+nice -n 10 pnpm test:db
+nice -n 10 pnpm test --workers=1  # requires a running local stack
 ```
 
 Open short-lived PRs against `main`. Public fork PRs run checks without deployment
-credentials; trusted same-repository PRs can receive staging previews. Database
-checks need a configured Neon project. See [contributing](docs/development/contributing.md),
+credentials; trusted same-repository PRs can receive staging previews. Database and browser
+checks run against disposable local D1 databases without account credentials. See [contributing](docs/development/contributing.md),
 [architecture](docs/architecture/overview.md), and the [documentation index](docs/index.md).
 
 ## Deployment
 
-Configure your own GitHub environments, Cloudflare resources, and Neon database
+Configure your own GitHub environments, Cloudflare resources, and separate staging/production D1 databases
 before enabling deployments. GitHub-hosted runners run CI. Merges to `main` deploy
 staging; production requires manual promotion of a SHA with a successful staging
 deployment. See [deployment](docs/operations/deployment.md).
@@ -132,3 +143,5 @@ for your own sender domain.
 [MIT](LICENSE). Preserve the copyright and permission notices when distributing
 copies. Native bootstrap attribution is included in
 [the upstream license](packages/mobile/UPSTREAM-LICENSE.txt).
+
+Made with <3 by [ak5](https://alexander.verver.is).

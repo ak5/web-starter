@@ -9,8 +9,8 @@ thin presentation shells that call the API over a fully-typed client.
 ```
                     ┌──────────────────────────────┐
                     │  @ak5/api  (Hono / CF Worker) │
-   browser ───────► │  auth · DB · cron · JWT issue │ ──► Neon Postgres
-                    │  owns DATABASE_URL + secrets  │     (Drizzle ORM)
+   browser ───────► │  auth · DB · cron · JWT issue │ ──► Cloudflare D1
+                    │  owns DB binding + secrets  │     (Drizzle ORM)
                     └──────────────┬───────────────┘
                        exports types only (WebApiType / AdminApiType)
             ┌──────────────────────┼──────────────────────┐
@@ -59,7 +59,7 @@ Two rules fall out, both enforced mechanically by `pnpm audit:split`:
 
 ## Runtime & data
 
-Every worker runs on **Cloudflare Workers**. The database is **Neon Postgres**
+Every worker runs on **Cloudflare Workers**. The database is **Cloudflare D1**
 accessed through **Drizzle ORM**, and only `@ak5/api` ever touches it. KV backs
 rate limiting and cron locks; R2 backs uploads. The frontends have no DB binding
 and no data secrets — only `JWT_SECRET`, and only to verify cookies.

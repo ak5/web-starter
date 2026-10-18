@@ -97,38 +97,38 @@ export async function adminInviteAccount(
 
 		const userId = crypto.randomUUID().replace(/-/g, '').slice(0, 21);
 		const userPub = publicId('user');
-		await db.transaction(async (tx) => {
-			await tx.insert(users).values({
+		await db.batch([
+			db.insert(users).values({
 				id: userId,
 				publicId: userPub,
 				username,
 				email,
 				emailVerified: false,
 				role: 'user'
-			});
-			await tx.insert(authEmail).values({
+			}),
+			db.insert(authEmail).values({
 				subjectType: 'user',
 				subjectId: userId,
 				email,
 				passwordHashed: await hashPassword(tempPassword),
 				verified: false
-			});
-			await tx.insert(tokens).values({
+			}),
+			db.insert(tokens).values({
 				userId,
 				adminId: null,
 				purpose: 'reset_password',
 				tokenHash: await sha256Hex(token),
 				expiresAt,
 				payload: { purpose: 'invite_user' }
-			});
-			await tx.insert(auditLog).values({
+			}),
+			db.insert(auditLog).values({
 				adminId: admin.id,
 				action: 'user.invite',
 				entityType: 'user',
 				entityId: userPub,
 				payload: { email, username, adminPublicId: admin.publicId }
-			});
-		});
+			})
+		]);
 		if (!(await sendAdminInviteEmail(env, { email, role, token }))) {
 			return {
 				ok: false as const,
@@ -148,37 +148,37 @@ export async function adminInviteAccount(
 
 	const adminId = crypto.randomUUID().replace(/-/g, '').slice(0, 21);
 	const adminPub = publicId('admin');
-	await db.transaction(async (tx) => {
-		await tx.insert(adminUsers).values({
+	await db.batch([
+		db.insert(adminUsers).values({
 			id: adminId,
 			publicId: adminPub,
 			username,
 			email,
 			emailVerified: false
-		});
-		await tx.insert(authEmail).values({
+		}),
+		db.insert(authEmail).values({
 			subjectType: 'admin',
 			subjectId: adminId,
 			email,
 			passwordHashed: await hashPassword(tempPassword),
 			verified: false
-		});
-		await tx.insert(tokens).values({
+		}),
+		db.insert(tokens).values({
 			userId: null,
 			adminId,
 			purpose: 'reset_password',
 			tokenHash: await sha256Hex(token),
 			expiresAt,
 			payload: { purpose: 'invite_admin' }
-		});
-		await tx.insert(auditLog).values({
+		}),
+		db.insert(auditLog).values({
 			adminId: admin.id,
 			action: 'admin_user.invite',
 			entityType: 'admin_user',
 			entityId: adminPub,
 			payload: { email, username, adminPublicId: admin.publicId }
-		});
-	});
+		})
+	]);
 	if (!(await sendAdminInviteEmail(env, { email, role, token }))) {
 		return {
 			ok: false as const,
@@ -226,23 +226,23 @@ export async function adminCreateAccount(db: Database, data: AdminCreateUserInpu
 
 		const userId = crypto.randomUUID().replace(/-/g, '').slice(0, 21);
 		const userPub = publicId('user');
-		await db.transaction(async (tx) => {
-			await tx.insert(users).values({
+		await db.batch([
+			db.insert(users).values({
 				id: userId,
 				publicId: userPub,
 				username,
 				email,
 				emailVerified: true,
 				role: 'user'
-			});
-			await tx.insert(authEmail).values({
+			}),
+			db.insert(authEmail).values({
 				subjectType: 'user',
 				subjectId: userId,
 				email,
 				passwordHashed: await hashPassword(password),
 				verified: true
-			});
-		});
+			})
+		]);
 		return { ok: true as const, result: { ok: true, publicId: userPub, role } };
 	}
 
@@ -255,22 +255,22 @@ export async function adminCreateAccount(db: Database, data: AdminCreateUserInpu
 
 	const adminId = crypto.randomUUID().replace(/-/g, '').slice(0, 21);
 	const adminPub = publicId('admin');
-	await db.transaction(async (tx) => {
-		await tx.insert(adminUsers).values({
+	await db.batch([
+		db.insert(adminUsers).values({
 			id: adminId,
 			publicId: adminPub,
 			username,
 			email,
 			emailVerified: true
-		});
-		await tx.insert(authEmail).values({
+		}),
+		db.insert(authEmail).values({
 			subjectType: 'admin',
 			subjectId: adminId,
 			email,
 			passwordHashed: await hashPassword(password),
 			verified: true
-		});
-	});
+		})
+	]);
 	return { ok: true as const, result: { ok: true, publicId: adminPub, role } };
 }
 
@@ -309,16 +309,16 @@ export async function adminBanUser(db: Database, adminPublicId: string, targetPu
 		return { ok: false as const, error: 'user_not_found' as const, status: 404 as const };
 
 	const bannedAt = new Date();
-	await db.transaction(async (tx) => {
-		await tx.update(users).set({ bannedAt }).where(eq(users.id, target.id));
-		await tx.insert(auditLog).values({
+	await db.batch([
+		db.update(users).set({ bannedAt }).where(eq(users.id, target.id)),
+		db.insert(auditLog).values({
 			adminId: admin.id,
 			action: 'user.ban',
 			entityType: 'user',
 			entityId: target.publicId,
 			payload: { userPublicId: target.publicId, adminPublicId: admin.publicId }
-		});
-	});
+		})
+	]);
 
 	return {
 		ok: true as const,
@@ -339,16 +339,16 @@ export async function adminUnbanUser(db: Database, adminPublicId: string, target
 	if (!target)
 		return { ok: false as const, error: 'user_not_found' as const, status: 404 as const };
 
-	await db.transaction(async (tx) => {
-		await tx.update(users).set({ bannedAt: null }).where(eq(users.id, target.id));
-		await tx.insert(auditLog).values({
+	await db.batch([
+		db.update(users).set({ bannedAt: null }).where(eq(users.id, target.id)),
+		db.insert(auditLog).values({
 			adminId: admin.id,
 			action: 'user.unban',
 			entityType: 'user',
 			entityId: target.publicId,
 			payload: { userPublicId: target.publicId, adminPublicId: admin.publicId }
-		});
-	});
+		})
+	]);
 
 	return {
 		ok: true as const,

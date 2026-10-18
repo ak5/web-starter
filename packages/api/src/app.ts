@@ -18,7 +18,6 @@ import { usersRoutes } from './routes/users';
 import { itemsRoutes } from './routes/items';
 import { adminRoutes } from './routes/admin';
 import { oauthRoutes } from './routes/oauth/index';
-import { devRoutes } from './routes/dev/index';
 
 function createBaseApp() {
 	return new Hono<AppContext>()
@@ -77,8 +76,7 @@ export const app = createBaseApp()
 	.route('/me', meRoutes)
 	.route('/users', usersRoutes)
 	.route('/items', itemsRoutes)
-	.route('/admin', adminRoutes)
-	.route('/dev', devRoutes);
+	.route('/admin', adminRoutes);
 
 // Exported types — consumed by `hc<WebApiType>` / `hc<AdminApiType>` in frontends.
 export type WebApiType = typeof webApi;

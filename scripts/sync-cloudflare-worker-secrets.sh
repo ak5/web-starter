@@ -17,7 +17,7 @@
 #
 # Needs CLOUDFLARE_API_TOKEN in the env (wrangler auth) + account_id in each
 # wrangler.jsonc. NOT synced as Worker secrets: the deploy CLOUDFLARE_API_TOKEN
-# and NEON_API_KEY (deploy-/admin-only; don't leak the deploy token into runtime).
+# (do not copy the deploy token into runtime).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -43,7 +43,6 @@ put_secret() { # <pnpm-package> <SECRET_NAME> <required|optional>
 }
 
 echo "Syncing api Worker secrets"
-put_secret "@ak5/api" DATABASE_URL required
 put_secret "@ak5/api" JWT_SECRET required
 put_secret "@ak5/api" TOKEN_ENCRYPTION_KEY required
 put_secret "@ak5/api" DISCORD_CLIENT_SECRET optional

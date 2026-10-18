@@ -12,7 +12,7 @@ auth wiring.
 
 | Route             | Auth   | Purpose                              |
 | ----------------- | ------ | ------------------------------------ |
-| `/`               | public | Landing page                         |
+| `/`               | public | Starter overview and author credit   |
 | `/login`          | guest  | Sign in (email + password)           |
 | `/register`       | guest  | Create an account                    |
 | `/account/verify` | user   | Enter verification code or resend    |

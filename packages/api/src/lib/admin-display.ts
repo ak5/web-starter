@@ -70,41 +70,6 @@ export function localServiceStatusBadgeClass(ok: boolean) {
 	return ok ? 'badge-success' : 'badge-error';
 }
 
-export function neonBranchStateBadgeClass(state: string) {
-	if (state === 'ready') return 'badge-success';
-	if (state === 'init') return 'badge-warning';
-	return 'badge-ghost';
-}
-
-export function neonBranchRoleBadges(branch: {
-	default?: boolean | null;
-	primary?: boolean | null;
-}) {
-	return [
-		branch.default
-			? {
-					label: 'default',
-					badgeClass: 'badge-primary'
-				}
-			: null,
-		branch.primary
-			? {
-					label: 'primary',
-					badgeClass: 'badge-warning'
-				}
-			: null
-	].filter((badge): badge is { label: string; badgeClass: string } => badge !== null);
-}
-
-export function neonBranchResetAction(branchName: string, protectedBranch: boolean) {
-	return {
-		canReset: !protectedBranch,
-		resetLabel: 'Reset',
-		resettingLabel: 'Resetting',
-		resetConfirmation: protectedBranch ? null : `Reset Neon branch "${branchName}" from its parent?`
-	};
-}
-
 export function formatAddressPreview(address: string) {
 	return address.length <= 14 ? address : `${address.slice(0, 6)}...${address.slice(-4)}`;
 }

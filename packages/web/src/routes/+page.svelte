@@ -7,8 +7,8 @@
 		<div class="max-w-md">
 			<h1 class="text-5xl font-bold">ak5-web</h1>
 			<p class="py-6 text-base-content/70">
-				A batteries-included full-stack starter — Hono API, split SvelteKit apps, Postgres, auth.
-				Replace this landing page with your product.
+				A batteries-included full-stack starter — Hono API, split SvelteKit apps, Cloudflare D1,
+				auth. Replace this landing page with your product.
 			</p>
 			{#if data.auth}
 				<a href="/dashboard" class="btn btn-primary">Go to your dashboard</a>
@@ -21,3 +21,7 @@
 		</div>
 	</div>
 </section>
+
+<footer class="py-6 text-center text-sm text-base-content/70">
+	Made with &lt;3 by <a class="link" href="https://alexander.verver.is">ak5</a>
+</footer>

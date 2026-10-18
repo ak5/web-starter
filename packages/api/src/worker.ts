@@ -19,7 +19,7 @@ export function runScheduledCron(
 	deps: ScheduledCronDeps = {}
 ): void {
 	const runner = deps.runAllCronJobs ?? runAllCronJobs;
-	const db = (deps.makeDb ?? makeDb)(env.DATABASE_URL);
+	const db = (deps.makeDb ?? makeDb)(env.DB);
 	const logger = deps.makeLogger?.(env, ctx) ?? new Logger(env.DISCORD_LOG_ENDPOINT, ctx);
 	ctx.waitUntil(runner(controller.cron, { db, kv: env.KV, logger }));
 }

@@ -120,8 +120,18 @@ Options:
 
 function makeReplacer(scope, slug) {
 	const envPrefix = slug.toUpperCase().replace(/[^A-Z0-9]/g, '') + '_';
+	// Keep upstream links and author attribution intact when branding an application.
+	const preserved =
+		/(https:\/\/github\.com\/ak5\/web-starter|by \[ak5\]\(https:\/\/alexander\.verver\.is\)|<a class="link" href="https:\/\/alexander\.verver\.is">ak5<\/a>)/;
 	return (text) =>
-		text.split('@ak5').join(scope).split('AK5_').join(envPrefix).split('ak5').join(slug);
+		text
+			.split(preserved)
+			.map((part, index) =>
+				index % 2
+					? part
+					: part.split('@ak5').join(scope).split('AK5_').join(envPrefix).split('ak5').join(slug)
+			)
+			.join('');
 }
 
 function walkReplace(dir, replace, relBase = '') {
@@ -220,8 +230,8 @@ function main() {
 	console.log(`\nDone. This repo is now branded ${scope} / ${slug}.`);
 	console.log('The rebrand script has removed itself. Next:');
 	console.log('  pnpm -w run dev:init   # scaffold .env, rotate JWT_SECRET');
-	console.log('  # paste a Neon DATABASE_URL into packages/api/.env, then:');
-	console.log('  pnpm db:migrate && pnpm create:admin && pnpm dev\n');
+	console.log('  # initialize the local D1 schema, then:');
+	console.log('  pnpm db:migrate && pnpm create:admin && pnpm dev:auto\n');
 }
 
 main();

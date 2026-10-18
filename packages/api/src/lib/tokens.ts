@@ -60,15 +60,13 @@ export async function consumeToken(
 	plaintext: string
 ): Promise<typeof tokens.$inferSelect | null> {
 	const hash = await sha256Hex(plaintext);
-	const rows = await db
-		.select()
+	const candidate = db
+		.select({ id: tokens.id })
 		.from(tokens)
 		.where(
 			and(eq(tokens.purpose, purpose), eq(tokens.tokenHash, hash), gt(tokens.expiresAt, new Date()))
 		)
 		.limit(1);
-	const row = rows[0];
-	if (!row) return null;
-	await db.delete(tokens).where(eq(tokens.id, row.id));
-	return row;
+	const rows = await db.delete(tokens).where(eq(tokens.id, candidate)).returning();
+	return rows[0] ?? null;
 }

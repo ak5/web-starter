@@ -1,5 +1,5 @@
 /**
- * @ak5/api Postgres schema (Drizzle pg-core).
+ * @ak5/api D1 schema (Drizzle sqlite-core).
  *
  * Platform identity + auth + audit tables. Replace/extend with your own domain
  * tables — keep the identity spine (`users`, `admin_users`, `auth_*`, `tokens`)
@@ -12,86 +12,73 @@
  *     discriminator so admins and users share the auth tables.
  */
 import { sql, isNull, relations } from 'drizzle-orm';
-import {
-	boolean,
-	check,
-	index,
-	integer,
-	jsonb,
-	pgTable,
-	pgEnum,
-	timestamp,
-	uniqueIndex,
-	varchar
-} from 'drizzle-orm/pg-core';
+import { check, index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 import { nanoid } from 'nanoid';
-
-// ============================================================================
-// Enums
-// ============================================================================
-
-export const userRole = pgEnum('user_role', ['user', 'admin']);
-export const tokenPurpose = pgEnum('token_purpose', [
-	'verify_email',
-	'reset_password',
-	'magic_login',
-	'email_change'
-]);
-export const subjectType = pgEnum('subject_type', ['user', 'admin']);
-export const logLevel = pgEnum('log_level', ['debug', 'info', 'warn', 'error']);
-export const avatarSource = pgEnum('avatar_source', ['discord', 'upload']);
 
 // ============================================================================
 // Helpers
 // ============================================================================
 
 const nanoid21 = () => nanoid(21);
-const id = () => varchar('id', { length: 21 }).primaryKey().$default(nanoid21);
-const ts = (col: string) => timestamp(col, { withTimezone: true, mode: 'date' });
+const id = () => text('id').primaryKey().$default(nanoid21);
+const ts = (col: string) => integer(col, { mode: 'timestamp_ms' });
 
 // ============================================================================
 // Identity tables
 // ============================================================================
 
-export const users = pgTable(
+export const users = sqliteTable(
 	'users',
 	{
 		id: id(),
-		publicId: varchar('public_id', { length: 24 }).notNull().unique(),
-		username: varchar('username', { length: 64 }).notNull(),
-		displayName: varchar('display_name', { length: 128 }),
-		avatar: varchar('avatar', { length: 512 }),
-		avatarSource: avatarSource('avatar_source'),
-		email: varchar('email', { length: 320 }),
-		emailVerified: boolean('email_verified').default(false).notNull(),
-		role: userRole('role').default('user').notNull(),
+		publicId: text('public_id').notNull().unique(),
+		username: text('username').notNull(),
+		displayName: text('display_name'),
+		avatar: text('avatar'),
+		avatarSource: text('avatar_source', { enum: ['discord', 'upload'] }),
+		email: text('email'),
+		emailVerified: integer('email_verified', { mode: 'boolean' }).default(false).notNull(),
+		role: text('role', { enum: ['user', 'admin'] })
+			.default('user')
+			.notNull(),
 		bannedAt: ts('banned_at'),
 		termsAcceptedAt: ts('terms_accepted_at'),
-		termsVersion: varchar('terms_version', { length: 32 }),
-		privacyVersion: varchar('privacy_version', { length: 32 }),
-		acceptableUseVersion: varchar('acceptable_use_version', { length: 32 }),
-		usernameChangeAt: ts('username_change_at').defaultNow().notNull(),
+		termsVersion: text('terms_version'),
+		privacyVersion: text('privacy_version'),
+		acceptableUseVersion: text('acceptable_use_version'),
+		usernameChangeAt: ts('username_change_at')
+			.default(sql`(unixepoch() * 1000)`)
+			.notNull(),
 		lastLoginAt: ts('last_login_at'),
-		createdAt: ts('created_at').defaultNow().notNull(),
+		createdAt: ts('created_at')
+			.default(sql`(unixepoch() * 1000)`)
+			.notNull(),
 		deletedAt: ts('deleted_at')
 	},
 	(t) => [
+		check('users_role', sql`${t.role} IN ('user', 'admin')`),
+		check(
+			'users_avatar_source',
+			sql`${t.avatarSource} IS NULL OR ${t.avatarSource} IN ('discord', 'upload')`
+		),
 		uniqueIndex('users_username_unique').on(t.username).where(isNull(t.deletedAt)),
 		uniqueIndex('users_email_unique').on(t.email).where(isNull(t.deletedAt))
 	]
 );
 
-export const adminUsers = pgTable(
+export const adminUsers = sqliteTable(
 	'admin_users',
 	{
 		id: id(),
-		publicId: varchar('public_id', { length: 24 }).notNull().unique(),
-		email: varchar('email', { length: 320 }).notNull(),
-		username: varchar('username', { length: 64 }).notNull(),
-		displayName: varchar('display_name', { length: 128 }),
-		emailVerified: boolean('email_verified').default(true).notNull(),
+		publicId: text('public_id').notNull().unique(),
+		email: text('email').notNull(),
+		username: text('username').notNull(),
+		displayName: text('display_name'),
+		emailVerified: integer('email_verified', { mode: 'boolean' }).default(true).notNull(),
 		lastLoginAt: ts('last_login_at'),
-		createdAt: ts('created_at').defaultNow().notNull(),
+		createdAt: ts('created_at')
+			.default(sql`(unixepoch() * 1000)`)
+			.notNull(),
 		deletedAt: ts('deleted_at')
 	},
 	(t) => [
@@ -104,60 +91,68 @@ export const adminUsers = pgTable(
 // Auth identities (single table per provider, discriminated by subject_type)
 // ============================================================================
 
-export const authEmail = pgTable(
+export const authEmail = sqliteTable(
 	'auth_email',
 	{
 		id: id(),
-		subjectType: subjectType('subject_type').notNull(),
-		subjectId: varchar('subject_id', { length: 21 }).notNull(),
-		email: varchar('email', { length: 320 }).notNull(),
-		passwordHashed: varchar('password_hashed', { length: 256 }).notNull(),
-		verified: boolean('verified').default(false).notNull(),
-		createdAt: ts('created_at').defaultNow().notNull()
+		subjectType: text('subject_type', { enum: ['user', 'admin'] }).notNull(),
+		subjectId: text('subject_id').notNull(),
+		email: text('email').notNull(),
+		passwordHashed: text('password_hashed').notNull(),
+		verified: integer('verified', { mode: 'boolean' }).default(false).notNull(),
+		createdAt: ts('created_at')
+			.default(sql`(unixepoch() * 1000)`)
+			.notNull()
 	},
 	(t) => [
+		check('auth_email_subject_type', sql`${t.subjectType} IN ('user', 'admin')`),
 		uniqueIndex('auth_email_email_unique').on(t.subjectType, t.email),
 		index('auth_email_subject_idx').on(t.subjectType, t.subjectId)
 	]
 );
 
-export const authDiscord = pgTable(
+export const authDiscord = sqliteTable(
 	'auth_discord',
 	{
 		id: id(),
-		subjectType: subjectType('subject_type').notNull(),
-		subjectId: varchar('subject_id', { length: 21 }).notNull(),
-		discordId: varchar('discord_id', { length: 64 }).notNull(),
-		discordUsername: varchar('discord_username', { length: 128 }),
-		discordAvatar: varchar('discord_avatar', { length: 512 }),
-		discordEmail: varchar('discord_email', { length: 320 }),
-		discordData: jsonb('discord_data'),
-		accessToken: varchar('access_token', { length: 1024 }),
-		refreshToken: varchar('refresh_token', { length: 1024 }),
+		subjectType: text('subject_type', { enum: ['user', 'admin'] }).notNull(),
+		subjectId: text('subject_id').notNull(),
+		discordId: text('discord_id').notNull(),
+		discordUsername: text('discord_username'),
+		discordAvatar: text('discord_avatar'),
+		discordEmail: text('discord_email'),
+		discordData: text('discord_data', { mode: 'json' }),
+		accessToken: text('access_token'),
+		refreshToken: text('refresh_token'),
 		tokenExpiresAt: ts('token_expires_at'),
-		createdAt: ts('created_at').defaultNow().notNull()
+		createdAt: ts('created_at')
+			.default(sql`(unixepoch() * 1000)`)
+			.notNull()
 	},
 	(t) => [
+		check('auth_discord_subject_type', sql`${t.subjectType} IN ('user', 'admin')`),
 		uniqueIndex('auth_discord_id_unique').on(t.subjectType, t.discordId),
 		index('auth_discord_subject_idx').on(t.subjectType, t.subjectId)
 	]
 );
 
-export const apiKeys = pgTable(
+export const apiKeys = sqliteTable(
 	'api_keys',
 	{
 		id: id(),
-		publicId: varchar('public_id', { length: 24 }).notNull().unique(),
-		userId: varchar('user_id', { length: 21 })
+		publicId: text('public_id').notNull().unique(),
+		userId: text('user_id')
 			.notNull()
 			.references(() => users.id),
-		label: varchar('label', { length: 64 }).notNull(),
-		keyPrefix: varchar('key_prefix', { length: 32 }).notNull(),
-		keyHash: varchar('key_hash', { length: 256 }).notNull(),
-		scopes: jsonb('scopes').$type<string[]>(),
+		label: text('label').notNull(),
+		keyPrefix: text('key_prefix').notNull(),
+		keyHash: text('key_hash').notNull(),
+		scopes: text('scopes', { mode: 'json' }).$type<string[]>(),
 		expiresAt: ts('expires_at'),
 		lastUsedAt: ts('last_used_at'),
-		createdAt: ts('created_at').defaultNow().notNull()
+		createdAt: ts('created_at')
+			.default(sql`(unixepoch() * 1000)`)
+			.notNull()
 	},
 	(t) => [index('api_keys_user_idx').on(t.userId)]
 );
@@ -167,35 +162,45 @@ export const apiKeys = pgTable(
 // read this table — it exists for any server-side session bookkeeping you add).
 // ============================================================================
 
-export const sessions = pgTable('sessions', {
+export const sessions = sqliteTable('sessions', {
 	id: id(),
-	userId: varchar('user_id', { length: 21 })
+	userId: text('user_id')
 		.notNull()
 		.references(() => users.id),
-	extraPrivileges: jsonb('extra_privileges'),
+	extraPrivileges: text('extra_privileges', { mode: 'json' }),
 	lastLoginAt: ts('last_login_at'),
-	createdAt: ts('created_at').defaultNow().notNull()
+	createdAt: ts('created_at')
+		.default(sql`(unixepoch() * 1000)`)
+		.notNull()
 });
 
 // ============================================================================
 // Tokens (exclusive-arc: exactly one of user_id / admin_id is set)
 // ============================================================================
 
-export const tokens = pgTable(
+export const tokens = sqliteTable(
 	'tokens',
 	{
 		id: id(),
-		userId: varchar('user_id', { length: 21 }).references(() => users.id),
-		adminId: varchar('admin_id', { length: 21 }).references(() => adminUsers.id),
-		purpose: tokenPurpose('purpose').notNull(),
-		tokenHash: varchar('token_hash', { length: 128 }).notNull(),
+		userId: text('user_id').references(() => users.id),
+		adminId: text('admin_id').references(() => adminUsers.id),
+		purpose: text('purpose', {
+			enum: ['verify_email', 'reset_password', 'magic_login', 'email_change']
+		}).notNull(),
+		tokenHash: text('token_hash').notNull(),
 		expiresAt: ts('expires_at').notNull(),
 		attempts: integer('attempts').default(0).notNull(),
-		payload: jsonb('payload'),
-		createdAt: ts('created_at').defaultNow().notNull()
+		payload: text('payload', { mode: 'json' }),
+		createdAt: ts('created_at')
+			.default(sql`(unixepoch() * 1000)`)
+			.notNull()
 	},
 	(t) => [
-		check('tokens_exclusive_arc', sql`num_nonnulls(${t.userId}, ${t.adminId}) = 1`),
+		check(
+			'tokens_purpose',
+			sql`${t.purpose} IN ('verify_email', 'reset_password', 'magic_login', 'email_change')`
+		),
+		check('tokens_exclusive_arc', sql`(${t.userId} IS NOT NULL) + (${t.adminId} IS NOT NULL) = 1`),
 		index('tokens_hash_idx').on(t.tokenHash),
 		index('tokens_user_purpose_idx').on(t.userId, t.purpose),
 		index('tokens_admin_purpose_idx').on(t.adminId, t.purpose)
@@ -206,33 +211,39 @@ export const tokens = pgTable(
 // Operational tables
 // ============================================================================
 
-export const logs = pgTable('logs', {
-	id: id(),
-	timestamp: ts('timestamp').notNull(),
-	level: logLevel('level').notNull(),
-	context: jsonb('context').notNull(),
-	data: jsonb('data').notNull()
-});
+export const logs = sqliteTable(
+	'logs',
+	{
+		id: id(),
+		timestamp: ts('timestamp').notNull(),
+		level: text('level', { enum: ['debug', 'info', 'warn', 'error'] }).notNull(),
+		context: text('context', { mode: 'json' }).notNull(),
+		data: text('data', { mode: 'json' }).notNull()
+	},
+	(t) => [check('logs_level', sql`${t.level} IN ('debug', 'info', 'warn', 'error')`)]
+);
 
-export const config = pgTable('config', {
-	key: varchar('key', { length: 128 }).primaryKey(),
-	value: varchar('value', { length: 4096 }).notNull()
+export const config = sqliteTable('config', {
+	key: text('key').primaryKey(),
+	value: text('value').notNull()
 });
 
 // ============================================================================
 // Audit log (admin actions — accountability-relevant events).
 // ============================================================================
 
-export const auditLog = pgTable(
+export const auditLog = sqliteTable(
 	'audit_log',
 	{
 		id: id(),
-		adminId: varchar('admin_id', { length: 21 }).references(() => adminUsers.id),
-		action: varchar('action', { length: 128 }).notNull(),
-		entityType: varchar('entity_type', { length: 64 }),
-		entityId: varchar('entity_id', { length: 24 }),
-		payload: jsonb('payload'),
-		createdAt: ts('created_at').defaultNow().notNull()
+		adminId: text('admin_id').references(() => adminUsers.id),
+		action: text('action').notNull(),
+		entityType: text('entity_type'),
+		entityId: text('entity_id'),
+		payload: text('payload', { mode: 'json' }),
+		createdAt: ts('created_at')
+			.default(sql`(unixepoch() * 1000)`)
+			.notNull()
 	},
 	(t) => [
 		index('audit_log_admin_idx').on(t.adminId),
@@ -244,24 +255,28 @@ export const auditLog = pgTable(
 
 // ============================================================================
 // Example domain table — a generic per-user `item` with a free-form `data`
-// jsonb payload. This is the demo CRUD resource the native mobile app (packages/mobile)
+// JSON payload. This is the demo CRUD resource the native mobile app (packages/mobile)
 // drives end-to-end. Replace it with your real domain tables; it is safe to
 // delete wholesale (this table, its relation + inferred type, the `item`
 // public-id prefix, `lib/items.ts`, `routes/items.ts`, and the `/items` mount
 // in `app.ts`) — nothing in the identity spine depends on it.
 // ============================================================================
 
-export const items = pgTable(
+export const items = sqliteTable(
 	'items',
 	{
 		id: id(),
-		publicId: varchar('public_id', { length: 24 }).notNull().unique(),
-		userId: varchar('user_id', { length: 21 })
+		publicId: text('public_id').notNull().unique(),
+		userId: text('user_id')
 			.notNull()
 			.references(() => users.id),
-		data: jsonb('data').notNull().default({}),
-		createdAt: ts('created_at').defaultNow().notNull(),
-		modifiedAt: ts('modified_at').defaultNow().notNull()
+		data: text('data', { mode: 'json' }).notNull().default({}),
+		createdAt: ts('created_at')
+			.default(sql`(unixepoch() * 1000)`)
+			.notNull(),
+		modifiedAt: ts('modified_at')
+			.default(sql`(unixepoch() * 1000)`)
+			.notNull()
 	},
 	(t) => [index('items_user_idx').on(t.userId, t.createdAt)]
 );

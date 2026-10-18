@@ -16,7 +16,7 @@ would force them to share both.
 Deploy **one worker per surface**: a single `@ak5/api` worker plus one SvelteKit
 worker per persona (`@ak5/web`, `@ak5/admin`, …), each with its own
 `wrangler.jsonc`, custom domain, and deploy. The API is the only worker that
-holds data-touching secrets (`DATABASE_URL`, provider secrets, encryption keys);
+holds data-touching secrets (provider secrets, encryption keys);
 the frontend workers hold **only** `JWT_SECRET`, and only to verify cookies —
 never to write data. Frontends consume the API across a clean type boundary
 (type-only RPC; see ADR 0006), not by importing its runtime.

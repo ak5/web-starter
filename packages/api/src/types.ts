@@ -5,6 +5,7 @@ import type { Database } from './db';
 /** Cloudflare bindings + secrets visible to the worker. */
 export interface Env {
 	// Bindings
+	DB: D1Database;
 	R2: R2Bucket;
 	KV: KVNamespace;
 
@@ -21,13 +22,8 @@ export interface Env {
 	EMAIL_MOCK_URL?: string;
 
 	// Secrets
-	DATABASE_URL: string;
 	JWT_SECRET: string;
 	TOKEN_ENCRYPTION_KEY: string;
-
-	// Neon — used by /dev/db-branches/:endpointId/reset (prod-only)
-	NEON_API_KEY: string;
-	NEON_PROJECT_ID: string;
 
 	// Cloudflare API — used by admin infrastructure status panels (optional)
 	CLOUDFLARE_API_TOKEN?: string;

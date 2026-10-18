@@ -229,12 +229,12 @@ export async function deleteMeAccount(db: Database, auth: JwtPayload) {
 	});
 	if (!row) return { ok: false as const, error: 'not_found' as const, status: 404 as const };
 
-	await db.transaction(async (tx) => {
-		await tx.update(adminUsers).set({ deletedAt: now }).where(eq(adminUsers.id, row.id));
-		await tx
+	await db.batch([
+		db.update(adminUsers).set({ deletedAt: now }).where(eq(adminUsers.id, row.id)),
+		db
 			.delete(authEmail)
-			.where(and(eq(authEmail.subjectType, 'admin'), eq(authEmail.subjectId, row.id)));
-	});
+			.where(and(eq(authEmail.subjectType, 'admin'), eq(authEmail.subjectId, row.id)))
+	]);
 
 	return { ok: true as const, result: { ok: true } };
 }

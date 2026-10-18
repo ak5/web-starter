@@ -1,95 +1,69 @@
 #!/usr/bin/env tsx
-/**
- * Create an admin user directly in Postgres. Used by tests (via
- * e2e/helpers.ts) and by operators bootstrapping the first admin in a
- * fresh environment.
- *
- * Usage:
- *   DATABASE_URL=postgres://... pnpm --filter @ak5/api create:admin <email> <username> <password>
- *
- * Prints `publicId=a-<id>` on success so callers can scrape it.
- *
- * Idempotent on email: if an admin with this email exists, updates the
- * password instead of failing. This lets tests re-run without manual cleanup
- * even when test DB reset is skipped.
- */
-import { Pool } from '@neondatabase/serverless';
-import { hashPassword } from 'worker-password-auth';
-import { customAlphabet } from 'nanoid';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { join, resolve } from 'node:path';
+import { getPlatformProxy } from 'wrangler';
+import { and, eq, isNull } from 'drizzle-orm';
+import { db } from '../src/db';
+import { adminUsers, authEmail } from '../src/db/schema';
+import { hashPassword } from '../src/lib/password';
+import { publicId } from '../src/lib/public-id';
 
-const [, , email, username, password] = process.argv;
-if (!email || !username || !password) {
-	console.error('usage: create-admin.ts <email> <username> <password>');
-	process.exit(2);
+const [email, username, password, ...flags] = process.argv.slice(2);
+if (!email || !username || !password || flags.some((flag) => flag !== '--remote')) {
+	throw new Error('usage: pnpm create:admin <email> <username> <password> [--remote]');
 }
-
-const url = process.env.DATABASE_URL;
-if (!url) {
-	console.error('DATABASE_URL is required');
-	process.exit(2);
-}
-
-const nano = customAlphabet('0123456789abcdefghijklmnopqrstuvwxyz', 21);
-const publicNano = customAlphabet('0123456789abcdefghijklmnopqrstuvwxyz', 12);
-
-async function main() {
-	const pool = new Pool({ connectionString: url });
-	const client = await pool.connect();
-
-	try {
-		const pwHash = await hashPassword(password);
-		await client.query('BEGIN');
-
-		const existing = await client.query<{ id: string; public_id: string }>(
-			'SELECT id, public_id FROM admin_users WHERE email = $1 AND deleted_at IS NULL',
-			[email]
-		);
-
-		let adminId: string;
-		let publicId: string;
-		if (existing.rows.length > 0) {
-			adminId = existing.rows[0].id;
-			publicId = existing.rows[0].public_id;
-		} else {
-			adminId = nano();
-			publicId = `a-${publicNano()}`;
-			await client.query(
-				`INSERT INTO admin_users (id, public_id, email, username, email_verified)
-				 VALUES ($1, $2, $3, $4, true)`,
-				[adminId, publicId, email, username]
-			);
-		}
-
-		// Upsert the auth_email row so password changes are honored.
-		const auth = await client.query(
-			`SELECT id FROM auth_email WHERE subject_type = 'admin' AND subject_id = $1`,
-			[adminId]
-		);
-		if (auth.rows.length > 0) {
-			await client.query(
-				`UPDATE auth_email SET password_hashed = $1, verified = true WHERE id = $2`,
-				[pwHash, auth.rows[0].id]
-			);
-		} else {
-			await client.query(
-				`INSERT INTO auth_email (id, subject_type, subject_id, email, password_hashed, verified)
-				 VALUES ($1, 'admin', $2, $3, $4, true)`,
-				[nano(), adminId, email, pwHash]
-			);
-		}
-
-		await client.query('COMMIT');
-		console.log(`publicId=${publicId}`);
-	} catch (e) {
-		await client.query('ROLLBACK').catch(() => {});
-		throw e;
-	} finally {
-		client.release();
-		await pool.end();
+const remote = flags.includes('--remote');
+let directory: string | undefined;
+let configPath = resolve('wrangler.jsonc');
+if (remote) {
+	const id = process.env.D1_DATABASE_ID;
+	if (!id || !/^[a-f\d]{8}(?:-[a-f\d]{4}){3}-[a-f\d]{12}$/i.test(id) || /^00000000-/.test(id)) {
+		throw new Error('--remote requires the actual D1_DATABASE_ID and Wrangler authentication.');
 	}
+	mkdirSync('.wrangler', { recursive: true });
+	directory = mkdtempSync('.wrangler/admin-');
+	configPath = join(directory, 'wrangler.json');
+	writeFileSync(
+		configPath,
+		JSON.stringify({
+			name: 'admin-bootstrap',
+			compatibility_date: '2025-03-19',
+			d1_databases: [{ binding: 'DB', database_name: 'bootstrap', database_id: id, remote: true }]
+		})
+	);
 }
-
-main().catch((e) => {
-	console.error(e);
-	process.exit(1);
+const runtime = await getPlatformProxy<{ DB: D1Database }>({
+	configPath,
+	envFiles: [],
+	remoteBindings: remote
 });
+try {
+	const database = db(runtime.env.DB);
+	const existing = await database.query.adminUsers.findFirst({
+		where: and(eq(adminUsers.email, email), isNull(adminUsers.deletedAt))
+	});
+	const id = existing?.id ?? crypto.randomUUID().replaceAll('-', '').slice(0, 21);
+	const pub = existing?.publicId ?? publicId('admin');
+	const identity = await database.query.authEmail.findFirst({
+		where: and(eq(authEmail.subjectType, 'admin'), eq(authEmail.subjectId, id))
+	});
+	const passwordHashed = await hashPassword(password);
+	await database.batch([
+		database
+			.insert(adminUsers)
+			.values({ id, publicId: pub, email, username })
+			.onConflictDoNothing({ target: adminUsers.id }),
+		identity
+			? database
+					.update(authEmail)
+					.set({ passwordHashed, verified: true })
+					.where(eq(authEmail.id, identity.id))
+			: database
+					.insert(authEmail)
+					.values({ subjectType: 'admin', subjectId: id, email, passwordHashed, verified: true })
+	]);
+	console.log(`publicId=${pub}`);
+} finally {
+	await runtime.dispose();
+	if (directory) rmSync(directory, { recursive: true, force: true });
+}

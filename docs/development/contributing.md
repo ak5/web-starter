@@ -19,7 +19,11 @@ It runs, in order:
 3. `pnpm -r lint:nofmt` — ESLint across packages
 4. `pnpm audit:split` — package boundary + instruction-file drift checks
 5. `pnpm -r check` — `svelte-check` / `tsc --noEmit`
-6. `pnpm -w run build` — full build
+6. `pnpm test:unit` — unit suites
+7. `pnpm -w run build` — full build
+
+`db-tests` runs `pnpm test:db` against disposable local D1 bindings. `e2e` runs
+the full local stack with Playwright. Both run without provider credentials.
 
 ## Reproduce locally before pushing
 

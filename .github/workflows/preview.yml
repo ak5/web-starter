@@ -26,6 +26,11 @@ jobs:
       - run: nice -n 10 pnpm install --frozen-lockfile
       - run: nice -n 10 pnpm -w run build:libs
 
+      - name: Configure D1 binding
+        env:
+          D1_DATABASE_ID: ${{ vars.D1_DATABASE_ID }}
+        run: node scripts/configure-d1.mjs
+
       - name: Wire verified email sender
         env:
           EMAIL_FROM: ${{ vars.EMAIL_FROM }}
@@ -93,7 +98,6 @@ jobs:
       - name: Sync Cloudflare Worker secrets
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           TOKEN_ENCRYPTION_KEY: ${{ secrets.TOKEN_ENCRYPTION_KEY }}
           DISCORD_CLIENT_SECRET: ${{ secrets.DISCORD_CLIENT_SECRET }}

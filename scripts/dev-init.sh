@@ -1,7 +1,7 @@
 #!/bin/bash
 # First-time local dev setup. Syncs each package .env with its .env.example
 # keys, rotates a shared JWT_SECRET across workers, and prints the manual setup
-# still required (Neon connection string, optional provider secrets).
+# still required (optional provider secrets).
 
 set -e
 
@@ -50,9 +50,8 @@ echo ""
 cat <<'EOF'
 === Next steps ===
 
-1. DATABASE_URL — paste a Neon branch connection string into packages/api/.env.
-2. DATABASE_URL_TEST — paste a DEDICATED Neon test branch (wiped on every test run).
-3. Optional provider secrets — fill only what you test locally:
+Local D1 uses Wrangler persistence and needs no account credentials.
+Optional provider secrets — fill only what you test locally:
    DISCORD_CLIENT_ID / DISCORD_CLIENT_SECRET (OAuth login),
    TOKEN_ENCRYPTION_KEY (`openssl rand -hex 32`), Cloudflare read tokens.
 
@@ -60,7 +59,7 @@ Then:
 
    pnpm db:migrate
    pnpm create:admin
-   pnpm dev
+   pnpm dev:auto
 
 See docs/development/setup.md and docs/architecture/database.md.
 EOF

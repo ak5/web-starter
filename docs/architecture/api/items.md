@@ -13,7 +13,7 @@ in the identity spine depends on it; deleting it is mechanical (see below).
 ## Shape
 
 Every row is owned by a user and carries a free-form `data` JSON object the API
-stores verbatim (`jsonb`) — it does not constrain `data`'s shape. Clients only
+stores verbatim (JSON text) — it does not constrain `data`'s shape. Clients only
 ever see the public id (`i-…`), never the internal PK or `user_id`.
 
 ```jsonc
