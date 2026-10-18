@@ -19,24 +19,20 @@
 		"COOKIE_ORIGIN": ".__PROD_DOMAIN__",
 		"DISCORD_CLIENT_ID": ""
 	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "ak5",
+			"database_id": "00000000-0000-0000-0000-000000000000",
+			"migrations_dir": "drizzle"
+		}
+	],
 	"send_email": [{ "name": "EMAIL", "allowed_sender_addresses": ["__EMAIL_FROM__"] }],
 	"r2_buckets": [{ "binding": "R2", "bucket_name": "ak5" }],
 	"kv_namespaces": [{ "binding": "KV", "id": "REPLACE_WITH_KV_NAMESPACE_ID" }],
 	// Hourly tick drives the expired-token purge in src/cron/jobs.ts.
 	"triggers": { "crons": ["0 * * * *"] },
-	// Secrets (set via `wrangler secret put`): DATABASE_URL, JWT_SECRET,
-	// DISCORD_CLIENT_SECRET, TOKEN_ENCRYPTION_KEY,
-	// NEON_API_KEY, CLOUDFLARE_API_TOKEN.
-	//
-	// Staging (deployed after main CI; PRs use separate Workers with staging data).
-	// IMPORTANT: named envs do NOT inherit kv_namespaces / r2_buckets / triggers
-	// from the top level (wrangler warns about this) — they must be re-declared
-	// here. We override the name (workers.dev only), drop the custom-domain
-	// routes, point the public URLs at *-stg hosts, and re-declare the KV/R2
-	// bindings (the KV id placeholder is filled by deploy.yml just like the
-	// top-level one). COOKIE_ORIGIN is empty so staging issues host-only Secure
-	// cookies (workers.dev is on the Public Suffix List — siblings can't share a
-	// cookie domain). Cron is intentionally omitted on staging.
+	// Named environments declare their own D1, email, KV and R2 bindings.
 	"env": {
 		"staging": {
 			"name": "ak5-api-stg",
@@ -50,6 +46,14 @@
 				"COOKIE_ORIGIN": "",
 				"DISCORD_CLIENT_ID": ""
 			},
+			"d1_databases": [
+				{
+					"binding": "DB",
+					"database_name": "ak5-stg",
+					"database_id": "00000000-0000-0000-0000-000000000001",
+					"migrations_dir": "drizzle"
+				}
+			],
 			"send_email": [{ "name": "EMAIL", "allowed_sender_addresses": ["__EMAIL_FROM__"] }],
 			"r2_buckets": [{ "binding": "R2", "bucket_name": "ak5" }],
 			"kv_namespaces": [{ "binding": "KV", "id": "REPLACE_WITH_KV_NAMESPACE_ID" }]

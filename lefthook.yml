@@ -58,10 +58,7 @@ pre-commit:
           - name: check
             run: pnpm check
 
-# Tests run before sharing, not on every commit (keeps commits fast). The fast
-# suites only: pure unit tests + the api integration tests, which SKIP when no
-# DATABASE_URL(_TEST) is set, so a DB-less push stays quick. The Playwright e2e
-# (`pnpm test`) is NOT here — it needs the running dev stack and runs in CI.
+# Fast unit suites run before sharing; D1 integration and browser suites run in CI.
 pre-push:
   jobs:
     - name: unit-tests

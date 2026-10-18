@@ -58,8 +58,8 @@ function database(options: { existing?: boolean; active?: boolean; invite?: bool
 				writes.push({ table, value });
 			}
 		}),
-		transaction: async (run: (tx: unknown) => Promise<void>) => {
-			await run(db);
+		batch: async (queries: Promise<unknown>[]) => {
+			await Promise.all(queries);
 			committed = true;
 		}
 	};

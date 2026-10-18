@@ -28,17 +28,17 @@ async function softDeleteUserRow(
 	row: { id: string; publicId: string }
 ): Promise<SoftDeleteUserResult> {
 	const now = new Date();
-	await db.transaction(async (tx) => {
-		await tx.update(users).set({ deletedAt: now }).where(eq(users.id, row.id));
-		await tx.delete(tokens).where(eq(tokens.userId, row.id));
-		await tx
+	await db.batch([
+		db.update(users).set({ deletedAt: now }).where(eq(users.id, row.id)),
+		db.delete(tokens).where(eq(tokens.userId, row.id)),
+		db
 			.delete(authEmail)
-			.where(and(eq(authEmail.subjectType, 'user'), eq(authEmail.subjectId, row.id)));
-		await tx
+			.where(and(eq(authEmail.subjectType, 'user'), eq(authEmail.subjectId, row.id))),
+		db
 			.delete(authDiscord)
-			.where(and(eq(authDiscord.subjectType, 'user'), eq(authDiscord.subjectId, row.id)));
-		await tx.delete(apiKeys).where(eq(apiKeys.userId, row.id));
-		await tx.delete(sessions).where(eq(sessions.userId, row.id));
-	});
+			.where(and(eq(authDiscord.subjectType, 'user'), eq(authDiscord.subjectId, row.id))),
+		db.delete(apiKeys).where(eq(apiKeys.userId, row.id)),
+		db.delete(sessions).where(eq(sessions.userId, row.id))
+	]);
 	return { ok: true as const, publicId: row.publicId, id: row.id };
 }

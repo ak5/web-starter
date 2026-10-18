@@ -82,8 +82,8 @@ export async function registerUserPreAuth(
 	const userId = crypto.randomUUID().replace(/-/g, '').slice(0, 21);
 	const userPub = publicId('user');
 
-	await db.transaction(async (tx) => {
-		await tx.insert(users).values({
+	await db.batch([
+		db.insert(users).values({
 			id: userId,
 			publicId: userPub,
 			username,
@@ -94,15 +94,15 @@ export async function registerUserPreAuth(
 			termsVersion: LEGAL_VERSIONS.terms,
 			privacyVersion: LEGAL_VERSIONS.privacy,
 			acceptableUseVersion: LEGAL_VERSIONS.acceptableUse
-		});
-		await tx.insert(authEmail).values({
+		}),
+		db.insert(authEmail).values({
 			subjectType: 'user',
 			subjectId: userId,
 			email,
 			passwordHashed: await hashPassword(password),
 			verified: false
-		});
-	});
+		})
+	]);
 
 	const pin = generatePin();
 	const expires = new Date(Date.now() + TIME_MS.ONE_HOUR);
@@ -324,16 +324,16 @@ export async function acceptInvitePreAuth(
 			return { ok: false, status: 404, body: { error: 'user_not_found' } };
 		if (user.bannedAt) return { ok: false, status: 403, body: { error: 'user_disabled' } };
 
-		await db.transaction(async (tx) => {
-			await tx
+		await db.batch([
+			db
 				.update(authEmail)
 				.set({ passwordHashed: await hashPassword(password), verified: true })
-				.where(eq(authEmail.id, identity.id));
-			await tx
+				.where(eq(authEmail.id, identity.id)),
+			db
 				.update(users)
 				.set({ emailVerified: true, lastLoginAt: new Date() })
-				.where(eq(users.id, subjectId));
-		});
+				.where(eq(users.id, subjectId))
+		]);
 
 		const jwt = await signJwt(env.JWT_SECRET, {
 			sub: user.publicId,
@@ -363,16 +363,16 @@ export async function acceptInvitePreAuth(
 		return { ok: false, status: 404, body: { error: 'admin_not_found' } };
 	}
 
-	await db.transaction(async (tx) => {
-		await tx
+	await db.batch([
+		db
 			.update(authEmail)
 			.set({ passwordHashed: await hashPassword(password), verified: true })
-			.where(eq(authEmail.id, identity.id));
-		await tx
+			.where(eq(authEmail.id, identity.id)),
+		db
 			.update(adminUsers)
 			.set({ emailVerified: true, lastLoginAt: new Date() })
-			.where(eq(adminUsers.id, subjectId));
-	});
+			.where(eq(adminUsers.id, subjectId))
+	]);
 
 	const jwt = await signJwt(env.JWT_SECRET, {
 		sub: admin.publicId,

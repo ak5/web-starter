@@ -1,25 +1,13 @@
 import {
 	checkLocalService,
 	displayDateTime,
-	displayLabel,
 	displayMillisecondsFromMicroseconds,
 	displayNumber,
 	isLocalDiagnosticsEnabled,
 	localServices,
-	localServiceStatusBadgeClass,
-	neonBranchResetAction,
-	neonBranchRoleBadges,
-	neonBranchStateBadgeClass
+	localServiceStatusBadgeClass
 } from './admin-display';
 import { getWorkerAnalytics, listWorkers } from './cloudflare';
-import {
-	getBranch,
-	getProject,
-	isProtectedBranch,
-	listBranches,
-	listEndpoints,
-	resetBranchFromParent
-} from './neon';
 import type { Env } from '../types';
 
 export function adminOpenRouterIntegration() {
@@ -30,102 +18,6 @@ export function adminOpenRouterIntegration() {
 		statusLabel: 'Not configured',
 		statusBadgeClass: 'badge-ghost'
 	};
-}
-
-export async function adminNeonIntegration(env: Env) {
-	if (!env.NEON_API_KEY || !env.NEON_PROJECT_ID) {
-		return {
-			available: false,
-			configured: false,
-			message: 'Not configured.'
-		};
-	}
-
-	try {
-		const [project, branches, endpoints] = await Promise.all([
-			getProject(env),
-			listBranches(env),
-			listEndpoints(env)
-		]);
-
-		const lastActiveByBranch = new Map<string, string>();
-		for (const endpoint of endpoints) {
-			if (!endpoint.last_active) continue;
-			const existing = lastActiveByBranch.get(endpoint.branch_id);
-			if (!existing || endpoint.last_active > existing) {
-				lastActiveByBranch.set(endpoint.branch_id, endpoint.last_active);
-			}
-		}
-
-		return {
-			available: true,
-			configured: true,
-			project: {
-				id: project.id,
-				name: project.name,
-				region: project.region_id,
-				createdAt: project.created_at,
-				createdLabel: displayDateTime(project.created_at),
-				updatedAt: project.updated_at,
-				updatedLabel: displayDateTime(project.updated_at)
-			},
-			branches: branches
-				.map((branch) => {
-					const state = branch.current_state ?? 'unknown';
-					const updatedAt = branch.updated_at ?? null;
-					const lastActive = lastActiveByBranch.get(branch.id) ?? null;
-					const protectedBranch = isProtectedBranch(branch);
-					return {
-						id: branch.id,
-						name: branch.name,
-						isDefault: branch.default ?? false,
-						isPrimary: branch.primary ?? false,
-						isProtected: protectedBranch,
-						roleBadges: neonBranchRoleBadges(branch),
-						state,
-						stateLabel: displayLabel(state),
-						stateBadgeClass: neonBranchStateBadgeClass(state),
-						updatedAt,
-						updatedLabel: displayDateTime(updatedAt),
-						lastActive,
-						lastActiveLabel: displayDateTime(lastActive),
-						consoleHref: `https://console.neon.tech/app/projects/${project.id}/branches/${branch.id}`,
-						...neonBranchResetAction(branch.name, protectedBranch)
-					};
-				})
-				.sort((a, b) => {
-					const left = neonBranchSortOrder(a.name);
-					const right = neonBranchSortOrder(b.name);
-					if (left !== right) return left - right;
-					return a.name.localeCompare(b.name);
-				})
-		};
-	} catch (e) {
-		const message = e instanceof Error ? e.message : 'Neon API unreachable.';
-		return {
-			available: false,
-			configured: true,
-			message,
-			error: message
-		};
-	}
-}
-
-export async function adminResetNeonBranch(env: Env, branchId: string) {
-	if (!env.NEON_API_KEY || !env.NEON_PROJECT_ID) {
-		return { ok: false as const, status: 503 as const, body: { error: 'neon_not_configured' } };
-	}
-
-	const { branch } = await getBranch(env, branchId);
-	if (isProtectedBranch(branch)) {
-		return { ok: false as const, status: 403 as const, body: { error: 'protected_branch' } };
-	}
-	if (!branch.parent_id) {
-		return { ok: false as const, status: 400 as const, body: { error: 'missing_parent_branch' } };
-	}
-
-	await resetBranchFromParent(env, branch.id, branch.parent_id);
-	return { ok: true as const, body: { ok: true } };
 }
 
 export async function adminCloudflareIntegration(env: Env) {
@@ -201,11 +93,4 @@ export async function adminLocalIntegration(env: Env) {
 			statusBadgeClass: localServiceStatusBadgeClass(service.ok)
 		}))
 	};
-}
-
-function neonBranchSortOrder(name: string) {
-	const normalized = name.toLowerCase();
-	if (normalized === 'main' || normalized === 'production' || normalized === 'prod') return 0;
-	if (normalized === 'dev-template') return 1;
-	return 2;
 }

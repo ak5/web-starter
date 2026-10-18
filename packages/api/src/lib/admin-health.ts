@@ -20,17 +20,17 @@ export async function adminHealthReport(db: Database) {
 	const checks: AdminHealthCheck[] = [];
 
 	try {
-		await db.select({ ok: sql<number>`1` });
+		await db.run(sql`SELECT 1`);
 		checks.push({
 			name: 'Database',
-			target: 'Neon Postgres',
+			target: 'Cloudflare D1',
 			status: 'ok',
 			message: 'Query succeeded'
 		});
 	} catch (e) {
 		checks.push({
 			name: 'Database',
-			target: 'Neon Postgres',
+			target: 'Cloudflare D1',
 			status: 'error',
 			message: e instanceof Error ? e.message : String(e)
 		});

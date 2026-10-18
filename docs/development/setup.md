@@ -18,8 +18,8 @@ installs, no version drift. mise also auto-loads `.env.dev-slot` (your active de
 slot's ports + URLs) and sets a per-worktree `XDG_CONFIG_HOME` so each checkout
 keeps its own CLI persona store.
 
-You also need network access to a Postgres database (Neon in this starter) for
-the api to talk to — see [operations/3rd-party-services.md](../operations/3rd-party-services.md).
+The database is local D1 through Wrangler. You do not need a Cloudflare account,
+a connection string, or an external database server for local development.
 
 ## Start from the starter
 
@@ -32,7 +32,8 @@ without creating a GitHub fork. Follow the [README install and update instructio
 ```sh
 pnpm install            # workspace deps
 pnpm -w run dev:init    # one-time setup (see below)
-pnpm dev                # launch the full stack on slot 1
+pnpm db:migrate         # initialize the local D1 schema
+pnpm dev:auto           # launch on the next free slot
 ```
 
 `dev:init` does the one-time setup so a fresh clone is ready to run:
@@ -98,7 +99,7 @@ pnpm create:admin
 - **`JWT_SECRET` must be identical across api / web / admin.** `dev:init` does this
   for you; if you ever desync them, run `pnpm -w run rotate-jwt-secret` to
   regenerate and rewrite all three.
-- The api owns every data-touching secret (`DATABASE_URL`, provider keys); web and
+- The api owns every data-touching secret (provider keys); web and
   admin hold only `JWT_SECRET`, used to verify cookies.
 - `COOKIE_ORIGIN` (api) / `PUBLIC_COOKIE_ORIGIN` (apps) control the cookie
   `Domain`/`Secure` attributes. `pnpm dev` writes `.ak5.localhost` (Domain set,
@@ -110,3 +111,8 @@ manual enablement, verified sender DNS, and Email Sending:Edit on the deployment
 token are prerequisites. Local setup uses the mock and does not send real mail.
 
 For iOS/Android development, see [native mobile setup](../../packages/mobile/README.md).
+
+## Inspect local D1
+
+Use Wrangler's local explorer URL printed by `pnpm dev:api`, or query with
+`pnpm wrangler d1 execute DB --local --command "SELECT name FROM sqlite_master WHERE type = 'table'"`.

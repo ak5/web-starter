@@ -18,12 +18,7 @@ import {
 	adminUnbanUser,
 	adminUserList
 } from '../lib/admin-users';
-import {
-	adminCloudflareIntegration,
-	adminLocalIntegration,
-	adminNeonIntegration,
-	adminResetNeonBranch
-} from '../lib/admin-system';
+import { adminCloudflareIntegration, adminLocalIntegration } from '../lib/admin-system';
 import {
 	adminCreateUserSchema,
 	adminInviteSchema,
@@ -36,11 +31,6 @@ import type { AppContext } from '../types';
 export const adminRoutes = new Hono<AppContext>()
 	.use(requireAuth('admin'))
 	.get('/health', async (c) => c.json(await adminHealthReport(c.var.db)))
-	.get('/integrations/neon', async (c) => c.json(await adminNeonIntegration(c.env)))
-	.post('/db-branches/:branchId/reset', async (c) => {
-		const result = await adminResetNeonBranch(c.env, c.req.param('branchId'));
-		return apiBodyJson(c, result);
-	})
 	.get('/integrations/cloudflare', async (c) => c.json(await adminCloudflareIntegration(c.env)))
 	.get('/integrations/local', async (c) => c.json(await adminLocalIntegration(c.env)))
 	.get('/logs', zValidator('query', adminLogQuerySchema), async (c) => {

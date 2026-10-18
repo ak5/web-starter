@@ -81,13 +81,13 @@ docs↔code matrix below.
 
 - **Monorepo:** pnpm workspace, `@ak5/{api,web,admin,shared,webui,email,cli}`.
 - **Runtime:** Cloudflare Workers (api + both SvelteKit apps).
-- **DB:** Neon Postgres + Drizzle; one api worker owns all DB access.
+- **DB:** Cloudflare D1 + Drizzle; one api worker owns all DB access.
 - **Auth:** two identity tables + one exclusive-arc tokens table; JWT
   (`ak5_token`) carries `type`; scoped sub-routers give per-persona `*ApiType`.
 - **RPC:** frontends consume `hc<WebApiType>()` / `hc<AdminApiType>()` via the
   `createApiClient` factory in `@ak5/webui`.
 - **Dev:** Caddy fronts each slot on one port (`base + (slot-1)*10`).
-- **Tests:** Playwright against the live dev stack on a dedicated DB branch.
+- **Tests:** Playwright against the live dev stack on a local D1 database.
 
 ## What not to do in reviews
 

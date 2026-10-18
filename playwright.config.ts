@@ -13,12 +13,9 @@ export default defineConfig({
 	testDir: './tests',
 	fullyParallel: true,
 	forbidOnly: !!process.env.CI,
-	// `wrangler dev` + the neon-serverless driver drops the occasional connection
-	// under concurrency ("Network connection lost"); retry transient infra flakes.
-	retries: process.env.CI ? 2 : 1,
-	// Capped low on purpose: the suite hammers a single Neon compute, which has a
-	// modest connection ceiling — high parallelism makes those flakes frequent.
-	workers: 2,
+	retries: process.env.CI ? 2 : 0,
+	workers: 1,
+
 	reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
 	projects: [
 		{

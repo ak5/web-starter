@@ -46,7 +46,9 @@ if (process.argv[2] === '--test') {
 		const config = JSON.parse(
 			readFileSync(`packages/${app}/wrangler.jsonc`, 'utf8').replace(/^\s*\/\/.*$/gm, '')
 		);
+		const bindings = JSON.stringify(config.env.staging.d1_databases);
 		const preview = configurePreview(config, '42').env.staging;
+		assert.equal(JSON.stringify(preview.d1_databases), bindings);
 		assert.ok(preview.name.endsWith(`-${app}-pr-42`));
 		assert.ok(preview.vars.PUBLIC_API_URL.includes('-api-pr-42.'));
 	}

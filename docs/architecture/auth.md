@@ -17,7 +17,7 @@ verification, password reset, magic login, invite). It uses an **exclusive-arc**
 constraint so each row belongs to exactly one identity:
 
 ```sql
-CHECK (num_nonnulls(user_id, admin_id) = 1)
+CHECK ((user_id IS NOT NULL) + (admin_id IS NOT NULL) = 1)
 ```
 
 A token is for a user **or** an admin, never both, never neither. The

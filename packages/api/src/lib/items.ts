@@ -9,7 +9,7 @@ import type { ItemCreate, ItemUpdate } from './items-validation';
 
 /**
  * Business logic for the example `items` resource — a generic per-user record
- * with a free-form `data` jsonb payload. Every operation is scoped to the
+ * with a free-form `data` JSON payload. Every operation is scoped to the
  * authenticated user; rows are addressed by their `public_id` (`i-…`), and the
  * internal PK / `user_id` are never exposed. This is the demo CRUD the native mobile
  * app drives; replace it with your real domain logic.

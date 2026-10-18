@@ -310,8 +310,8 @@ export async function handleDiscordOAuthCallback(args: {
 		emailVerified = !!profile.verified;
 		hasPassword = false;
 
-		await args.db.transaction(async (tx) => {
-			await tx.insert(users).values({
+		await args.db.batch([
+			args.db.insert(users).values({
 				id: userInternalId,
 				publicId: userPub,
 				username,
@@ -324,8 +324,8 @@ export async function handleDiscordOAuthCallback(args: {
 				termsVersion: LEGAL_VERSIONS.terms,
 				privacyVersion: LEGAL_VERSIONS.privacy,
 				acceptableUseVersion: LEGAL_VERSIONS.acceptableUse
-			});
-			await tx.insert(authDiscord).values({
+			}),
+			args.db.insert(authDiscord).values({
 				subjectType: 'user',
 				subjectId: userInternalId,
 				discordId: profile.id,
@@ -335,8 +335,8 @@ export async function handleDiscordOAuthCallback(args: {
 				accessToken: tokens.access_token,
 				refreshToken: encryptedRefresh,
 				tokenExpiresAt: expiresAt
-			});
-		});
+			})
+		]);
 	}
 
 	return {

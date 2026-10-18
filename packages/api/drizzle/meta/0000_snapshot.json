@@ -1,198 +1,187 @@
 {
-	"id": "75636c19-d186-4c67-b785-58bd70b95f9e",
+	"version": "6",
+	"dialect": "sqlite",
+	"id": "f525e271-854f-4095-bf38-1c5e3fa445d6",
 	"prevId": "00000000-0000-0000-0000-000000000000",
-	"version": "7",
-	"dialect": "postgresql",
 	"tables": {
-		"public.admin_users": {
+		"admin_users": {
 			"name": "admin_users",
-			"schema": "",
 			"columns": {
 				"id": {
 					"name": "id",
-					"type": "varchar(21)",
+					"type": "text",
 					"primaryKey": true,
-					"notNull": true
+					"notNull": true,
+					"autoincrement": false
 				},
 				"public_id": {
 					"name": "public_id",
-					"type": "varchar(24)",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": true
+					"notNull": true,
+					"autoincrement": false
 				},
 				"email": {
 					"name": "email",
-					"type": "varchar(320)",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": true
+					"notNull": true,
+					"autoincrement": false
 				},
 				"username": {
 					"name": "username",
-					"type": "varchar(64)",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": true
+					"notNull": true,
+					"autoincrement": false
 				},
 				"display_name": {
 					"name": "display_name",
-					"type": "varchar(128)",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": false
+					"notNull": false,
+					"autoincrement": false
 				},
 				"email_verified": {
 					"name": "email_verified",
-					"type": "boolean",
+					"type": "integer",
 					"primaryKey": false,
 					"notNull": true,
+					"autoincrement": false,
 					"default": true
 				},
 				"last_login_at": {
 					"name": "last_login_at",
-					"type": "timestamp with time zone",
+					"type": "integer",
 					"primaryKey": false,
-					"notNull": false
+					"notNull": false,
+					"autoincrement": false
 				},
 				"created_at": {
 					"name": "created_at",
-					"type": "timestamp with time zone",
+					"type": "integer",
 					"primaryKey": false,
 					"notNull": true,
-					"default": "now()"
+					"autoincrement": false,
+					"default": "(unixepoch() * 1000)"
 				},
 				"deleted_at": {
 					"name": "deleted_at",
-					"type": "timestamp with time zone",
+					"type": "integer",
 					"primaryKey": false,
-					"notNull": false
+					"notNull": false,
+					"autoincrement": false
 				}
 			},
 			"indexes": {
+				"admin_users_public_id_unique": {
+					"name": "admin_users_public_id_unique",
+					"columns": ["public_id"],
+					"isUnique": true
+				},
 				"admin_users_email_unique": {
 					"name": "admin_users_email_unique",
-					"columns": [
-						{
-							"expression": "email",
-							"isExpression": false,
-							"asc": true,
-							"nulls": "last"
-						}
-					],
+					"columns": ["email"],
 					"isUnique": true,
-					"where": "\"admin_users\".\"deleted_at\" is null",
-					"concurrently": false,
-					"method": "btree",
-					"with": {}
+					"where": "\"admin_users\".\"deleted_at\" is null"
 				},
 				"admin_users_username_unique": {
 					"name": "admin_users_username_unique",
-					"columns": [
-						{
-							"expression": "username",
-							"isExpression": false,
-							"asc": true,
-							"nulls": "last"
-						}
-					],
+					"columns": ["username"],
 					"isUnique": true,
-					"where": "\"admin_users\".\"deleted_at\" is null",
-					"concurrently": false,
-					"method": "btree",
-					"with": {}
+					"where": "\"admin_users\".\"deleted_at\" is null"
 				}
 			},
 			"foreignKeys": {},
 			"compositePrimaryKeys": {},
-			"uniqueConstraints": {
-				"admin_users_public_id_unique": {
-					"name": "admin_users_public_id_unique",
-					"nullsNotDistinct": false,
-					"columns": ["public_id"]
-				}
-			},
-			"policies": {},
-			"checkConstraints": {},
-			"isRLSEnabled": false
+			"uniqueConstraints": {},
+			"checkConstraints": {}
 		},
-		"public.api_keys": {
+		"api_keys": {
 			"name": "api_keys",
-			"schema": "",
 			"columns": {
 				"id": {
 					"name": "id",
-					"type": "varchar(21)",
+					"type": "text",
 					"primaryKey": true,
-					"notNull": true
+					"notNull": true,
+					"autoincrement": false
 				},
 				"public_id": {
 					"name": "public_id",
-					"type": "varchar(24)",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": true
+					"notNull": true,
+					"autoincrement": false
 				},
 				"user_id": {
 					"name": "user_id",
-					"type": "varchar(21)",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": true
+					"notNull": true,
+					"autoincrement": false
 				},
 				"label": {
 					"name": "label",
-					"type": "varchar(64)",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": true
+					"notNull": true,
+					"autoincrement": false
 				},
 				"key_prefix": {
 					"name": "key_prefix",
-					"type": "varchar(32)",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": true
+					"notNull": true,
+					"autoincrement": false
 				},
 				"key_hash": {
 					"name": "key_hash",
-					"type": "varchar(256)",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": true
+					"notNull": true,
+					"autoincrement": false
 				},
 				"scopes": {
 					"name": "scopes",
-					"type": "jsonb",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": false
+					"notNull": false,
+					"autoincrement": false
 				},
 				"expires_at": {
 					"name": "expires_at",
-					"type": "timestamp with time zone",
+					"type": "integer",
 					"primaryKey": false,
-					"notNull": false
+					"notNull": false,
+					"autoincrement": false
 				},
 				"last_used_at": {
 					"name": "last_used_at",
-					"type": "timestamp with time zone",
+					"type": "integer",
 					"primaryKey": false,
-					"notNull": false
+					"notNull": false,
+					"autoincrement": false
 				},
 				"created_at": {
 					"name": "created_at",
-					"type": "timestamp with time zone",
+					"type": "integer",
 					"primaryKey": false,
 					"notNull": true,
-					"default": "now()"
+					"autoincrement": false,
+					"default": "(unixepoch() * 1000)"
 				}
 			},
 			"indexes": {
+				"api_keys_public_id_unique": {
+					"name": "api_keys_public_id_unique",
+					"columns": ["public_id"],
+					"isUnique": true
+				},
 				"api_keys_user_idx": {
 					"name": "api_keys_user_idx",
-					"columns": [
-						{
-							"expression": "user_id",
-							"isExpression": false,
-							"asc": true,
-							"nulls": "last"
-						}
-					],
-					"isUnique": false,
-					"concurrently": false,
-					"method": "btree",
-					"with": {}
+					"columns": ["user_id"],
+					"isUnique": false
 				}
 			},
 			"foreignKeys": {
@@ -207,131 +196,83 @@
 				}
 			},
 			"compositePrimaryKeys": {},
-			"uniqueConstraints": {
-				"api_keys_public_id_unique": {
-					"name": "api_keys_public_id_unique",
-					"nullsNotDistinct": false,
-					"columns": ["public_id"]
-				}
-			},
-			"policies": {},
-			"checkConstraints": {},
-			"isRLSEnabled": false
+			"uniqueConstraints": {},
+			"checkConstraints": {}
 		},
-		"public.audit_log": {
+		"audit_log": {
 			"name": "audit_log",
-			"schema": "",
 			"columns": {
 				"id": {
 					"name": "id",
-					"type": "varchar(21)",
+					"type": "text",
 					"primaryKey": true,
-					"notNull": true
+					"notNull": true,
+					"autoincrement": false
 				},
 				"admin_id": {
 					"name": "admin_id",
-					"type": "varchar(21)",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": false
+					"notNull": false,
+					"autoincrement": false
 				},
 				"action": {
 					"name": "action",
-					"type": "varchar(128)",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": true
+					"notNull": true,
+					"autoincrement": false
 				},
 				"entity_type": {
 					"name": "entity_type",
-					"type": "varchar(64)",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": false
+					"notNull": false,
+					"autoincrement": false
 				},
 				"entity_id": {
 					"name": "entity_id",
-					"type": "varchar(24)",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": false
+					"notNull": false,
+					"autoincrement": false
 				},
 				"payload": {
 					"name": "payload",
-					"type": "jsonb",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": false
+					"notNull": false,
+					"autoincrement": false
 				},
 				"created_at": {
 					"name": "created_at",
-					"type": "timestamp with time zone",
+					"type": "integer",
 					"primaryKey": false,
 					"notNull": true,
-					"default": "now()"
+					"autoincrement": false,
+					"default": "(unixepoch() * 1000)"
 				}
 			},
 			"indexes": {
 				"audit_log_admin_idx": {
 					"name": "audit_log_admin_idx",
-					"columns": [
-						{
-							"expression": "admin_id",
-							"isExpression": false,
-							"asc": true,
-							"nulls": "last"
-						}
-					],
-					"isUnique": false,
-					"concurrently": false,
-					"method": "btree",
-					"with": {}
+					"columns": ["admin_id"],
+					"isUnique": false
 				},
 				"audit_log_action_idx": {
 					"name": "audit_log_action_idx",
-					"columns": [
-						{
-							"expression": "action",
-							"isExpression": false,
-							"asc": true,
-							"nulls": "last"
-						}
-					],
-					"isUnique": false,
-					"concurrently": false,
-					"method": "btree",
-					"with": {}
+					"columns": ["action"],
+					"isUnique": false
 				},
 				"audit_log_entity_idx": {
 					"name": "audit_log_entity_idx",
-					"columns": [
-						{
-							"expression": "entity_type",
-							"isExpression": false,
-							"asc": true,
-							"nulls": "last"
-						},
-						{
-							"expression": "entity_id",
-							"isExpression": false,
-							"asc": true,
-							"nulls": "last"
-						}
-					],
-					"isUnique": false,
-					"concurrently": false,
-					"method": "btree",
-					"with": {}
+					"columns": ["entity_type", "entity_id"],
+					"isUnique": false
 				},
 				"audit_log_created_idx": {
 					"name": "audit_log_created_idx",
-					"columns": [
-						{
-							"expression": "created_at",
-							"isExpression": false,
-							"asc": true,
-							"nulls": "last"
-						}
-					],
-					"isUnique": false,
-					"concurrently": false,
-					"method": "btree",
-					"with": {}
+					"columns": ["created_at"],
+					"isUnique": false
 				}
 			},
 			"foreignKeys": {
@@ -347,331 +288,279 @@
 			},
 			"compositePrimaryKeys": {},
 			"uniqueConstraints": {},
-			"policies": {},
-			"checkConstraints": {},
-			"isRLSEnabled": false
+			"checkConstraints": {}
 		},
-		"public.auth_discord": {
+		"auth_discord": {
 			"name": "auth_discord",
-			"schema": "",
 			"columns": {
 				"id": {
 					"name": "id",
-					"type": "varchar(21)",
+					"type": "text",
 					"primaryKey": true,
-					"notNull": true
+					"notNull": true,
+					"autoincrement": false
 				},
 				"subject_type": {
 					"name": "subject_type",
-					"type": "subject_type",
-					"typeSchema": "public",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": true
+					"notNull": true,
+					"autoincrement": false
 				},
 				"subject_id": {
 					"name": "subject_id",
-					"type": "varchar(21)",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": true
+					"notNull": true,
+					"autoincrement": false
 				},
 				"discord_id": {
 					"name": "discord_id",
-					"type": "varchar(64)",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": true
+					"notNull": true,
+					"autoincrement": false
 				},
 				"discord_username": {
 					"name": "discord_username",
-					"type": "varchar(128)",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": false
+					"notNull": false,
+					"autoincrement": false
 				},
 				"discord_avatar": {
 					"name": "discord_avatar",
-					"type": "varchar(512)",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": false
+					"notNull": false,
+					"autoincrement": false
 				},
 				"discord_email": {
 					"name": "discord_email",
-					"type": "varchar(320)",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": false
+					"notNull": false,
+					"autoincrement": false
 				},
 				"discord_data": {
 					"name": "discord_data",
-					"type": "jsonb",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": false
+					"notNull": false,
+					"autoincrement": false
 				},
 				"access_token": {
 					"name": "access_token",
-					"type": "varchar(1024)",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": false
+					"notNull": false,
+					"autoincrement": false
 				},
 				"refresh_token": {
 					"name": "refresh_token",
-					"type": "varchar(1024)",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": false
+					"notNull": false,
+					"autoincrement": false
 				},
 				"token_expires_at": {
 					"name": "token_expires_at",
-					"type": "timestamp with time zone",
+					"type": "integer",
 					"primaryKey": false,
-					"notNull": false
+					"notNull": false,
+					"autoincrement": false
 				},
 				"created_at": {
 					"name": "created_at",
-					"type": "timestamp with time zone",
+					"type": "integer",
 					"primaryKey": false,
 					"notNull": true,
-					"default": "now()"
+					"autoincrement": false,
+					"default": "(unixepoch() * 1000)"
 				}
 			},
 			"indexes": {
 				"auth_discord_id_unique": {
 					"name": "auth_discord_id_unique",
-					"columns": [
-						{
-							"expression": "subject_type",
-							"isExpression": false,
-							"asc": true,
-							"nulls": "last"
-						},
-						{
-							"expression": "discord_id",
-							"isExpression": false,
-							"asc": true,
-							"nulls": "last"
-						}
-					],
-					"isUnique": true,
-					"concurrently": false,
-					"method": "btree",
-					"with": {}
+					"columns": ["subject_type", "discord_id"],
+					"isUnique": true
 				},
 				"auth_discord_subject_idx": {
 					"name": "auth_discord_subject_idx",
-					"columns": [
-						{
-							"expression": "subject_type",
-							"isExpression": false,
-							"asc": true,
-							"nulls": "last"
-						},
-						{
-							"expression": "subject_id",
-							"isExpression": false,
-							"asc": true,
-							"nulls": "last"
-						}
-					],
-					"isUnique": false,
-					"concurrently": false,
-					"method": "btree",
-					"with": {}
+					"columns": ["subject_type", "subject_id"],
+					"isUnique": false
 				}
 			},
 			"foreignKeys": {},
 			"compositePrimaryKeys": {},
 			"uniqueConstraints": {},
-			"policies": {},
-			"checkConstraints": {},
-			"isRLSEnabled": false
+			"checkConstraints": {
+				"auth_discord_subject_type": {
+					"name": "auth_discord_subject_type",
+					"value": "\"auth_discord\".\"subject_type\" IN ('user', 'admin')"
+				}
+			}
 		},
-		"public.auth_email": {
+		"auth_email": {
 			"name": "auth_email",
-			"schema": "",
 			"columns": {
 				"id": {
 					"name": "id",
-					"type": "varchar(21)",
+					"type": "text",
 					"primaryKey": true,
-					"notNull": true
+					"notNull": true,
+					"autoincrement": false
 				},
 				"subject_type": {
 					"name": "subject_type",
-					"type": "subject_type",
-					"typeSchema": "public",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": true
+					"notNull": true,
+					"autoincrement": false
 				},
 				"subject_id": {
 					"name": "subject_id",
-					"type": "varchar(21)",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": true
+					"notNull": true,
+					"autoincrement": false
 				},
 				"email": {
 					"name": "email",
-					"type": "varchar(320)",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": true
+					"notNull": true,
+					"autoincrement": false
 				},
 				"password_hashed": {
 					"name": "password_hashed",
-					"type": "varchar(256)",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": true
+					"notNull": true,
+					"autoincrement": false
 				},
 				"verified": {
 					"name": "verified",
-					"type": "boolean",
+					"type": "integer",
 					"primaryKey": false,
 					"notNull": true,
+					"autoincrement": false,
 					"default": false
 				},
 				"created_at": {
 					"name": "created_at",
-					"type": "timestamp with time zone",
+					"type": "integer",
 					"primaryKey": false,
 					"notNull": true,
-					"default": "now()"
+					"autoincrement": false,
+					"default": "(unixepoch() * 1000)"
 				}
 			},
 			"indexes": {
 				"auth_email_email_unique": {
 					"name": "auth_email_email_unique",
-					"columns": [
-						{
-							"expression": "subject_type",
-							"isExpression": false,
-							"asc": true,
-							"nulls": "last"
-						},
-						{
-							"expression": "email",
-							"isExpression": false,
-							"asc": true,
-							"nulls": "last"
-						}
-					],
-					"isUnique": true,
-					"concurrently": false,
-					"method": "btree",
-					"with": {}
+					"columns": ["subject_type", "email"],
+					"isUnique": true
 				},
 				"auth_email_subject_idx": {
 					"name": "auth_email_subject_idx",
-					"columns": [
-						{
-							"expression": "subject_type",
-							"isExpression": false,
-							"asc": true,
-							"nulls": "last"
-						},
-						{
-							"expression": "subject_id",
-							"isExpression": false,
-							"asc": true,
-							"nulls": "last"
-						}
-					],
-					"isUnique": false,
-					"concurrently": false,
-					"method": "btree",
-					"with": {}
+					"columns": ["subject_type", "subject_id"],
+					"isUnique": false
 				}
 			},
 			"foreignKeys": {},
 			"compositePrimaryKeys": {},
 			"uniqueConstraints": {},
-			"policies": {},
-			"checkConstraints": {},
-			"isRLSEnabled": false
+			"checkConstraints": {
+				"auth_email_subject_type": {
+					"name": "auth_email_subject_type",
+					"value": "\"auth_email\".\"subject_type\" IN ('user', 'admin')"
+				}
+			}
 		},
-		"public.config": {
+		"config": {
 			"name": "config",
-			"schema": "",
 			"columns": {
 				"key": {
 					"name": "key",
-					"type": "varchar(128)",
+					"type": "text",
 					"primaryKey": true,
-					"notNull": true
+					"notNull": true,
+					"autoincrement": false
 				},
 				"value": {
 					"name": "value",
-					"type": "varchar(4096)",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": true
+					"notNull": true,
+					"autoincrement": false
 				}
 			},
 			"indexes": {},
 			"foreignKeys": {},
 			"compositePrimaryKeys": {},
 			"uniqueConstraints": {},
-			"policies": {},
-			"checkConstraints": {},
-			"isRLSEnabled": false
+			"checkConstraints": {}
 		},
-		"public.items": {
+		"items": {
 			"name": "items",
-			"schema": "",
 			"columns": {
 				"id": {
 					"name": "id",
-					"type": "varchar(21)",
+					"type": "text",
 					"primaryKey": true,
-					"notNull": true
+					"notNull": true,
+					"autoincrement": false
 				},
 				"public_id": {
 					"name": "public_id",
-					"type": "varchar(24)",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": true
+					"notNull": true,
+					"autoincrement": false
 				},
 				"user_id": {
 					"name": "user_id",
-					"type": "varchar(21)",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": true
+					"notNull": true,
+					"autoincrement": false
 				},
 				"data": {
 					"name": "data",
-					"type": "jsonb",
+					"type": "text",
 					"primaryKey": false,
 					"notNull": true,
-					"default": "'{}'::jsonb"
+					"autoincrement": false,
+					"default": "'{}'"
 				},
 				"created_at": {
 					"name": "created_at",
-					"type": "timestamp with time zone",
+					"type": "integer",
 					"primaryKey": false,
 					"notNull": true,
-					"default": "now()"
+					"autoincrement": false,
+					"default": "(unixepoch() * 1000)"
 				},
 				"modified_at": {
 					"name": "modified_at",
-					"type": "timestamp with time zone",
+					"type": "integer",
 					"primaryKey": false,
 					"notNull": true,
-					"default": "now()"
+					"autoincrement": false,
+					"default": "(unixepoch() * 1000)"
 				}
 			},
 			"indexes": {
+				"items_public_id_unique": {
+					"name": "items_public_id_unique",
+					"columns": ["public_id"],
+					"isUnique": true
+				},
 				"items_user_idx": {
 					"name": "items_user_idx",
-					"columns": [
-						{
-							"expression": "user_id",
-							"isExpression": false,
-							"asc": true,
-							"nulls": "last"
-						},
-						{
-							"expression": "created_at",
-							"isExpression": false,
-							"asc": true,
-							"nulls": "last"
-						}
-					],
-					"isUnique": false,
-					"concurrently": false,
-					"method": "btree",
-					"with": {}
+					"columns": ["user_id", "created_at"],
+					"isUnique": false
 				}
 			},
 			"foreignKeys": {
@@ -686,95 +575,97 @@
 				}
 			},
 			"compositePrimaryKeys": {},
-			"uniqueConstraints": {
-				"items_public_id_unique": {
-					"name": "items_public_id_unique",
-					"nullsNotDistinct": false,
-					"columns": ["public_id"]
-				}
-			},
-			"policies": {},
-			"checkConstraints": {},
-			"isRLSEnabled": false
+			"uniqueConstraints": {},
+			"checkConstraints": {}
 		},
-		"public.logs": {
+		"logs": {
 			"name": "logs",
-			"schema": "",
 			"columns": {
 				"id": {
 					"name": "id",
-					"type": "varchar(21)",
+					"type": "text",
 					"primaryKey": true,
-					"notNull": true
+					"notNull": true,
+					"autoincrement": false
 				},
 				"timestamp": {
 					"name": "timestamp",
-					"type": "timestamp with time zone",
+					"type": "integer",
 					"primaryKey": false,
-					"notNull": true
+					"notNull": true,
+					"autoincrement": false
 				},
 				"level": {
 					"name": "level",
-					"type": "log_level",
-					"typeSchema": "public",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": true
+					"notNull": true,
+					"autoincrement": false
 				},
 				"context": {
 					"name": "context",
-					"type": "jsonb",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": true
+					"notNull": true,
+					"autoincrement": false
 				},
 				"data": {
 					"name": "data",
-					"type": "jsonb",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": true
+					"notNull": true,
+					"autoincrement": false
 				}
 			},
 			"indexes": {},
 			"foreignKeys": {},
 			"compositePrimaryKeys": {},
 			"uniqueConstraints": {},
-			"policies": {},
-			"checkConstraints": {},
-			"isRLSEnabled": false
+			"checkConstraints": {
+				"logs_level": {
+					"name": "logs_level",
+					"value": "\"logs\".\"level\" IN ('debug', 'info', 'warn', 'error')"
+				}
+			}
 		},
-		"public.sessions": {
+		"sessions": {
 			"name": "sessions",
-			"schema": "",
 			"columns": {
 				"id": {
 					"name": "id",
-					"type": "varchar(21)",
+					"type": "text",
 					"primaryKey": true,
-					"notNull": true
+					"notNull": true,
+					"autoincrement": false
 				},
 				"user_id": {
 					"name": "user_id",
-					"type": "varchar(21)",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": true
+					"notNull": true,
+					"autoincrement": false
 				},
 				"extra_privileges": {
 					"name": "extra_privileges",
-					"type": "jsonb",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": false
+					"notNull": false,
+					"autoincrement": false
 				},
 				"last_login_at": {
 					"name": "last_login_at",
-					"type": "timestamp with time zone",
+					"type": "integer",
 					"primaryKey": false,
-					"notNull": false
+					"notNull": false,
+					"autoincrement": false
 				},
 				"created_at": {
 					"name": "created_at",
-					"type": "timestamp with time zone",
+					"type": "integer",
 					"primaryKey": false,
 					"notNull": true,
-					"default": "now()"
+					"autoincrement": false,
+					"default": "(unixepoch() * 1000)"
 				}
 			},
 			"indexes": {},
@@ -791,129 +682,92 @@
 			},
 			"compositePrimaryKeys": {},
 			"uniqueConstraints": {},
-			"policies": {},
-			"checkConstraints": {},
-			"isRLSEnabled": false
+			"checkConstraints": {}
 		},
-		"public.tokens": {
+		"tokens": {
 			"name": "tokens",
-			"schema": "",
 			"columns": {
 				"id": {
 					"name": "id",
-					"type": "varchar(21)",
+					"type": "text",
 					"primaryKey": true,
-					"notNull": true
+					"notNull": true,
+					"autoincrement": false
 				},
 				"user_id": {
 					"name": "user_id",
-					"type": "varchar(21)",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": false
+					"notNull": false,
+					"autoincrement": false
 				},
 				"admin_id": {
 					"name": "admin_id",
-					"type": "varchar(21)",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": false
+					"notNull": false,
+					"autoincrement": false
 				},
 				"purpose": {
 					"name": "purpose",
-					"type": "token_purpose",
-					"typeSchema": "public",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": true
+					"notNull": true,
+					"autoincrement": false
 				},
 				"token_hash": {
 					"name": "token_hash",
-					"type": "varchar(128)",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": true
+					"notNull": true,
+					"autoincrement": false
 				},
 				"expires_at": {
 					"name": "expires_at",
-					"type": "timestamp with time zone",
+					"type": "integer",
 					"primaryKey": false,
-					"notNull": true
+					"notNull": true,
+					"autoincrement": false
 				},
 				"attempts": {
 					"name": "attempts",
 					"type": "integer",
 					"primaryKey": false,
 					"notNull": true,
+					"autoincrement": false,
 					"default": 0
 				},
 				"payload": {
 					"name": "payload",
-					"type": "jsonb",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": false
+					"notNull": false,
+					"autoincrement": false
 				},
 				"created_at": {
 					"name": "created_at",
-					"type": "timestamp with time zone",
+					"type": "integer",
 					"primaryKey": false,
 					"notNull": true,
-					"default": "now()"
+					"autoincrement": false,
+					"default": "(unixepoch() * 1000)"
 				}
 			},
 			"indexes": {
 				"tokens_hash_idx": {
 					"name": "tokens_hash_idx",
-					"columns": [
-						{
-							"expression": "token_hash",
-							"isExpression": false,
-							"asc": true,
-							"nulls": "last"
-						}
-					],
-					"isUnique": false,
-					"concurrently": false,
-					"method": "btree",
-					"with": {}
+					"columns": ["token_hash"],
+					"isUnique": false
 				},
 				"tokens_user_purpose_idx": {
 					"name": "tokens_user_purpose_idx",
-					"columns": [
-						{
-							"expression": "user_id",
-							"isExpression": false,
-							"asc": true,
-							"nulls": "last"
-						},
-						{
-							"expression": "purpose",
-							"isExpression": false,
-							"asc": true,
-							"nulls": "last"
-						}
-					],
-					"isUnique": false,
-					"concurrently": false,
-					"method": "btree",
-					"with": {}
+					"columns": ["user_id", "purpose"],
+					"isUnique": false
 				},
 				"tokens_admin_purpose_idx": {
 					"name": "tokens_admin_purpose_idx",
-					"columns": [
-						{
-							"expression": "admin_id",
-							"isExpression": false,
-							"asc": true,
-							"nulls": "last"
-						},
-						{
-							"expression": "purpose",
-							"isExpression": false,
-							"asc": true,
-							"nulls": "last"
-						}
-					],
-					"isUnique": false,
-					"concurrently": false,
-					"method": "btree",
-					"with": {}
+					"columns": ["admin_id", "purpose"],
+					"isUnique": false
 				}
 			},
 			"foreignKeys": {
@@ -938,217 +792,193 @@
 			},
 			"compositePrimaryKeys": {},
 			"uniqueConstraints": {},
-			"policies": {},
 			"checkConstraints": {
+				"tokens_purpose": {
+					"name": "tokens_purpose",
+					"value": "\"tokens\".\"purpose\" IN ('verify_email', 'reset_password', 'magic_login', 'email_change')"
+				},
 				"tokens_exclusive_arc": {
 					"name": "tokens_exclusive_arc",
-					"value": "num_nonnulls(\"tokens\".\"user_id\", \"tokens\".\"admin_id\") = 1"
+					"value": "(\"tokens\".\"user_id\" IS NOT NULL) + (\"tokens\".\"admin_id\" IS NOT NULL) = 1"
 				}
-			},
-			"isRLSEnabled": false
+			}
 		},
-		"public.users": {
+		"users": {
 			"name": "users",
-			"schema": "",
 			"columns": {
 				"id": {
 					"name": "id",
-					"type": "varchar(21)",
+					"type": "text",
 					"primaryKey": true,
-					"notNull": true
+					"notNull": true,
+					"autoincrement": false
 				},
 				"public_id": {
 					"name": "public_id",
-					"type": "varchar(24)",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": true
+					"notNull": true,
+					"autoincrement": false
 				},
 				"username": {
 					"name": "username",
-					"type": "varchar(64)",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": true
+					"notNull": true,
+					"autoincrement": false
 				},
 				"display_name": {
 					"name": "display_name",
-					"type": "varchar(128)",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": false
+					"notNull": false,
+					"autoincrement": false
 				},
 				"avatar": {
 					"name": "avatar",
-					"type": "varchar(512)",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": false
+					"notNull": false,
+					"autoincrement": false
 				},
 				"avatar_source": {
 					"name": "avatar_source",
-					"type": "avatar_source",
-					"typeSchema": "public",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": false
+					"notNull": false,
+					"autoincrement": false
 				},
 				"email": {
 					"name": "email",
-					"type": "varchar(320)",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": false
+					"notNull": false,
+					"autoincrement": false
 				},
 				"email_verified": {
 					"name": "email_verified",
-					"type": "boolean",
+					"type": "integer",
 					"primaryKey": false,
 					"notNull": true,
+					"autoincrement": false,
 					"default": false
 				},
 				"role": {
 					"name": "role",
-					"type": "user_role",
-					"typeSchema": "public",
+					"type": "text",
 					"primaryKey": false,
 					"notNull": true,
+					"autoincrement": false,
 					"default": "'user'"
 				},
 				"banned_at": {
 					"name": "banned_at",
-					"type": "timestamp with time zone",
+					"type": "integer",
 					"primaryKey": false,
-					"notNull": false
+					"notNull": false,
+					"autoincrement": false
 				},
 				"terms_accepted_at": {
 					"name": "terms_accepted_at",
-					"type": "timestamp with time zone",
+					"type": "integer",
 					"primaryKey": false,
-					"notNull": false
+					"notNull": false,
+					"autoincrement": false
 				},
 				"terms_version": {
 					"name": "terms_version",
-					"type": "varchar(32)",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": false
+					"notNull": false,
+					"autoincrement": false
 				},
 				"privacy_version": {
 					"name": "privacy_version",
-					"type": "varchar(32)",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": false
+					"notNull": false,
+					"autoincrement": false
 				},
 				"acceptable_use_version": {
 					"name": "acceptable_use_version",
-					"type": "varchar(32)",
+					"type": "text",
 					"primaryKey": false,
-					"notNull": false
+					"notNull": false,
+					"autoincrement": false
 				},
 				"username_change_at": {
 					"name": "username_change_at",
-					"type": "timestamp with time zone",
+					"type": "integer",
 					"primaryKey": false,
 					"notNull": true,
-					"default": "now()"
+					"autoincrement": false,
+					"default": "(unixepoch() * 1000)"
 				},
 				"last_login_at": {
 					"name": "last_login_at",
-					"type": "timestamp with time zone",
+					"type": "integer",
 					"primaryKey": false,
-					"notNull": false
+					"notNull": false,
+					"autoincrement": false
 				},
 				"created_at": {
 					"name": "created_at",
-					"type": "timestamp with time zone",
+					"type": "integer",
 					"primaryKey": false,
 					"notNull": true,
-					"default": "now()"
+					"autoincrement": false,
+					"default": "(unixepoch() * 1000)"
 				},
 				"deleted_at": {
 					"name": "deleted_at",
-					"type": "timestamp with time zone",
+					"type": "integer",
 					"primaryKey": false,
-					"notNull": false
+					"notNull": false,
+					"autoincrement": false
 				}
 			},
 			"indexes": {
+				"users_public_id_unique": {
+					"name": "users_public_id_unique",
+					"columns": ["public_id"],
+					"isUnique": true
+				},
 				"users_username_unique": {
 					"name": "users_username_unique",
-					"columns": [
-						{
-							"expression": "username",
-							"isExpression": false,
-							"asc": true,
-							"nulls": "last"
-						}
-					],
+					"columns": ["username"],
 					"isUnique": true,
-					"where": "\"users\".\"deleted_at\" is null",
-					"concurrently": false,
-					"method": "btree",
-					"with": {}
+					"where": "\"users\".\"deleted_at\" is null"
 				},
 				"users_email_unique": {
 					"name": "users_email_unique",
-					"columns": [
-						{
-							"expression": "email",
-							"isExpression": false,
-							"asc": true,
-							"nulls": "last"
-						}
-					],
+					"columns": ["email"],
 					"isUnique": true,
-					"where": "\"users\".\"deleted_at\" is null",
-					"concurrently": false,
-					"method": "btree",
-					"with": {}
+					"where": "\"users\".\"deleted_at\" is null"
 				}
 			},
 			"foreignKeys": {},
 			"compositePrimaryKeys": {},
-			"uniqueConstraints": {
-				"users_public_id_unique": {
-					"name": "users_public_id_unique",
-					"nullsNotDistinct": false,
-					"columns": ["public_id"]
+			"uniqueConstraints": {},
+			"checkConstraints": {
+				"users_role": {
+					"name": "users_role",
+					"value": "\"users\".\"role\" IN ('user', 'admin')"
+				},
+				"users_avatar_source": {
+					"name": "users_avatar_source",
+					"value": "\"users\".\"avatar_source\" IS NULL OR \"users\".\"avatar_source\" IN ('discord', 'upload')"
 				}
-			},
-			"policies": {},
-			"checkConstraints": {},
-			"isRLSEnabled": false
+			}
 		}
 	},
-	"enums": {
-		"public.avatar_source": {
-			"name": "avatar_source",
-			"schema": "public",
-			"values": ["discord", "upload"]
-		},
-		"public.log_level": {
-			"name": "log_level",
-			"schema": "public",
-			"values": ["debug", "info", "warn", "error"]
-		},
-		"public.subject_type": {
-			"name": "subject_type",
-			"schema": "public",
-			"values": ["user", "admin"]
-		},
-		"public.token_purpose": {
-			"name": "token_purpose",
-			"schema": "public",
-			"values": ["verify_email", "reset_password", "magic_login", "email_change"]
-		},
-		"public.user_role": {
-			"name": "user_role",
-			"schema": "public",
-			"values": ["user", "admin"]
-		}
-	},
-	"schemas": {},
-	"sequences": {},
-	"roles": {},
-	"policies": {},
 	"views": {},
+	"enums": {},
 	"_meta": {
-		"columns": {},
 		"schemas": {},
-		"tables": {}
+		"tables": {},
+		"columns": {}
+	},
+	"internal": {
+		"indexes": {}
 	}
 }

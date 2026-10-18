@@ -63,154 +63,74 @@ secrets; fork PRs have no live preview. URLs appear in the Actions summary.
 three Workers; it does not delete shared data. Previews do not run migrations.
 Schema-dependent previews need an additive schema change staged first.
 
-`migrate-check.yml` validates schema changes on an ephemeral Neon branch of
-production data before merging, then deletes the temporary branch.
+## D1 and account setup
 
-## Repository enforcement
+Create separate databases for staging and production in the consuming app's own
+Cloudflare account. Use `pnpm wrangler d1 create <your-app-staging>` and repeat for
+production. Their UUIDs are resource identifiers, not database passwords. Keep
+account/domain IDs out of starter defaults.
 
-Keep the default branch `main`, require PRs, `quality-gates`, and `migrate-check`,
-and disable force pushes/deletion. The production GitHub Environment should allow
-only `main`; staging must also allow PR refs for previews. Keep environment secrets
-separate and never make production credentials available to preview jobs.
+Set `D1_DATABASE_ID` separately in the **Staging Cloudflare** and **Prod Cloudflare**
+GitHub Environments. `scripts/configure-d1.mjs` rejects placeholder IDs and wires
+the selected environment's ID before deployment. Previews use staging's ID.
+The API alone has a native `DB` binding. Local Wrangler uses the committed
+placeholder IDs for local persistence and never reaches a remote database.
 
-## Secrets — two kinds
+Create KV namespaces and R2 buckets and configure the matching bindings in
+`packages/api/wrangler.jsonc`. Choose distinct production/staging resources when
+you need isolation. Create the GitHub Environments before enabling deployments.
 
-Deployment uses **two** distinct secret stores; don't confuse them.
+| Setting                 | Kind / scope                    | Purpose                                           |
+| ----------------------- | ------------------------------- | ------------------------------------------------- |
+| `DEPLOY_WORKERS=true`   | repository variable             | Enable staging, preview and promotion deployments |
+| `D1_DATABASE_ID`        | environment variable            | This environment's actual D1 UUID                 |
+| `CLOUDFLARE_ACCOUNT_ID` | environment variable            | Consuming app's Cloudflare account                |
+| `KV_NAMESPACE_ID`       | environment variable            | API KV namespace                                  |
+| `EMAIL_FROM`            | environment variable            | Verified sender address                           |
+| `PROD_DOMAIN`           | production environment variable | App domain, without protocol                      |
+| `CLOUDFLARE_API_TOKEN`  | environment secret              | Deployment token                                  |
+| `JWT_SECRET`            | environment secret              | Shared by API, web and admin in this environment  |
+| `TOKEN_ENCRYPTION_KEY`  | environment secret              | API encryption key                                |
+| `DISCORD_CLIENT_SECRET` | optional environment secret     | OAuth provider secret                             |
 
-1. **GitHub Actions secrets/variables** — the single source of truth. Per-env
-   secrets live in **GitHub Environments** (`Prod Cloudflare` / `Staging Cloudflare`):
-   - `CLOUDFLARE_API_TOKEN` (env-scoped) — deploy + secret-sync auth.
-   - `DATABASE_URL` (env-scoped) — the env's Neon branch, **pooled** (`-pooler`); the
-     api Worker's runtime connection (synced onto the Worker).
-   - `DATABASE_URL_DIRECT` (env-scoped) — the same branch **unpooled** (no `-pooler`);
-     used only by the migrate step (Neon recommends a direct connection for DDL /
-     advisory locks). Optional — the migrate step falls back to `DATABASE_URL`.
-   - `JWT_SECRET`, `TOKEN_ENCRYPTION_KEY` (env-scoped) — synced onto the Workers.
-   - `DISCORD_CLIENT_SECRET` (env-scoped, optional) — synced if set.
-   - `NEON_API_KEY` (repo-level) — `migrate-check` + the DB-backed `test.yml` jobs.
-   - `JWT_SECRET` (repo-level) — the e2e job (`test.yml` runs with no environment, so
-     it can't see the env-scoped one).
-   - Variables: `DEPLOY_WORKERS`, `RUN_MIGRATIONS` (gates), `NEON_PROJECT_ID`,
-     `NEON_PROD_BRANCH` (migrate-check fork parent).
+Give the deployment token only the account/zone permissions needed for these
+resources: Worker scripts and routes, D1 edit, KV, R2 and Email Sending edit.
+Runtime D1 uses a native binding; do not copy the deployment token into the Worker.
+Complete [Email Sending onboarding](email-sending.md) for your verified domain
+before enabling sends. Local setup uses the mock.
 
-2. **Cloudflare Worker runtime secrets** — read by the worker at runtime, but you
-   **never run `wrangler secret put` by hand**. They live in the **same GitHub
-   Environments** above; `deploy-workers.yml` syncs them onto the Workers on every deploy
-   (`scripts/sync-cloudflare-worker-secrets.sh`, run after deploy so the first run
-   can auto-create the Workers; idempotent thereafter). The division is load-bearing:
-   - **`JWT_SECRET`** — pushed to **all three** workers from one env secret, so it's
-     **identical within an env** (api signs cookies; web/admin verify). Rotating it
-     is a global logout. Use a **different** value per env (a staging leak shouldn't
-     forge prod cookies).
-   - **api only** — `DATABASE_URL`, `TOKEN_ENCRYPTION_KEY`, and provider secrets
-     (`DISCORD_CLIENT_SECRET`). Web/admin **never** get a
-     data-touching secret.
-   - **Previews** receive staging secrets through the same sync script.
-     Rotate secrets in the GitHub Environment and redeploy affected Workers.
+`deploy-workers.yml` applies committed D1 migrations with `--remote` to the selected
+environment before deploying the API. Web/admin use API service bindings and only
+hold the shared JWT secret. Production promotion reuses a main SHA already
+deployed successfully to staging. Configure production's GitHub Environment to
+accept only `main`.
 
-## Cookie domains: prod vs staging
+`migrate-check.yml` runs without credentials: validate the Drizzle journal and
+apply local migrations twice. It proves fresh-database setup and repeat safety;
+it does not prove compatibility with every possible production data set. Use
+additive migrations, backup/Time Travel, and a reviewed data migration for
+non-additive changes.
 
-`COOKIE_ORIGIN` (api) / `PUBLIC_COOKIE_ORIGIN` (web/admin) control the cookie
-`Domain` + `Secure` attributes (see `packages/shared/src/cookie.ts`):
+## Bootstrap an admin
 
-- **Prod** = `.ak5web.com` (dotted, HTTPS) → `Domain` is set (cookies span
-  `api`/`www`/`admin` subdomains → cross-app SSO) **and** `Secure`.
-- **Staging** = `""` (empty) → **host-only + Secure** cookies. `workers.dev` is on
-  the Public Suffix List, so sibling `*-stg.ak5.workers.dev` hosts **can't** share
-  a cookie domain — each staging app logs in independently. This is fine for
-  staging/previews; the api and the Playwright `api` project work fully.
-
-  > Opt-in for true staging SSO: give staging its own custom subdomains
-  > (`*-staging.ak5web.com`) and set the staging `COOKIE_ORIGIN`/`PUBLIC_COOKIE_ORIGIN`
-  > to `.ak5web.com`.
-
-## Database migrations
-
-Migrations run automatically in `deploy-workers.yml` (gated on `vars.RUN_MIGRATIONS`)
-against the env's `DATABASE_URL`, **before** the api ships — schema always leads
-code. `migrate-check.yml` proves they apply cleanly against a fork of prod data
-before merge. See [../development/contributing.md](../development/contributing.md)
-for the additive-only / 2-PR-drop / 3-PR-rename policy.
-
-## Compatibility flags
-
-All three workers share a `compatibility_date` and the **`nodejs_compat`** flag in
-`wrangler.jsonc`. Keep these aligned across the workers when you bump them.
-
-## One-time setup checklist
-
-Run **once** after forking (and rebranding), with `gh` and `wrangler` logged in
-(use your own account and resource values).
-After this, the push-to-deploy flow above is fully automatic.
+For local D1:
 
 ```sh
-# 1. Bindings + IDs
-wrangler kv namespace create ak5     # → KV namespace id
-wrangler r2 bucket create ak5
-#   Wire the KV id either by pasting it into packages/api/wrangler.jsonc, OR (best
-#   for the auto-synced example, since a sync would overwrite the file):
-#     gh variable set KV_NAMESPACE_ID --body <id>   # deploy-workers.yml injects it
-#   account_id auto-detects from a single-account API token (else set it in
-#   wrangler.jsonc / CLOUDFLARE_ACCOUNT_ID). Confirm the staging vars use your
-#   workers.dev subdomain.
-
-# 2. GitHub Environments + secrets/variables. These ARE the Worker runtime
-#    secrets — deploy-workers.yml syncs them onto the Workers; there is NO manual
-#    `wrangler secret put`. CLOUDFLARE_API_TOKEN scope: Workers Scripts:Edit,
-#    Routes:Edit, Zone:Edit.
-gh api -X PUT repos/:owner/:repo/environments/"Prod Cloudflare"
-gh api -X PUT repos/:owner/:repo/environments/"Staging Cloudflare"
-for ENV in "Prod Cloudflare" "Staging Cloudflare"; do
-  gh secret set CLOUDFLARE_API_TOKEN --env "$ENV"
-  gh secret set DATABASE_URL         --env "$ENV"   # pooled (-pooler) — Worker runtime
-  gh secret set DATABASE_URL_DIRECT  --env "$ENV"   # same branch, unpooled — migrations
-  openssl rand -hex 32 | gh secret set JWT_SECRET           --env "$ENV"   # one per env
-  openssl rand -hex 32 | gh secret set TOKEN_ENCRYPTION_KEY --env "$ENV"
-  # optional (synced only if set):
-  # gh secret set DISCORD_CLIENT_SECRET --env "$ENV"
-done
-gh secret set NEON_API_KEY                              # repo-level (migrate-check + test.yml)
-openssl rand -hex 32 | gh secret set JWT_SECRET         # repo-level (e2e job only)
-gh variable set CLOUDFLARE_ACCOUNT_ID --body <your-account-id>
-gh variable set EMAIL_FROM --body <verified-sender-address>
-gh variable set DEPLOY_WORKERS   --body true
-gh variable set RUN_MIGRATIONS   --body true
-gh variable set NEON_PROJECT_ID  --body <neon-project-id>
-gh variable set NEON_PROD_BRANCH --body <neon-prod-branch-id>   # migrate-check fork parent
-gh variable set PROD_DOMAIN      --body <your-domain>           # prod binds api/www/admin/cdn.<it> as
-#   custom domains on that Cloudflare zone; deploy-workers.yml seds __PROD_DOMAIN__ in wrangler.jsonc. Omit
-#   for staging-only (workers.dev). Must be a zone on your CF account.
-
-# 3. (No manual Worker secrets — deploy-workers.yml runs
-#    scripts/sync-cloudflare-worker-secrets.sh, pushing the GitHub Environment
-#    secrets above onto the Workers on every deploy.)
-
-# 4. Protect main: require PRs, quality-gates and migrate-check.
-#    In GitHub Settings → Environments → Prod Cloudflare, restrict deployment
-#    branches to main. Keep Staging Cloudflare available to trusted PR previews.
-
+pnpm create:admin admin@example.com adminname '<strong-password>'
 ```
 
-Until `vars.DEPLOY_WORKERS` is `true`, the deploy/preview workflows no-op, so a
-fresh fork stays green before Cloudflare is wired.
+For a configured remote D1 database, authenticate Wrangler, set `D1_DATABASE_ID`
+to the intended target, and add `--remote` to the same command. The flag is
+explicit and uses the target D1 remote binding. Protect shell history and never
+commit a bootstrap password. The script creates or updates the email credential
+with an atomic batch and prints only the public ID. It is operator tooling, not
+a public bootstrap endpoint.
 
-## Transactional email readiness
+## Observability and recovery
 
-Before the first deployment, follow [Cloudflare Email Sending setup](email-sending.md):
-Workers Paid, manual Email Sending enablement, the consuming app's verified sender
-domain, and Email Sending:Edit on the deployment token are required. The API's
-native `EMAIL` binding is declared separately for production and staging; no
-runtime email API token is synced. `EMAIL_FROM` is a GitHub repository/Environment variable holding the verified
-sender address; deploy and preview workflows use it for `PUBLIC_EMAIL_FROM` and
-`allowed_sender_addresses`, independently of the website domain. Staging sends real
-mail unless explicitly mocked or restricted. Verify an application message in a
-consented inbox on staging and production before considering the migration live.
-
-## Native mobile application
-
-The mobile app is Svelte on Symbiote Native / React Native. Backend PR previews
-and staging/production promotion follow the Worker workflows above. Mobile
-binaries are distributed separately with app-specific signing and store setup;
-release launch commands require explicit HTTPS `MOBILE_API_URL` and `MOBILE_WEB_URL`. CI produces
-JavaScript bundle checks for both platforms, not store-ready signed binaries.
-See [native setup](../../packages/mobile/README.md).
+Watch Worker logs and D1 query metrics. Index high-volume filters so billed rows
+read/written reflect the intended access path. Review current
+[D1 limits](https://developers.cloudflare.com/d1/platform/limits/) and
+[Time Travel](https://developers.cloudflare.com/d1/reference/time-travel/).
+Worker rollback does not roll back the database schema. Keep forward-compatible
+migrations and a separate database recovery plan.

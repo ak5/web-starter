@@ -15,7 +15,6 @@ jobs:
     if: ${{ vars.DEPLOY_WORKERS == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    # GitHub Environment scopes the Cloudflare token + DATABASE_URL per env.
     environment: ${{ inputs.target == 'production' && 'Prod Cloudflare' || 'Staging Cloudflare' }}
     env:
       CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
@@ -27,6 +26,11 @@ jobs:
       - uses: jdx/mise-action@v2
       - run: nice -n 10 pnpm install --frozen-lockfile
       - run: nice -n 10 pnpm -w run build:libs
+
+      - name: Configure D1 binding
+        env:
+          D1_DATABASE_ID: ${{ vars.D1_DATABASE_ID }}
+        run: node scripts/configure-d1.mjs
 
       - name: Wire verified email sender
         env:
@@ -57,16 +61,10 @@ jobs:
           sed -i "s|__PROD_DOMAIN__|${{ vars.PROD_DOMAIN }}|g" \
             packages/api/wrangler.jsonc packages/web/wrangler.jsonc packages/admin/wrangler.jsonc
 
-      # Apply pending Drizzle migrations BEFORE the api worker ships, so the
-      # schema always leads the code (expand/contract). Migrations use the DIRECT
-      # (unpooled) connection — Neon recommends bypassing the PgBouncer pooler for
-      # DDL / advisory locks; set DATABASE_URL_DIRECT to the non-`-pooler` URL.
-      # Falls back to the (pooled) DATABASE_URL if no direct URL is configured.
-      - name: Run DB migrations
-        if: ${{ vars.RUN_MIGRATIONS == 'true' }}
+      - name: Apply D1 migrations
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL_DIRECT || secrets.DATABASE_URL }}
-        run: nice -n 10 pnpm --filter @ak5/api db:migrate
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: nice -n 10 pnpm --filter @ak5/api exec wrangler d1 migrations apply DB --remote ${{ env.WENV }}
 
       - name: Configure build API origin
         run: |
@@ -104,7 +102,6 @@ jobs:
       - name: Sync Cloudflare Worker secrets
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           TOKEN_ENCRYPTION_KEY: ${{ secrets.TOKEN_ENCRYPTION_KEY }}
           DISCORD_CLIENT_SECRET: ${{ secrets.DISCORD_CLIENT_SECRET }}

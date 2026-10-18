@@ -10,7 +10,7 @@ const FIFTEEN_MIN_S = 15 * 60;
 
 /** Populate `c.var.db` for every request. */
 export const withDb = (): MiddlewareHandler<AppContext> => async (c, next) => {
-	c.set('db', db(c.env.DATABASE_URL));
+	c.set('db', db(c.env.DB));
 	await next();
 };
 
