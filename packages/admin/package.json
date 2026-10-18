@@ -1,0 +1,57 @@
+{
+	"name": "@ak5/admin",
+	"private": true,
+	"version": "0.0.1",
+	"type": "module",
+	"scripts": {
+		"dev": "vite dev --host ${DEV_HOST:-localhost} --port ${AK5_ADMIN_PORT:-8352}",
+		"build": "vite build",
+		"preview": "pnpm run build && wrangler pages dev",
+		"prepare": "svelte-kit sync || echo ''",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"format": "prettier --write .",
+		"format:check": "prettier --check .",
+		"lint": "prettier --check . && eslint --cache .",
+		"lint:nofmt": "eslint --cache .",
+		"lint:fix": "prettier --write . && eslint --cache --fix .",
+		"lint:fix:nofmt": "eslint --cache --fix .",
+		"gen": "wrangler types --env-file .env.example",
+		"cf-typegen": "pnpm gen"
+	},
+	"devDependencies": {
+		"@ak5/api": "workspace:*",
+		"@cloudflare/workers-types": "^5.20261015.1",
+		"@eslint/compat": "^1.4.1",
+		"@eslint/js": "^9.39.5",
+		"@sveltejs/adapter-cloudflare": "^8.0.1",
+		"@sveltejs/kit": "^3.1.0",
+		"@sveltejs/vite-plugin-svelte": "^7.3.1",
+		"@tailwindcss/forms": "^0.5.11",
+		"@tailwindcss/typography": "^0.5.20",
+		"@tailwindcss/vite": "^4.3.3",
+		"@types/node": "^24.19.2",
+		"daisyui": "^5.7.50",
+		"eslint": "^9.39.5",
+		"eslint-config-prettier": "^10.1.8",
+		"eslint-plugin-svelte": "^3.23.1",
+		"globals": "^16.5.0",
+		"prettier": "^3.9.10",
+		"prettier-plugin-svelte": "^3.5.2",
+		"prettier-plugin-tailwindcss": "^0.7.4",
+		"svelte": "^5.57.2",
+		"svelte-check": "^4.7.6",
+		"tailwindcss": "^4.3.3",
+		"typescript": "^6.0.3",
+		"typescript-eslint": "^8.71.2",
+		"vite": "^8.3.4",
+		"wrangler": "^4.151.0"
+	},
+	"dependencies": {
+		"@ak5/webui": "workspace:*",
+		"@lucide/svelte": "^0.525.0"
+	},
+	"imports": {
+		"#lib": "./src/lib/index.js",
+		"#lib/*": "./src/lib/*"
+	}
+}

@@ -1,0 +1,17 @@
+name: migrate-check
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  migrate-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v2
+      - run: nice -n 10 pnpm install --frozen-lockfile
+      - run: nice -n 10 pnpm --filter @ak5/api db:check
+      - run: nice -n 10 pnpm db:migrate
+      - run: nice -n 10 pnpm db:migrate

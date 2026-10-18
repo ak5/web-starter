@@ -1,0 +1,11 @@
+# Build artifacts
+.svelte-kit
+.wrangler
+build
+dist
+
+# Generated
+src/worker-configuration.d.ts
+
+# Static assets shouldn't be auto-formatted
+static

@@ -1,0 +1,74 @@
+name: test
+
+on:
+  workflow_call:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # The required status check. Keep this green to merge.
+  quality-gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v2
+      - run: nice -n 10 pnpm install --frozen-lockfile
+      - run: nice -n 10 pnpm -w run build:libs
+      - run: nice -n 10 pnpm format:check
+      - run: nice -n 10 pnpm --workspace-concurrency=1 -r lint:nofmt
+      - run: nice -n 10 pnpm audit:split
+      - run: nice -n 10 pnpm -w run check:docs
+      - run: nice -n 10 pnpm --workspace-concurrency=1 -r check
+      - run: nice -n 10 pnpm -w run test:unit
+      - run: nice -n 10 pnpm --workspace-concurrency=1 -r build
+
+  mobile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v2
+      - run: nice -n 10 pnpm install --frozen-lockfile
+      - run: nice -n 10 pnpm -w run build:libs
+      - run: nice -n 10 pnpm check:mobile
+      - run: nice -n 10 pnpm build:mobile
+
+  db-tests:
+    needs: quality-gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v2
+      - run: nice -n 10 pnpm install --frozen-lockfile
+      - run: nice -n 10 pnpm build:libs
+      - run: nice -n 10 pnpm test:db
+
+  e2e:
+    needs: [quality-gates, db-tests]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v2
+      - run: nice -n 10 pnpm install --frozen-lockfile
+      - run: nice -n 10 pnpm test:install
+      - run: nice -n 10 pnpm dev:init
+      - run: nice -n 10 pnpm db:migrate
+      - run: |
+          echo "127.0.0.1 api.ak5.localhost web.ak5.localhost admin.ak5.localhost mock.ak5.localhost preview.ak5.localhost" | sudo tee -a /etc/hosts
+      - run: nice -n 10 pnpm dev:auto &
+      - run: nice -n 10 pnpm test:preflight
+      - run: nice -n 10 pnpm test --workers=1
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
