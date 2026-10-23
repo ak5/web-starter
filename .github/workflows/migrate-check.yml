@@ -10,7 +10,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - uses: jdx/mise-action@v2
+      - uses: jdx/mise-action@v4
       - run: nice -n 10 pnpm install --frozen-lockfile
       - run: nice -n 10 pnpm --filter @ak5/api db:check
       - run: nice -n 10 pnpm db:migrate

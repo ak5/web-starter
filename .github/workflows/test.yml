@@ -18,7 +18,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - uses: jdx/mise-action@v2
+      - uses: jdx/mise-action@v4
       - run: nice -n 10 pnpm install --frozen-lockfile
       - run: nice -n 10 pnpm -w run build:libs
       - run: nice -n 10 pnpm format:check
@@ -34,7 +34,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - uses: jdx/mise-action@v2
+      - uses: jdx/mise-action@v4
       - run: nice -n 10 pnpm install --frozen-lockfile
       - run: nice -n 10 pnpm -w run build:libs
       - run: nice -n 10 pnpm check:mobile
@@ -46,7 +46,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - uses: jdx/mise-action@v2
+      - uses: jdx/mise-action@v4
       - run: nice -n 10 pnpm install --frozen-lockfile
       - run: nice -n 10 pnpm build:libs
       - run: nice -n 10 pnpm test:db
@@ -57,7 +57,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - uses: jdx/mise-action@v2
+      - uses: jdx/mise-action@v4
       - run: nice -n 10 pnpm install --frozen-lockfile
       - run: nice -n 10 pnpm test:install
       - run: nice -n 10 pnpm dev:init

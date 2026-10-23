@@ -40,7 +40,7 @@ jobs:
       PUBLIC_APP_URL: ${{ inputs.app_url }}
     steps:
       - uses: actions/checkout@v4
-      - uses: jdx/mise-action@v2
+      - uses: jdx/mise-action@v4
       - run: pnpm install --frozen-lockfile
       - name: Send one Cloudflare REST diagnostic email
         run: nice -n 10 pnpm email:test --real --to "$TEST_EMAIL_TO" --from "$PUBLIC_EMAIL_FROM" --app-url "$PUBLIC_APP_URL"
