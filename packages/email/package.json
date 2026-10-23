@@ -51,7 +51,7 @@
 		"globals": "^16.5.0",
 		"hono": "^4.13.13",
 		"prettier": "^3.9.10",
-		"react-email": "5.1.1",
+		"react-email": "6.11.3",
 		"tsx": "^4.23.15",
 		"typescript": "^5.9.3",
 		"typescript-eslint": "^8.71.2"
