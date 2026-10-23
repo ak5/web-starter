@@ -20,12 +20,12 @@
 		"@livestore/livestore": "0.5.0",
 		"@livestore/sync-cf": "0.5.0",
 		"@livestore/peer-deps": "0.5.0",
-		"effect": "4.0.3"
+		"effect": "4.0.5"
 	},
 	"devDependencies": {
 		"typescript": "^6.0.3",
 		"@eslint/js": "^9.39.5",
-		"typescript-eslint": "^8.71.2",
+		"typescript-eslint": "^8.72.0",
 		"eslint": "^9.39.5",
 		"eslint-config-prettier": "^10.1.8",
 		"prettier": "^3.9.10",
