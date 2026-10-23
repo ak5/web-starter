@@ -1,0 +1,31 @@
+{
+	"name": "@ak5/cli",
+	"private": true,
+	"version": "0.0.1",
+	"type": "module",
+	"scripts": {
+		"start": "tsx src/cli.ts",
+		"test:unit": "node --test --test-concurrency=1 --import tsx src/cli.test.ts",
+		"check": "tsc --noEmit",
+		"format": "prettier --write .",
+		"format:check": "prettier --check .",
+		"lint": "prettier --check . && eslint --cache .",
+		"lint:nofmt": "eslint --cache .",
+		"lint:fix": "prettier --write . && eslint --cache --fix .",
+		"lint:fix:nofmt": "eslint --cache --fix ."
+	},
+	"bin": {
+		"ak5": "./src/cli.ts"
+	},
+	"devDependencies": {
+		"@eslint/js": "^9.39.5",
+		"@types/node": "^24.19.2",
+		"eslint": "^9.39.5",
+		"eslint-config-prettier": "^10.1.8",
+		"globals": "^16.5.0",
+		"prettier": "^3.9.10",
+		"tsx": "^4.23.15",
+		"typescript": "^5.9.3",
+		"typescript-eslint": "^8.71.2"
+	}
+}

@@ -1,0 +1,112 @@
+name: deploy-workers
+on:
+  workflow_call:
+    inputs:
+      sha:
+        required: true
+        type: string
+      target:
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  deploy:
+    if: ${{ vars.DEPLOY_WORKERS == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: ${{ inputs.target == 'production' && 'Prod Cloudflare' || 'Staging Cloudflare' }}
+    env:
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      WENV: ${{ inputs.target == 'staging' && '--env staging' || '' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.sha }}
+      - uses: jdx/mise-action@v2
+      - run: nice -n 10 pnpm install --frozen-lockfile
+      - run: nice -n 10 pnpm -w run build:libs
+
+      - name: Configure D1 binding
+        env:
+          D1_DATABASE_ID: ${{ vars.D1_DATABASE_ID }}
+        run: node scripts/configure-d1.mjs
+
+      - name: Wire verified email sender
+        env:
+          EMAIL_FROM: ${{ vars.EMAIL_FROM }}
+        run: |
+          if ! [[ "$EMAIL_FROM" =~ ^[a-zA-Z0-9._+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
+            echo "::error::Set EMAIL_FROM to this app's verified sender address before deployment."
+            exit 1
+          fi
+          sed -i "s|__EMAIL_FROM__|$EMAIL_FROM|g" packages/api/wrangler.jsonc
+
+      # Per-project binding ids come from a GitHub variable so the committed
+      # wrangler.jsonc stays template-clean (and survives the example's auto-sync).
+      # Set vars.KV_NAMESPACE_ID to wire the api's KV binding at deploy time;
+      # leave it unset if you filled the id into wrangler.jsonc directly.
+      # (account_id auto-detects from a single-account API token.)
+      - name: Wire per-project binding ids
+        if: ${{ vars.KV_NAMESPACE_ID != '' }}
+        run: sed -i "s|REPLACE_WITH_KV_NAMESPACE_ID|${{ vars.KV_NAMESPACE_ID }}|g" packages/api/wrangler.jsonc
+
+      # Prod custom domain comes from a GitHub variable so the committed
+      # wrangler.jsonc stays domain-agnostic (and survives `pnpm rebrand`). Set
+      # vars.PROD_DOMAIN (e.g. example.com) → prod binds api/www/admin/cdn.<it> as
+      # custom domains on that Cloudflare zone. Staging stays on workers.dev.
+      - name: Wire prod domain
+        if: ${{ vars.PROD_DOMAIN != '' }}
+        run: |
+          sed -i "s|__PROD_DOMAIN__|${{ vars.PROD_DOMAIN }}|g" \
+            packages/api/wrangler.jsonc packages/web/wrangler.jsonc packages/admin/wrangler.jsonc
+
+      - name: Apply D1 migrations
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: nice -n 10 pnpm --filter @ak5/api exec wrangler d1 migrations apply DB --remote ${{ env.WENV }}
+
+      - name: Configure build API origin
+        run: |
+          node --input-type=module <<'JS' >> "$GITHUB_ENV"
+          import { readFileSync } from 'node:fs';
+          const config = JSON.parse(readFileSync('packages/web/wrangler.jsonc', 'utf8').replace(/^\s*\/\/.*$/gm, ''));
+          const vars = process.env.WENV ? config.env.staging.vars : config.vars;
+          console.log(`PUBLIC_API_URL=${vars.PUBLIC_API_URL}`);
+          console.log(`SMOKE_APP_URL=${vars.PUBLIC_APP_URL}`);
+          console.log(`SMOKE_ADMIN_URL=${vars.PUBLIC_ADMIN_URL}`);
+          JS
+
+      - name: Deploy API
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: nice -n 10 pnpm --filter @ak5/api exec wrangler deploy ${{ env.WENV }}
+
+      - name: Build web
+        run: nice -n 10 pnpm build:web
+      - name: Deploy Web
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: nice -n 10 pnpm --filter @ak5/web exec wrangler deploy ${{ env.WENV }}
+
+      - name: Build admin
+        run: nice -n 10 pnpm build:admin
+      - name: Deploy Admin
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: nice -n 10 pnpm --filter @ak5/admin exec wrangler deploy ${{ env.WENV }}
+
+      # Apply supplied GitHub secret overrides after Workers exist. Required keys
+      # without an override must already be configured on the Worker.
+      - name: Sync Cloudflare Worker secrets
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          TOKEN_ENCRYPTION_KEY: ${{ secrets.TOKEN_ENCRYPTION_KEY }}
+          DISCORD_CLIENT_SECRET: ${{ secrets.DISCORD_CLIENT_SECRET }}
+        run: bash scripts/sync-cloudflare-worker-secrets.sh ${{ env.WENV }}
+
+      - name: Check deployed frontend runtime
+        run: |
+          curl --fail --silent --show-error --retry 3 --retry-all-errors --retry-delay 2 "$SMOKE_APP_URL/login" -o /dev/null
+          curl --fail --silent --show-error --retry 3 --retry-all-errors --retry-delay 2 "$SMOKE_ADMIN_URL/login" -o /dev/null

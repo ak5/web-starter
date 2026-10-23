@@ -1,0 +1,34 @@
+{
+	"name": "@ak5/sync",
+	"version": "0.0.1",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./src/schema.ts",
+		"./client": "./src/client.ts",
+		"./status": "./src/status.ts"
+	},
+	"scripts": {
+		"check": "tsc --noEmit",
+		"format": "prettier --write .",
+		"format:check": "prettier --check .",
+		"lint:nofmt": "eslint .",
+		"lint:fix:nofmt": "eslint --fix .",
+		"test:unit": "node --test --import tsx src/status.test.mjs"
+	},
+	"dependencies": {
+		"@livestore/livestore": "0.5.0",
+		"@livestore/sync-cf": "0.5.0",
+		"@livestore/peer-deps": "0.5.0",
+		"effect": "4.0.3"
+	},
+	"devDependencies": {
+		"typescript": "^6.0.3",
+		"@eslint/js": "^9.39.5",
+		"typescript-eslint": "^8.71.2",
+		"eslint": "^9.39.5",
+		"eslint-config-prettier": "^10.1.8",
+		"prettier": "^3.9.10",
+		"globals": "^16.5.0"
+	}
+}

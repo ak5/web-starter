@@ -1,0 +1,19 @@
+@import 'tailwindcss';
+@plugin '@tailwindcss/typography';
+@plugin '@tailwindcss/forms';
+
+@plugin 'daisyui' {
+	themes:
+		light --default,
+		dark --prefersdark;
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@media (max-width: 640px) {
+	input,
+	textarea,
+	select {
+		font-size: 16px !important;
+	}
+}

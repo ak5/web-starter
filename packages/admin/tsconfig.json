@@ -1,0 +1,10 @@
+{
+	"extends": "$app/tsconfig",
+	"compilerOptions": {
+		"sourceMap": true,
+		"strict": true,
+		"jsx": "preserve",
+		"types": ["$app/types", "@cloudflare/workers-types"]
+	},
+	"include": ["src", "vite.config.ts"]
+}

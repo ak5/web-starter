@@ -1,0 +1,100 @@
+{
+	"name": "@ak5/mobile",
+	"version": "0.0.1",
+	"private": true,
+	"devDependencies": {
+		"@babel/core": "^7.25.2",
+		"@babel/preset-env": "^7.25.3",
+		"@babel/runtime": "^7.25.0",
+		"@react-native-community/cli": "20.1.0",
+		"@react-native-community/cli-platform-android": "20.1.0",
+		"@react-native-community/cli-platform-ios": "20.1.0",
+		"@react-native/babel-preset": "0.86.0",
+		"@react-native/codegen": "0.86.0",
+		"@react-native/gradle-plugin": "0.86.0",
+		"@react-native/metro-config": "0.86.0",
+		"@react-native/typescript-config": "0.86.0",
+		"@symbiote-native/css-parser": "0.5.3",
+		"@types/node": "^24.19.2",
+		"@types/react": "^19.2.0",
+		"@typescript-eslint/parser": "^8.70.0",
+		"eslint": "^9.39.5",
+		"eslint-plugin-svelte": "^3.23.0",
+		"prettier": "^3.9.1",
+		"prettier-plugin-svelte": "^3.5.2",
+		"svelte-check": "^4.0.0",
+		"typescript": "~6.0.0",
+		"@eslint/js": "^9.39.5",
+		"typescript-eslint": "^8.71.2",
+		"globals": "^16.5.0",
+		"eslint-config-prettier": "^10.1.8",
+		"@babel/plugin-transform-export-namespace-from": "7.29.7",
+		"@babel/plugin-transform-dynamic-import": "7.29.7",
+		"babel-plugin-transform-vite-meta-env": "1.0.3",
+		"hermes-compiler": "250829098.0.14"
+	},
+	"engines": {
+		"node": ">=22.13"
+	},
+	"scripts": {
+		"dev": "node scripts/metro.mjs",
+		"ios": "node scripts/run.mjs ios",
+		"android": "node scripts/run.mjs android",
+		"ios:release": "node scripts/run.mjs ios release",
+		"android:release": "node scripts/run.mjs android release",
+		"pods": "cd ios && bundle exec pod install",
+		"check": "svelte-check --tsconfig tsconfig.typecheck.json --fail-on-warnings",
+		"test:unit": "node --import tsx --test test/*.test.ts",
+		"bundle:ios": "node scripts/bundle.mjs ios",
+		"bundle:android": "node scripts/bundle.mjs android",
+		"format": "prettier --write . --ignore-unknown",
+		"format:check": "prettier --check . --ignore-unknown",
+		"lint:nofmt": "eslint .",
+		"lint:fix:nofmt": "eslint --fix .",
+		"postinstall": "symbiote-expo-link"
+	},
+	"dependencies": {
+		"@symbiote-native/android": "0.2.2",
+		"@symbiote-native/engine": "1.5.0",
+		"@symbiote-native/expo-modules-link": "0.6.0",
+		"@symbiote-native/secure-store": "3.0.3",
+		"@symbiote-native/svelte": "3.1.0",
+		"react": "19.2.3",
+		"react-native": "0.86.0",
+		"svelte": "5.57.2",
+		"hono": "^4.13.13",
+		"@ak5/api": "workspace:*",
+		"@ak5/shared": "workspace:*",
+		"esm-env": "1.2.2",
+		"expo-modules-autolinking": "57.0.13",
+		"expo-modules-core": "57.0.20",
+		"expo": "57.0.14",
+		"@livestore/livestore": "0.5.0",
+		"@livestore/adapter-expo": "0.5.0",
+		"@livestore/peer-deps": "0.5.0",
+		"@ak5/sync": "workspace:*",
+		"expo-sqlite": "57.0.1",
+		"expo-application": "57.0.2",
+		"expo-crypto": "57.0.1",
+		"fast-text-encoding": "1.0.6",
+		"expo-asset": "57.0.20",
+		"expo-constants": "57.0.22"
+	},
+	"type": "module",
+	"expo": {
+		"autolinking": {
+			"android": {
+				"buildFromSource": [
+					".*"
+				]
+			},
+			"exclude": [
+				"expo-file-system",
+				"expo-font",
+				"expo-keep-awake",
+				"@expo/dom-webview",
+				"@expo/log-box"
+			]
+		}
+	}
+}

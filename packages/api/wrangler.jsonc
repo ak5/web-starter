@@ -1,0 +1,65 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "ak5-api",
+	"main": "src/worker.ts",
+	"compatibility_date": "2025-03-19",
+	"compatibility_flags": ["nodejs_compat", "enable_request_signal"],
+	"durable_objects": { "bindings": [{ "name": "NOTES_SYNC", "class_name": "NotesSync" }] },
+	"migrations": [{ "tag": "v1-notes-sync", "new_sqlite_classes": ["NotesSync"] }],
+	"observability": { "enabled": true },
+	// Enable Cloudflare version preview URLs.
+	"preview_urls": true,
+	// Replace with your Cloudflare account id (or set CLOUDFLARE_ACCOUNT_ID).
+	// "account_id": "",
+	"routes": [{ "pattern": "api.__PROD_DOMAIN__", "custom_domain": true }],
+	"vars": {
+		"PUBLIC_API_URL": "https://api.__PROD_DOMAIN__",
+		"PUBLIC_APP_URL": "https://www.__PROD_DOMAIN__",
+		"PUBLIC_ADMIN_URL": "https://admin.__PROD_DOMAIN__",
+		"PUBLIC_EMAIL_FROM": "__EMAIL_FROM__",
+		"PUBLIC_R2_URL": "https://cdn.__PROD_DOMAIN__",
+		"COOKIE_ORIGIN": ".__PROD_DOMAIN__",
+		"DISCORD_CLIENT_ID": ""
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "ak5",
+			"database_id": "00000000-0000-0000-0000-000000000000",
+			"migrations_dir": "drizzle"
+		}
+	],
+	"send_email": [{ "name": "EMAIL", "allowed_sender_addresses": ["__EMAIL_FROM__"] }],
+	"r2_buckets": [{ "binding": "R2", "bucket_name": "ak5" }],
+	"kv_namespaces": [{ "binding": "KV", "id": "REPLACE_WITH_KV_NAMESPACE_ID" }],
+	// Hourly tick drives the expired-token purge in src/cron/jobs.ts.
+	"triggers": { "crons": ["0 * * * *"] },
+	// Named environments declare their own D1, email, KV and R2 bindings.
+	"env": {
+		"staging": {
+			"name": "ak5-api-stg",
+			"routes": [],
+			"durable_objects": { "bindings": [{ "name": "NOTES_SYNC", "class_name": "NotesSync" }] },
+			"vars": {
+				"PUBLIC_API_URL": "https://ak5-api-stg.ak5.workers.dev",
+				"PUBLIC_APP_URL": "https://ak5-web-stg.ak5.workers.dev",
+				"PUBLIC_ADMIN_URL": "https://ak5-admin-stg.ak5.workers.dev",
+				"PUBLIC_EMAIL_FROM": "__EMAIL_FROM__",
+				"PUBLIC_R2_URL": "https://cdn.__PROD_DOMAIN__",
+				"COOKIE_ORIGIN": "",
+				"DISCORD_CLIENT_ID": ""
+			},
+			"d1_databases": [
+				{
+					"binding": "DB",
+					"database_name": "ak5-stg",
+					"database_id": "00000000-0000-0000-0000-000000000001",
+					"migrations_dir": "drizzle"
+				}
+			],
+			"send_email": [{ "name": "EMAIL", "allowed_sender_addresses": ["__EMAIL_FROM__"] }],
+			"r2_buckets": [{ "binding": "R2", "bucket_name": "ak5" }],
+			"kv_namespaces": [{ "binding": "KV", "id": "REPLACE_WITH_KV_NAMESPACE_ID" }]
+		}
+	}
+}

@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+
+# Build artifacts
+dist/
+build/
+.svelte-kit/
+.wrangler/
+**/worker-configuration.d.ts
+
+# Test output
+test-results/
+playwright-report/
+coverage/
+
+# Local env + dev orchestration
+.env
+.env.*
+!.env.example
+.env.dev-slot
+mise.local.toml
+.caddy/
+.ak5-config/
+
+# Tooling caches
+.eslintcache
+.turbo/
+
+# OS / editor
+.DS_Store
+*.log
+
+# Scratch pad — contents never committed, dir kept
+tmp/*
+!tmp/.gitkeep
