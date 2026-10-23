@@ -1,0 +1,64 @@
+{
+	"name": "@ak5/api",
+	"private": true,
+	"version": "0.0.1",
+	"type": "module",
+	"main": "./dist/client-runtime.js",
+	"types": "./dist/client.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/client.d.ts",
+			"import": "./dist/client-runtime.js"
+		}
+	},
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"dev": "wrangler dev --ip ${DEV_HOST:-localhost} --port ${AK5_API_PORT:-8350} --env-file .env",
+		"dev:cron": "wrangler dev --test-scheduled --ip ${DEV_HOST:-localhost} --port ${AK5_API_PORT:-8350} --env-file .env",
+		"build": "tsc -p tsconfig.client.json && cp src/client-runtime.ts dist/client-runtime.js && sed -i.bak 's/: () => void//; s/: string//' dist/client-runtime.js && rm dist/client-runtime.js.bak",
+		"check": "tsc --noEmit && tsc -p tsconfig.scripts.json --noEmit",
+		"test:unit": "node --test --import tsx 'src/lib/**/*.test.ts'",
+		"format": "prettier --write .",
+		"format:check": "prettier --check .",
+		"lint": "prettier --check . && eslint --cache .",
+		"lint:nofmt": "eslint --cache .",
+		"lint:fix": "prettier --write . && eslint --cache --fix .",
+		"lint:fix:nofmt": "eslint --cache --fix .",
+		"db:generate": "drizzle-kit generate --config drizzle.config.ts",
+		"db:migrate": "wrangler d1 migrations apply DB --local",
+		"db:check": "drizzle-kit check --config drizzle.config.ts",
+		"create:admin": "tsx scripts/create-admin.ts",
+		"gen": "wrangler types --env-file .env.example",
+		"cf-typegen": "pnpm gen",
+		"db:migrate:staging": "wrangler d1 migrations apply DB --remote --env staging",
+		"db:migrate:prod": "wrangler d1 migrations apply DB --remote",
+		"test:db": "node --test --test-concurrency=1 --import tsx src/db/d1.test.ts src/routes/items.test.ts src/db/sync.test.ts"
+	},
+	"dependencies": {
+		"@ak5/email": "workspace:*",
+		"@ak5/shared": "workspace:*",
+		"@hono/zod-validator": "^0.9.1",
+		"drizzle-orm": "^0.45.4",
+		"hono": "^4.13.13",
+		"nanoid": "^6.0.2",
+		"worker-password-auth": "^1.0.0",
+		"zod": "^4.6.7",
+		"@livestore/sync-cf": "0.5.0",
+		"@livestore/peer-deps": "0.5.0"
+	},
+	"devDependencies": {
+		"@eslint/js": "^10.0.1",
+		"@types/node": "^26.6.5",
+		"drizzle-kit": "^0.31.11",
+		"eslint": "^10.13.0",
+		"eslint-config-prettier": "^10.1.8",
+		"globals": "^17.13.0",
+		"prettier": "^3.9.10",
+		"tsx": "^4.23.15",
+		"typescript": "npm:@typescript/typescript6@^6.0.2",
+		"typescript-eslint": "^8.72.0",
+		"wrangler": "^4.152.0"
+	}
+}

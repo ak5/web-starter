@@ -1,0 +1,20 @@
+[tools]
+lefthook = "2.2.2"
+node = "26.12.1"
+pnpm = "12.15.0"
+ruby = "4.0.8"
+java = "temurin-25.0.5+8.0.LTS"
+caddy = "2.11.7"
+# Used by `pnpm audit:split` (scripts/audit-split-boundaries.sh greps the tree).
+ripgrep = "15.2.0"
+
+[settings]
+jobs = 1
+
+[env]
+# Keep corepack from auto-pinning the packageManager field — mise owns the pnpm version.
+COREPACK_ENABLE_AUTO_PIN = "0"
+# Per-worktree CLI identity store (used by @ak5/cli).
+XDG_CONFIG_HOME = "{{config_root}}/.ak5-config"
+# Auto-load the current dev slot's generated port + URL env vars.
+_.file = ".env.dev-slot"

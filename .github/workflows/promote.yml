@@ -1,0 +1,33 @@
+name: promote-production
+on:
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: Full main commit SHA successfully deployed to staging
+        required: true
+        type: string
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: production
+  cancel-in-progress: false
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+        env:
+          PROMOTION_SHA: ${{ inputs.sha }}
+        with:
+          script: |
+            const { default: verify } = await import(`${process.env.GITHUB_WORKSPACE}/scripts/verify-promotion.mjs`);
+            await verify({ github, context, sha: process.env.PROMOTION_SHA });
+  deploy:
+    needs: verify
+    uses: ./.github/workflows/deploy-workers.yml
+    with:
+      sha: ${{ inputs.sha }}
+      target: production
+    secrets: inherit

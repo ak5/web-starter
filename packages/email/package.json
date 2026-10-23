@@ -1,0 +1,57 @@
+{
+	"name": "@ak5/email",
+	"private": true,
+	"version": "0.0.1",
+	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
+		},
+		"./templates/*": {
+			"types": "./dist/templates/*.d.ts",
+			"import": "./dist/templates/*.js"
+		}
+	},
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"build": "tsc",
+		"dev": "tsc --watch",
+		"check": "tsc --noEmit",
+		"format": "prettier --write .",
+		"format:check": "prettier --check .",
+		"lint": "prettier --check . && eslint --cache .",
+		"lint:nofmt": "eslint --cache .",
+		"lint:fix": "prettier --write . && eslint --cache --fix .",
+		"lint:fix:nofmt": "eslint --cache --fix .",
+		"dev:preview": "PORT=${AK5_PREVIEW_PORT:-8354} tsx scripts/preview.ts",
+		"dev:mock": "PORT=${AK5_MOCK_PORT:-8355} tsx scripts/mock-server.ts",
+		"test:unit": "node --test --test-concurrency=1 --import tsx src/send.test.ts scripts/rest-send.test.ts",
+		"test:send": "tsx scripts/send-test.ts",
+		"preview": "pnpm dev:preview",
+		"mock": "pnpm dev:mock"
+	},
+	"dependencies": {
+		"react": "19.3.1",
+		"react-dom": "19.3.1",
+		"react-email": "6.11.3"
+	},
+	"devDependencies": {
+		"@eslint/js": "^10.0.1",
+		"@hono/node-server": "^2.1.5",
+		"@types/react": "^19.3.0",
+		"eslint": "^10.13.0",
+		"eslint-config-prettier": "^10.1.8",
+		"globals": "^17.13.0",
+		"hono": "^4.13.13",
+		"prettier": "^3.9.10",
+		"tsx": "^4.23.15",
+		"typescript": "npm:@typescript/typescript6@^6.0.2",
+		"typescript-eslint": "^8.72.0",
+		"@react-email/ui": "6.11.3"
+	}
+}

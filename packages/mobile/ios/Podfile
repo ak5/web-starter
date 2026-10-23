@@ -1,0 +1,33 @@
+require File.join(File.dirname(`node --print "require.resolve('expo/package.json')"`), "scripts/autolinking")
+require Pod::Executable.execute_command('node', ['-p',
+  'require.resolve("react-native/scripts/react_native_pods.rb", {paths: [process.argv[1]]})', __dir__]).strip
+
+platform :ios, [min_ios_version_supported.to_f, 16.4].max.to_s
+prepare_react_native_project!
+
+linkage = ENV['USE_FRAMEWORKS']
+if linkage != nil
+  Pod::UI.puts "Configuring Pod with #{linkage}ally linked Frameworks".green
+  use_frameworks! :linkage => linkage.to_sym
+end
+
+target 'Ak5Mobile' do
+  use_native_modules!
+
+  use_expo_modules!
+
+  use_react_native!(
+    :path => '../node_modules/react-native',
+    :app_path => "#{Pod::Config.instance.installation_root}/.."
+  )
+
+  post_install do |installer|
+    react_native_post_install(
+      installer,
+      '../node_modules/react-native',
+      :mac_catalyst_enabled => false,
+    )
+    # Keep Xcode settings independent of pnpm's versioned store directory.
+    ReactNativePodsUtils.set_build_setting(installer, build_setting: 'REACT_NATIVE_PATH', value: '${PODS_ROOT}/../../node_modules/react-native')
+  end
+end

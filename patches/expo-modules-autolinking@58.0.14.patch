@@ -1,0 +1,10 @@
+diff --git a/android/expo-gradle-plugin/build.gradle.kts b/android/expo-gradle-plugin/build.gradle.kts
+index e73cc12127e7c6b87bade314c8dcc2acfb92d508..8aa9ba8ea3b5afae31685c2e01b5b69fdc30d71b 100644
+--- a/android/expo-gradle-plugin/build.gradle.kts
++++ b/android/expo-gradle-plugin/build.gradle.kts
+@@ -1,4 +1,4 @@
+ plugins {
+-  kotlin("jvm") version "2.2.21" apply false
++  kotlin("jvm") version "2.4.20" apply false
+   id("java-gradle-plugin")
+ }

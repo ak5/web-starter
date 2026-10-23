@@ -1,0 +1,19 @@
+name: migrate-check
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  migrate-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
+        with:
+          install_args: node pnpm caddy lefthook ripgrep
+      - run: nice -n 10 pnpm install --frozen-lockfile
+      - run: nice -n 10 pnpm --filter @ak5/api db:check
+      - run: nice -n 10 pnpm db:migrate
+      - run: nice -n 10 pnpm db:migrate
