@@ -335,8 +335,8 @@ importers:
         specifier: 57.0.13
         version: 57.0.13(typescript@6.0.3)
       expo-modules-core:
-        specifier: 57.0.20
-        version: 57.0.20(react-native@0.86.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.86.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.2.3))(react@19.2.3)
+        specifier: 58.0.23
+        version: 58.0.23(react-native@0.86.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.86.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.2.3))(react@19.2.3)
       expo-sqlite:
         specifier: 57.0.1
         version: 57.0.1(expo@57.0.14)(react-native@0.86.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.86.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.2.3))(react@19.2.3)
@@ -2042,6 +2042,28 @@ packages:
 
   '@expo/metro@56.0.2':
     resolution: {integrity: sha512-Ld5AeYMCCDa8bLeWhfuLbZFFjlV3f6ORqyPz2glGh6RltIngMuLf9BTC2yvHFjkKuGxL5SynijmA8xmNNWn5iA==}
+
+  '@expo/modules-macros-linux-arm64@0.21.0':
+    resolution: {integrity: sha512-et6K38xG21MBiYGrSfLlh3pD8ZuWkUrg7O1fdQxuLUvmFggb/C1ddo29SHLguJ+5Hjl+6J+ncEgpIWt6pQZjIw==}
+    cpu: [arm64]
+    os: [linux]
+    libc: [glibc]
+
+  '@expo/modules-macros-linux-x64@0.21.0':
+    resolution: {integrity: sha512-p/vMS+FrWTvk+um3+8fd7/3VBJQxnPu8SjXGu4zs8lYPWaVOfpyjE80ziDW/KEOUyueT/U9DEzxX8JE/uDDdUg==}
+    cpu: [x64]
+    os: [linux]
+    libc: [glibc]
+
+  '@expo/modules-macros-win32-arm64@0.21.0':
+    resolution: {integrity: sha512-u2+LDxUKqKvos5dTnZn37Pbp6gMmdGG566dh9fO8gWrS5qcoxBDuNeeB0ZXwrfmhhiL7JtT4AhH5FO7NP8dsfQ==}
+    cpu: [arm64]
+    os: [win32]
+
+  '@expo/modules-macros-win32-x64@0.21.0':
+    resolution: {integrity: sha512-MPtZ6mYFJBs7aKfs5PZ9HikyXxn9OnxzObRkCM4vedRLwJ6mEPRaZEzWUyi9MS2SUVU7Lt4oQZPNp+gjTVEZkw==}
+    cpu: [x64]
+    os: [win32]
 
   '@expo/osascript@2.8.1':
     resolution: {integrity: sha512-SCi+6q6uOkGhiAn6AIP/OPFgaIq/iKD2oYpnAOg2rShHStJ8ey7wyT127RbOaZXmlcY/62rHOX1WiiMnD8u/BA==}
@@ -4565,10 +4587,28 @@ packages:
       react-native-worklets:
         optional: true
 
+  expo-modules-core@58.0.23:
+    resolution: {integrity: sha512-jsINDwUJ1ddCGMTQAROPnBHIvCyLFZNJcGT/3iFP5LcP+01edie2ZBx44NEYIPmQLb3Vnz8sC3rKouwo7vj2gQ==}
+    peerDependencies:
+      react: '*'
+      react-native: '*'
+      react-native-worklets: '>=0.13.0'
+    peerDependenciesMeta:
+      react-native-worklets:
+        optional: true
+
   expo-modules-jsi@57.1.2:
     resolution: {integrity: sha512-DYhBwO0fqcKIUma4jF16zRDP/m6ZbawEZbo4eX3gdekREIFqrrz8HKWXydgNUqOyOQcUkdrkZatxi2I9+V6E8g==}
     peerDependencies:
       react-native: '*'
+
+  expo-modules-jsi@58.0.16:
+    resolution: {integrity: sha512-+UwXQVGBJDmwCe2MgkeVLdMIXmUjCcmMakRrtlAmA5I7WwAt5QYcbVi3u7Cae9X12xKet9IpXzzJRPz5zM32LA==}
+    peerDependencies:
+      react-native: '*'
+
+  expo-modules-macros@0.21.0:
+    resolution: {integrity: sha512-dCzN+IH3ss9audf0tvDPgwEuQJZ0WvlC60SfUDFhms8Gal1cXkYpyU7epTH2lj+ipGqghrXXjp+fmyo5wDX+YQ==}
 
   expo-secure-store@57.0.1:
     resolution: {integrity: sha512-tLa1VmSadOq19mA/dwkl99RbHyjLE0T1qqBYMY3/OsguZTI+rlrDy/DDJjupqlVtmr95hD7o1pYqx5aL+B4YMA==}
@@ -8495,6 +8535,18 @@ snapshots:
       - supports-color
       - utf-8-validate
 
+  '@expo/modules-macros-linux-arm64@0.21.0':
+    optional: true
+
+  '@expo/modules-macros-linux-x64@0.21.0':
+    optional: true
+
+  '@expo/modules-macros-win32-arm64@0.21.0':
+    optional: true
+
+  '@expo/modules-macros-win32-x64@0.21.0':
+    optional: true
+
   '@expo/osascript@2.8.1':
     dependencies:
       '@expo/spawn-async': 1.8.0
@@ -11254,6 +11306,14 @@ snapshots:
       react: 19.2.3
       react-native: 0.86.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.86.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.2.3)
 
+  expo-modules-core@58.0.23(react-native@0.86.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.86.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.2.3))(react@19.2.3):
+    dependencies:
+      expo-modules-jsi: 58.0.16(react-native@0.86.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.86.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.2.3))
+      expo-modules-macros: 0.21.0
+      invariant: 2.2.4
+      react: 19.2.3
+      react-native: 0.86.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.86.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.2.3)
+
   expo-modules-jsi@57.1.2(react-native@0.86.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.86.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.2.3)):
     dependencies:
       react-native: 0.86.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@5.9.3))(@react-native/metro-config@0.86.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.2.3)
@@ -11261,6 +11321,17 @@ snapshots:
   expo-modules-jsi@57.1.2(react-native@0.86.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.86.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.2.3)):
     dependencies:
       react-native: 0.86.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.86.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.2.3)
+
+  expo-modules-jsi@58.0.16(react-native@0.86.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.86.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.2.3)):
+    dependencies:
+      react-native: 0.86.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.86.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.2.3)
+
+  expo-modules-macros@0.21.0:
+    optionalDependencies:
+      '@expo/modules-macros-linux-arm64': 0.21.0
+      '@expo/modules-macros-linux-x64': 0.21.0
+      '@expo/modules-macros-win32-arm64': 0.21.0
+      '@expo/modules-macros-win32-x64': 0.21.0
 
   expo-secure-store@57.0.1(expo@57.0.14):
     dependencies:
