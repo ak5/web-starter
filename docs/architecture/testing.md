@@ -20,6 +20,9 @@ bindings disabled and no local environment files loaded. It applies migrations
 to an empty D1 database and disposes of the runtime afterward. There are no
 provider credentials or test-skipping environment variables.
 
+Secret-sync unit tests use a fake Wrangler command to verify overrides, retained
+Worker keys, and failure when a required key is absent from both locations.
+
 For Playwright, run `pnpm dev:init` once, `pnpm db:migrate`, then `pnpm dev:auto`.
 Read `.env.dev-slot`; `pnpm test:preflight` verifies reachability. Reuse an existing
 stack if it is yours and reachable. Tests create unique accounts and use the local

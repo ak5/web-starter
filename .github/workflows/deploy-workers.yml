@@ -96,9 +96,8 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: nice -n 10 pnpm --filter @ak5/admin exec wrangler deploy ${{ env.WENV }}
 
-      # Push the GitHub Environment secrets onto the Workers (the source of truth
-      # for runtime secrets). Runs after deploy so the first run can auto-create
-      # the Workers; idempotent on every subsequent deploy.
+      # Apply supplied GitHub secret overrides after Workers exist. Required keys
+      # without an override must already be configured on the Worker.
       - name: Sync Cloudflare Worker secrets
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

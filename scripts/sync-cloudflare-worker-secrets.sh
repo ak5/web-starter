@@ -1,15 +1,13 @@
 #!/usr/bin/env bash
-# Sync GitHub-environment secrets into Cloudflare Worker secrets. The GitHub
-# Environments (Prod Cloudflare / Staging Cloudflare) are the canonical source
-# of truth; CI (.github/workflows/deploy-workers.yml) pushes them onto the Workers on
-# every deploy. Values come from the caller's env, never from disk.
+# Apply GitHub-environment secret overrides and retain existing Worker secrets.
+# Required secrets must exist in either location. Values come from the caller's
+# env, never from disk; existing Worker values are never read back.
 #
 #   bash scripts/sync-cloudflare-worker-secrets.sh [--env staging]
 #
 # Run AFTER the deploy step: `wrangler secret put` targets an existing Worker,
 # and the deploy is what creates it on the first run. Re-running is idempotent
-# (secret put overwrites), so every deploy reconciles the Workers to the GitHub
-# environment.
+# (secret put overwrites). Omitted required values are verified on the Worker.
 #
 # Secret ownership (see CLAUDE.md): the api owns every data-touching secret;
 # web/admin hold only JWT_SECRET (to verify sessions). JWT_SECRET MUST match
@@ -33,7 +31,12 @@ put_secret() { # <pnpm-package> <SECRET_NAME> <required|optional>
 	local pkg="$1" name="$2" req="$3" val="${!2-}"
 	if [[ -z "$val" ]]; then
 		if [[ "$req" == required ]]; then
-			echo "Missing required GitHub environment secret: $name" >&2
+			if pnpm --filter "$pkg" exec wrangler secret list "${wenv[@]}" |
+				node -e 'let data=""; process.stdin.on("data", chunk => data += chunk); process.stdin.on("end", () => process.exit(JSON.parse(data).some(secret => secret.name === process.argv[1]) ? 0 : 1));' "$name"; then
+				echo "Keeping configured Worker secret: $name"
+				return
+			fi
+			echo "Missing required secret: $name (configure the Worker or GitHub environment)" >&2
 			exit 1
 		fi
 		echo "Skipping optional Worker secret: $name (not set in this environment)"

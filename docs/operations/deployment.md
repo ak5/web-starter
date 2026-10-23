@@ -101,7 +101,12 @@ before enabling sends. Local setup uses the mock.
 
 `deploy-workers.yml` applies committed D1 migrations with `--remote` to the selected
 environment before deploying the API. Web/admin use API service bindings and only
-hold the shared JWT secret. Production promotion reuses a main SHA already
+hold the shared JWT secret. GitHub environment secrets override Worker values on
+deploy. When an override is absent, deployment verifies that each required secret
+already exists and keeps its value. This preserves sessions and encrypted data
+when deployment ownership moves between repositories. The JWT must match across
+all three Workers; secret names alone do not prove matching values. Production
+promotion reuses a main SHA already
 deployed successfully to staging. Configure production's GitHub Environment to
 accept only `main`.
 
