@@ -22,6 +22,10 @@ merge or collaborative editor. Materializers replay that order identically on
 every client. Keep published event names and materializers stable; follow
 [LiveStore's schema guidance](https://docs.livestore.dev/) for application changes.
 
+The pending indicator includes writes awaiting local persistence and events
+awaiting server acknowledgement. The shared status subscription reads the pinned
+LiveStore version's leader sync state; recheck it when upgrading LiveStore.
+
 The API exports `NotesSync`, using the official Cloudflare sync provider with
 `storage: { _tag: 'd1', binding: 'DB' }`. D1 stores the event log in LiveStore-managed
 `eventlog_*` tables. A SQLite Durable Object per store coordinates ordering; this
@@ -62,6 +66,9 @@ those headers. This starter has no offline page cache: loading the web shell fro
 scratch still requires a connection. Browser storage eviction can remove local,
 unsynced changes.
 
+Sync retries initial server contact after network failures and timeouts, so a
+store reopened offline can send its queue when connectivity returns.
+
 Native caches the last authenticated viewer alongside its session in secure
 storage. A network failure during restore permits reopening that user's local
 notes; an explicit server rejection clears the session. Cached identity never
@@ -93,5 +100,6 @@ LiveStore or Expo.
 
 `pnpm test:db` checks store authorization and event validation against disposable
 D1. `pnpm test --project=web --workers=1` covers browser SQLite persistence,
-offline commits, reconnection, cross-device edits/deletion, and account isolation.
+offline commits retained across reload before syncing, reconnection, cross-device
+edits/deletion, and account isolation.
 These use the local mock email transport, not live recipients.

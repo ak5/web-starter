@@ -48,7 +48,7 @@
 		"test:report": "playwright show-report",
 		"test:install": "playwright install --with-deps chromium",
 		"test:preflight": "pnpm tsx scripts/preflight.ts",
-		"test:unit": "node --test scripts/preflight.test.mjs scripts/init.test.mjs && node --test --import tsx packages/webui/src/lib/sveltekit-handle.test.ts && node scripts/verify-promotion.mjs && node scripts/configure-preview.mjs --test && node scripts/configure-d1.mjs --test && pnpm --filter @ak5/cli test:unit && pnpm --filter @ak5/email test:unit && pnpm --filter @ak5/shared test:unit && pnpm --filter @ak5/api test:unit && pnpm --filter @ak5/mobile test:unit",
+		"test:unit": "node --test scripts/preflight.test.mjs scripts/init.test.mjs && node --test --import tsx packages/webui/src/lib/sveltekit-handle.test.ts && node scripts/verify-promotion.mjs && node scripts/configure-preview.mjs --test && node scripts/configure-d1.mjs --test && pnpm --filter @ak5/cli test:unit && pnpm --filter @ak5/email test:unit && pnpm --filter @ak5/shared test:unit && pnpm --filter @ak5/api test:unit && pnpm --filter @ak5/mobile test:unit && pnpm --filter @ak5/sync test:unit",
 		"check:mobile": "pnpm --filter @ak5/mobile check && pnpm --filter @ak5/mobile test:unit",
 		"gen": "pnpm -r --if-present --parallel run gen",
 		"cf-typegen": "pnpm gen",

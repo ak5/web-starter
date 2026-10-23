@@ -40,9 +40,11 @@ Preview and production smoke tests are separate from the local test suites.
 
 ## Local-first notes
 
+Unit tests in `@ak5/sync` check that pending changes remain visible until server
+acknowledgement, including after local SQLite persistence.
 D1 integration tests cover sync ownership, session expiry, deleted/banned users,
 and event validation. The web notes Playwright test uses separate browser
-contexts to check offline writes, OPFS persistence after reload, reconnection,
+contexts to check offline writes, unsynced OPFS persistence after reload, reconnection,
 cross-device updates/deletion, and account isolation through the real sync
 endpoint. See [local-first notes](local-first.md).
 

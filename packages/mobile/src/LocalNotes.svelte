@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { subscribeNotesSync } from '@ak5/sync/status';
 	import { FlatList } from '@symbiote-native/svelte';
 	import { randomUUID } from 'expo-crypto';
 	import { createStorePromise } from '@livestore/livestore';
@@ -38,8 +39,8 @@
 				const rows = opened.subscribe(notesQuery, (value) => {
 					notes = value;
 				});
-				const status = opened.subscribeSyncStatus((value) => {
-					pending = value.pendingCount;
+				const status = subscribeNotesSync(opened, (value) => {
+					pending = value;
 				});
 				dispose = () => {
 					rows();

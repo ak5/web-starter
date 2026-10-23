@@ -37,7 +37,8 @@ test('local SQLite notes persist offline and sync across devices with account is
 		await a.goto(`${webUrl}/notes`);
 		await expect(a.getByRole('button', { name: 'Add note' })).toBeEnabled({ timeout: 45_000 });
 		await connected;
-		await first.route('**/sync*', (route) => route.abort('internetdisconnected'));
+		const syncEndpoint = (url: URL) => /^\/sync\/?$/.test(url.pathname);
+		await first.route(syncEndpoint, (route) => route.abort('internetdisconnected'));
 		await first.setOffline(true);
 		await a.getByRole('textbox', { name: 'Note text' }).fill('Written offline');
 		await a.getByRole('button', { name: 'Add note' }).click();
@@ -45,7 +46,27 @@ test('local SQLite notes persist offline and sync across devices with account is
 		await expect(a.getByRole('status').first()).toContainText('waiting to sync');
 
 		await first.setOffline(false);
-		await first.unroute('**/sync*');
+		await first.unroute(syncEndpoint);
+		let releaseSync = () => {};
+		const stalledSync = new Promise<void>((resolve) => {
+			releaseSync = resolve;
+		});
+		await first.route(syncEndpoint, async (route) => {
+			await stalledSync;
+			await route.continue().catch(() => {});
+		});
+		const handshakeTimeout = a.waitForEvent('requestfailed', {
+			predicate: (request) =>
+				syncEndpoint(new URL(request.url())) &&
+				request.postData()?.includes('SyncHttpRpc.Ping') === true,
+			timeout: 45_000
+		});
+		await a.reload();
+		await expect(a.getByText('Written offline', { exact: true })).toBeVisible({ timeout: 30_000 });
+		await expect(a.getByRole('status').first()).toContainText('waiting to sync');
+		await handshakeTimeout;
+		await first.unroute(syncEndpoint);
+		releaseSync();
 		await expect(a.getByText('No pending changes', { exact: true })).toBeVisible({
 			timeout: 30_000
 		});
