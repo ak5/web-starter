@@ -83,3 +83,10 @@ Environment banner browser checks cover dismissal, reappearance after client
 navigation and reload, and shared web/admin rendering. Promotion self-checks
 exercise all four hosted-dev/staging profiles and reject wrong-SHA, expired,
 failed, skipped and untrusted deployment qualifications.
+
+Project-creation tests clone a disposable local Git fixture and verify branding,
+website-only defaults, independent Git history, bootstrap cleanup and mobile
+restoration. Mobile-profile tests check preservation of source/local files,
+web configuration, native patch registrations, Dependabot entries, links and
+conflict rejection. CI only runs the native bundle job when the mobile package
+is in the active workspace.

@@ -127,6 +127,7 @@ Never deploy production directly.
 - **`@ak5/email`** — Better Svelte Email templates + native Cloudflare sender. Vite
   compiles the server bundle; TypeScript emits declarations. Mock email server +
   Svelte template preview in dev.
+- **`@ak5/create-web-starter`** — Dependency-free project creator, runnable from the GitHub package subdirectory.
 - **`@ak5/cli`** — Dev CLI wrapping the api endpoints. Run via `pnpm cli`.
 
 To add a third frontend persona, follow `docs/development/add-a-persona.md` — the
@@ -135,12 +136,18 @@ split generalizes to N SvelteKit apps over one API worker.
 ## Native mobile
 
 - **`@ak5/mobile`** — Svelte 5 on Symbiote Native / React Native for iOS and Android.
-  Lives in `packages/mobile`, inside the pnpm workspace. Use native primitives,
+  When enabled, lives in `packages/mobile`, inside the pnpm workspace. Use native primitives,
   Svelte runes, the typed Hono client, and `@symbiote-native/secure-store`.
   Web components and DOM APIs do not run in the native renderer.
 - `pnpm dev:app` picks a free Metro port; `pnpm app:ios` / `pnpm app:android`
   use that port. Read the package's `.env.dev-slot`.
 - See [mobile setup](packages/mobile/README.md) for native toolchains and API URLs.
+
+`pnpm mobile disable` removes mobile source and native configuration, preserving
+local files under ignored `tmp/`. `pnpm mobile enable` downloads the pinned
+starter source and applies application branding. Keep `.starter-template.json`
+and disabled-profile `.starter-mobile.json` versioned. See
+[project profiles](docs/development/start-project.md).
 
 ## Public IDs — no sequential PKs in APIs
 

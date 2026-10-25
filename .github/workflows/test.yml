@@ -14,10 +14,19 @@ concurrency:
 jobs:
   # The required status check. Keep this green to merge.
   quality-gates:
+    outputs:
+      mobile: ${{ steps.features.outputs.mobile }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - id: features
+        run: |
+          if test -f packages/mobile/package.json; then
+            echo "mobile=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "mobile=false" >> "$GITHUB_OUTPUT"
+          fi
       - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
         with:
           install_args: node pnpm caddy lefthook ripgrep
@@ -34,6 +43,8 @@ jobs:
       - run: nice -n 10 pnpm --workspace-concurrency=1 -r build
 
   mobile:
+    needs: quality-gates
+    if: needs.quality-gates.outputs.mobile == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:

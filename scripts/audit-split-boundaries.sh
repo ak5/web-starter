@@ -37,7 +37,8 @@ check_present() {
 }
 
 WEB_SRC=(packages/web/src packages/admin/src)
-FRONTEND_SRC=("${WEB_SRC[@]}" packages/mobile/src packages/mobile/App.svelte)
+FRONTEND_SRC=("${WEB_SRC[@]}")
+if [ -d packages/mobile ]; then FRONTEND_SRC+=(packages/mobile/src packages/mobile/App.svelte); fi
 
 # --- Package boundaries -------------------------------------------------------
 
@@ -46,10 +47,13 @@ FRONTEND_SRC=("${WEB_SRC[@]}" packages/mobile/src packages/mobile/App.svelte)
 check_absent "frontends import @ak5/api type-only (no runtime import)" \
 	"^[[:space:]]*import +(?!type )[^;]*from +['\"]@ak5/api" "${FRONTEND_SRC[@]}"
 
+if [ -d packages/mobile ]; then
 # Native runtime imports must avoid Worker-only JWT initialization.
 check_absent "mobile imports shared runtime through native-safe subpaths" \
     "^[[:space:]]*import +(?!type )[^;]*from +['\"]@ak5/shared['\"]" \
     packages/mobile/src packages/mobile/App.svelte
+
+fi
 
 # Frontends reach shared behavior through @ak5/webui, not direct @ak5/shared.
 check_absent "frontends do not import @ak5/shared directly (use @ak5/webui)" \

@@ -74,7 +74,8 @@ and no data secrets — only `JWT_SECRET`, and only to verify cookies.
 
 ## Native mobile
 
-`@ak5/mobile` lives in `packages/mobile`. Svelte 5 components render native views
+`@ak5/mobile` lives in `packages/mobile` when enabled; website-only projects
+remove its source and restore it later from a pinned starter commit. See [project profiles](../development/start-project.md). Svelte 5 components render native views
 through Symbiote Native over React Native's Fabric/Hermes runtime. The app uses
 the same type-only `WebApiType` and pure shared contracts; browser components
 from `@ak5/webui` remain specific to SvelteKit. Metro resolves the compiled

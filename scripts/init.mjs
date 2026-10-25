@@ -16,87 +16,22 @@
  *
  * Pure Node (no shell, no deps) so it runs the same on macOS/Linux/Windows.
  */
-import { existsSync, readdirSync, statSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { setMobileEnabled } from './mobile.mjs';
+import { makeReplacer, walkReplace } from './branding.mjs';
 
 const ROOT = process.cwd();
 const SELF = 'scripts/init.mjs'; // skip self during replace; deleted at the end
 
-// Directories/files never rewritten (VCS + build + local artifacts).
-const IGNORE = new Set([
-	'.git',
-	'tmp',
-	'node_modules',
-	'.svelte-kit',
-	'.wrangler',
-	'dist',
-	'build',
-	'.turbo',
-	'.eslintcache',
-	'.caddy',
-	'.ak5-config',
-	'.env',
-	'.env.dev-slot',
-	'test-results',
-	'playwright-report',
-	'worker-configuration.d.ts',
-	'.DS_Store',
-	'Pods',
-	'.gradle',
-	'.cxx',
-	'.kotlin',
-	'.bundle'
-]);
-
-// Extensions treated as text (token-replaced). Everything else is left as-is.
-const TEXT_EXT = new Set([
-	'.ts',
-	'.tsx',
-	'.js',
-	'.mjs',
-	'.cjs',
-	'.json',
-	'.jsonc',
-	'.svelte',
-	'.css',
-	'.html',
-	'.md',
-	'.sql',
-	'.sh',
-	'.yml',
-	'.yaml',
-	'.toml',
-	'.txt',
-	'.example',
-	'.svg',
-	'.gitignore',
-	'.npmrc',
-	'.prettierrc',
-	'.prettierignore',
-	'.swift',
-	'.kt',
-	'.gradle',
-	'.cxx',
-	'.kotlin',
-	'.bundle',
-	'.pbxproj',
-	'.plist',
-	'.xml'
-]);
-
-function isText(name) {
-	const dot = name.lastIndexOf('.');
-	const ext = dot === -1 ? '' : name.slice(dot);
-	return TEXT_EXT.has(ext) || name === '.gitignore' || name === '.npmrc';
-}
-
 function parseArgs(argv) {
-	const opts = { scope: '@ak5', slug: 'ak5', oauth: true, install: true };
+	const opts = { scope: '@ak5', slug: 'ak5', oauth: true, install: true, mobile: true };
 	for (let i = 0; i < argv.length; i++) {
 		const a = argv[i];
 		if (a === '--scope') opts.scope = argv[++i];
 		else if (a === '--slug') opts.slug = argv[++i];
+		else if (a === '--no-mobile') opts.mobile = false;
 		else if (a === '--no-oauth') opts.oauth = false;
 		else if (a === '--no-install') opts.install = false;
 		else if (a === '-h' || a === '--help') opts.help = true;
@@ -113,42 +48,10 @@ Usage:
 Options:
   --scope <@scope>   package scope (default: @ak5 — unchanged)
   --slug <slug>      brand slug for worker names / cookies / dev domain (default: ak5)
+  --no-mobile        remove mobile source; restore later from the pinned starter
   --no-oauth         remove the Discord OAuth-login overlay
   --no-install       skip the post-rebrand \`pnpm install\`
 `);
-}
-
-function makeReplacer(scope, slug) {
-	const envPrefix = slug.toUpperCase().replace(/[^A-Z0-9]/g, '') + '_';
-	// Keep upstream links and author attribution intact when branding an application.
-	const preserved =
-		/(https:\/\/github\.com\/ak5\/web-starter|by \[ak5\]\(https:\/\/alexander\.verver\.is\)|<a class="link" href="https:\/\/alexander\.verver\.is">ak5<\/a>)/;
-	return (text) =>
-		text
-			.split(preserved)
-			.map((part, index) =>
-				index % 2
-					? part
-					: part.split('@ak5').join(scope).split('AK5_').join(envPrefix).split('ak5').join(slug)
-			)
-			.join('');
-}
-
-function walkReplace(dir, replace, relBase = '') {
-	for (const entry of readdirSync(dir)) {
-		if (IGNORE.has(entry)) continue;
-		const abs = join(dir, entry);
-		const rel = relBase ? `${relBase}/${entry}` : entry;
-		if (rel === SELF) continue; // never rewrite this script
-		const st = statSync(abs);
-		if (st.isDirectory()) {
-			walkReplace(abs, replace, rel);
-		} else if (isText(entry)) {
-			const before = readFileSync(abs, 'utf8');
-			const after = replace(before);
-			if (after !== before) writeFileSync(abs, after);
-		}
-	}
 }
 
 function removeOAuthOverlay() {
@@ -188,10 +91,13 @@ function selfDestruct() {
 		const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'));
 		if (pkg.scripts && pkg.scripts.rebrand) {
 			delete pkg.scripts.rebrand;
+			if (pkg.scripts['test:unit'])
+				pkg.scripts['test:unit'] = pkg.scripts['test:unit'].replace(' scripts/init.test.mjs', '');
 			writeFileSync(pkgPath, JSON.stringify(pkg, null, '\t') + '\n');
 		}
 	}
 	rmSync(join(ROOT, SELF), { force: true });
+	rmSync(join(ROOT, 'scripts/init.test.mjs'), { force: true });
 }
 
 function main() {
@@ -217,6 +123,13 @@ function main() {
 	} else {
 		console.log('No --scope/--slug change — skipping token replacement.');
 	}
+
+	const templatePath = join(ROOT, '.starter-template.json');
+	if (existsSync(templatePath)) {
+		const template = JSON.parse(readFileSync(templatePath, 'utf8'));
+		writeFileSync(templatePath, JSON.stringify({ ...template, scope, slug }, null, '\t') + '\n');
+	}
+	if (!opts.mobile) setMobileEnabled(ROOT, false);
 
 	selfDestruct();
 
