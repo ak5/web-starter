@@ -10,9 +10,9 @@ concurrency:
   cancel-in-progress: false
 jobs:
   cleanup:
-    if: vars.DEPLOY_WORKERS == 'true' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.user.login != 'dependabot[bot]'
+    if: vars.DEPLOY_WORKERS == 'true' && vars.HOSTED_DEV != 'false' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.user.login != 'dependabot[bot]'
     runs-on: ubuntu-latest
-    environment: Staging Cloudflare
+    environment: Dev Cloudflare
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
@@ -30,5 +30,5 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
       - run: |
           for app in api web admin; do
-            pnpm --filter "@ak5/$app" exec wrangler delete --env staging --force
+            nice -n 10 pnpm --filter "@ak5/$app" exec wrangler delete --env development --force
           done

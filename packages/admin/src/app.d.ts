@@ -6,12 +6,8 @@ declare global {
 	namespace Cloudflare {
 		interface Env {
 			API?: Fetcher;
-		}
-	}
-
-	namespace Cloudflare {
-		interface Env {
-			API?: Fetcher;
+			PUBLIC_ENV_BANNER?: string;
+			PUBLIC_DEPLOY_ENVIRONMENT?: string;
 		}
 	}
 	namespace App {

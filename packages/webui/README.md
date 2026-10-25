@@ -10,22 +10,23 @@ components stay in that app's `src/components/`.
 
 Imported as `import Foo from '@ak5/webui/components/Foo.svelte'`.
 
-| Component             | Notes                                           |
-| --------------------- | ----------------------------------------------- |
-| `ActionButton`        | Primary action with optional confirmation modal |
-| `ChannelCard`         | Connected OAuth channel display                 |
-| `ConnectChannelModal` | OAuth connect prompt                            |
-| `CurrencyInput`       | Currency input with normalization               |
-| `Footer`              | Shared footer with legal links                  |
-| `GDPRCookies`         | Cookie consent banner                           |
-| `GoogleTag`           | GA / GTM embed                                  |
-| `IconSocial`          | Social-platform icon renderer                   |
-| `ImageUpload`         | Webp-only upload with size validation           |
-| `Modal`               | Generic modal wrapper                           |
-| `Pagination`          | 0-indexed paginator                             |
-| `SelectSingle`        | Single-select dropdown                          |
-| `ThemeToggle`         | Dark / light toggle                             |
-| `UserCard`            | User profile card                               |
+| Component             | Notes                                                                |
+| --------------------- | -------------------------------------------------------------------- |
+| `ActionButton`        | Primary action with optional confirmation modal                      |
+| `ChannelCard`         | Connected OAuth channel display                                      |
+| `ConnectChannelModal` | OAuth connect prompt                                                 |
+| `CurrencyInput`       | Currency input with normalization                                    |
+| `EnvironmentBanner`   | Optional environment label; dismissal resets on navigation or reload |
+| `Footer`              | Shared footer with legal links                                       |
+| `GDPRCookies`         | Cookie consent banner                                                |
+| `GoogleTag`           | GA / GTM embed                                                       |
+| `IconSocial`          | Social-platform icon renderer                                        |
+| `ImageUpload`         | Webp-only upload with size validation                                |
+| `Modal`               | Generic modal wrapper                                                |
+| `Pagination`          | 0-indexed paginator                                                  |
+| `SelectSingle`        | Single-select dropdown                                               |
+| `ThemeToggle`         | Dark / light toggle                                                  |
+| `UserCard`            | User profile card                                                    |
 
 ## Library exports
 

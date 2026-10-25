@@ -32,7 +32,7 @@ Runtime logs intentionally expose only a redacted event, transport, and code.
 ## Worker configuration
 
 `packages/api/wrangler.jsonc` declares this binding at the top level for production
-and under `env.staging` for staging (bindings are not inherited):
+and under `env.development` / `env.staging` for enabled non-production environments (bindings are not inherited):
 
 ```json
 {
@@ -56,10 +56,10 @@ Never test with invented inboxes on real domains.
 
 ## Verify delivery before activation
 
-Open a feature PR into `main`, verify its preview, then merge to staging. Promote
-the staged SHA manually to production. Deploys run
+Open a feature PR into `main`, verify its preview, then merge to hosted dev. Promote
+the qualified SHA manually through the enabled environments. Deploys run
 through GitHub Actions. Before merging into `main`, complete account/domain setup
-and review whether staging must restrict recipients.
+and review whether non-production environments must restrict recipients.
 
 In a configured environment, trigger an application signup, verification resend,
 or password recovery for an intended, consented inbox. Confirm that the actual

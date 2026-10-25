@@ -21,6 +21,8 @@ overrides:
   '@symbiote-native/css-parser>@react-native/metro-babel-transformer': '0.88.0'
   '@symbiote-native/secure-store>expo-modules-core': '58.0.24'
   '@symbiote-native/secure-store>expo-secure-store': '58.0.2'
+  'undici@>=7.0.0 <7.30.1': '^7.30.1'
+  'fast-uri@>=3.0.0 <3.1.9': '^3.1.9'
 patchedDependencies:
   '@livestore/adapter-expo@0.5.0': patches/@livestore__adapter-expo@0.5.0.patch
   # shortcut: RN/Expo pin Kotlin 2.2; keep compiler patches until upstream supports Gradle 9.8.
@@ -50,3 +52,5 @@ minimumReleaseAgeExclude:
   - '@babel/types@8.0.8'
   - '@cloudflare/workers-types@5.20261023.1'
   - runed@0.38.0
+  - undici@7.30.1
+  - fast-uri@3.1.9

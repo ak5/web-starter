@@ -61,6 +61,7 @@
 		"app:pods": "pnpm --filter @ak5/mobile pods",
 		"build:mobile": "pnpm --filter @ak5/mobile bundle:ios && pnpm --filter @ak5/mobile bundle:android",
 		"test:db": "pnpm --filter @ak5/api test:db",
+		"db:migrate:dev": "pnpm --filter @ak5/api db:migrate:dev",
 		"db:migrate:staging": "pnpm --filter @ak5/api db:migrate:staging",
 		"db:migrate:prod": "pnpm --filter @ak5/api db:migrate:prod",
 		"clean:build": "pnpm -r exec rm -rf dist .svelte-kit .eslintcache"

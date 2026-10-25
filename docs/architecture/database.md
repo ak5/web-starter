@@ -37,9 +37,10 @@ Committed SQL migrations live in `packages/api/drizzle`. Edit the schema, run
 Use `pnpm db:migrate` for **local** Wrangler storage. Repeating it is safe; Wrangler
 tracks applied migrations. Do not use schema push to provision deployments.
 
-Each consuming app creates its own D1 databases. Staging and production must use
-different IDs. Trusted PR previews share staging's binding and do not migrate it;
-schema-dependent previews need the additive migration staged first. Deployments
+Each consuming app creates its own D1 databases. Development, optional stable staging and
+production must use different IDs. Trusted PR previews share development's binding
+and do not migrate it; schema-dependent previews need the additive migration
+deployed to development first. Deployments
 apply migrations to the selected environment before deploying the API.
 
 Use additive migrations while deployed code may still use a column. Drop or

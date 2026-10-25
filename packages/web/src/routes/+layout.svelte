@@ -1,5 +1,6 @@
 <script lang="ts">
 	import '../app.css';
+	import EnvironmentBanner from '@ak5/webui/components/EnvironmentBanner.svelte';
 	import Navbar from '@ak5/webui/components/Navbar.svelte';
 	import Footer from '@ak5/webui/components/Footer.svelte';
 
@@ -7,6 +8,7 @@
 </script>
 
 <div class="flex min-h-screen flex-col">
+	<EnvironmentBanner environment={data.environmentBanner} />
 	<Navbar brand="ak5-web">
 		{#snippet actions()}
 			{#if data.auth}

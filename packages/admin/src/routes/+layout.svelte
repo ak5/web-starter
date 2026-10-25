@@ -1,11 +1,13 @@
 <script lang="ts">
 	import '../app.css';
+	import EnvironmentBanner from '@ak5/webui/components/EnvironmentBanner.svelte';
 	import Navbar from '@ak5/webui/components/Navbar.svelte';
 
 	let { data, children } = $props();
 </script>
 
 <div class="flex min-h-screen flex-col">
+	<EnvironmentBanner environment={data.environmentBanner} />
 	<Navbar brand="ak5-web admin">
 		{#snippet actions()}
 			{#if data.auth}

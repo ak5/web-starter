@@ -1,11 +1,11 @@
-name: staging
+name: development
 on:
   push:
     branches: [main]
 permissions:
   contents: read
 concurrency:
-  group: staging
+  group: development
   cancel-in-progress: false
 jobs:
   test:
@@ -13,8 +13,9 @@ jobs:
     secrets: inherit
   deploy:
     needs: test
+    if: vars.HOSTED_DEV != 'false'
     uses: ./.github/workflows/deploy-workers.yml
     with:
       sha: ${{ github.sha }}
-      target: staging
+      target: development
     secrets: inherit

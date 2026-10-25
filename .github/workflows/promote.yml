@@ -1,16 +1,22 @@
-name: promote-production
+name: promote
 on:
   workflow_dispatch:
     inputs:
+      target:
+        description: Environment to promote to (staging must be enabled first)
+        required: true
+        type: choice
+        default: production
+        options: [staging, production]
       sha:
-        description: Full main commit SHA successfully deployed to staging
+        description: Full main commit SHA that passed the preceding required stage
         required: true
         type: string
 permissions:
   contents: read
   actions: read
 concurrency:
-  group: production
+  group: promote-${{ inputs.target }}
   cancel-in-progress: false
 jobs:
   verify:
@@ -20,14 +26,19 @@ jobs:
       - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         env:
           PROMOTION_SHA: ${{ inputs.sha }}
+          PROMOTION_TARGET: ${{ inputs.target }}
+          HOSTED_DEV: ${{ vars.HOSTED_DEV }}
+          ENABLE_STAGING: ${{ vars.ENABLE_STAGING }}
         with:
           script: |
             const { default: verify } = await import(`${process.env.GITHUB_WORKSPACE}/scripts/verify-promotion.mjs`);
-            await verify({ github, context, sha: process.env.PROMOTION_SHA });
+            await verify({ github, context, sha: process.env.PROMOTION_SHA,
+              target: process.env.PROMOTION_TARGET, hostedDev: process.env.HOSTED_DEV !== 'false',
+              staging: process.env.ENABLE_STAGING === 'true' });
   deploy:
     needs: verify
     uses: ./.github/workflows/deploy-workers.yml
     with:
       sha: ${{ inputs.sha }}
-      target: production
+      target: ${{ inputs.target }}
     secrets: inherit

@@ -7,7 +7,7 @@ All data-touching keys live **only** in the api package's environment (see
 ## Cloudflare D1
 
 The API uses a native D1 binding with Drizzle's SQLite schema. Development and CI
-use local Wrangler storage without account credentials. Deployed staging and
+use local Wrangler storage without account credentials. Deployed development, optional stable staging and
 production have separate D1 databases. Set the selected environment's
 `D1_DATABASE_ID` before deployment; the runtime does not need a database API token.
 See [database](../architecture/database.md) and [deployment](deployment.md).

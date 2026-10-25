@@ -3,7 +3,7 @@
 # Required secrets must exist in either location. Values come from the caller's
 # env, never from disk; existing Worker values are never read back.
 #
-#   bash scripts/sync-cloudflare-worker-secrets.sh [--env staging]
+#   bash scripts/sync-cloudflare-worker-secrets.sh [--env development|staging]
 #
 # Run AFTER the deploy step: `wrangler secret put` targets an existing Worker,
 # and the deploy is what creates it on the first run. Re-running is idempotent
@@ -20,10 +20,10 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 wenv=()
-if [[ "${1-}" == "--env" && "${2-}" == "staging" ]]; then
-	wenv=(--env staging)
+if [[ "${1-}" == "--env" && ( "${2-}" == "development" || "${2-}" == "staging" ) ]]; then
+	wenv=(--env "$2")
 elif [[ $# -gt 0 ]]; then
-	echo "usage: $0 [--env staging]" >&2
+	echo "usage: $0 [--env development|staging]" >&2
 	exit 2
 fi
 
