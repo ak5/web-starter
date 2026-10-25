@@ -11,7 +11,8 @@ receive database credentials. Development uses local Wrangler persistence.
 ## Consequences
 
 - Compute and SQL storage share the Cloudflare account and billing model.
-- Staging and production have separate databases; trusted PR previews share staging.
+- Development, optional stable staging and production have separate databases;
+  trusted PR previews share development.
 - SQLite foreign keys, partial unique indexes and CHECK constraints enforce integrity.
 - Related writes use atomic D1 batches. Do not replace them with sequential writes
   or interactive transaction callbacks, which the D1 binding does not support.

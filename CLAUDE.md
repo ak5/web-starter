@@ -97,12 +97,15 @@ dependency order: shared → email → webui → api).
 
 ## Branches & deploys
 
-**`main` is the trunk.** Create short-lived feature branches from `main` and PR
-into `main`. PRs deploy isolated preview Workers sharing staging data. Merging
-into `main` runs CI and automatically deploys staging. Production is a manual
-`promote.yml` workflow from `main`, accepting only a full SHA already successfully
-deployed to staging. Deploy through GitHub Actions; see
-[deployment](docs/operations/deployment.md). Never deploy production directly.
+**`main` is the trunk.** Create short-lived feature branches and PR into `main`.
+Merges run CI and automatically deploy hosted development. PR Workers run their
+own code against development data and its notes sync authority. Production is a
+manual `promote.yml` workflow from `main`, accepting only a full SHA already
+qualified by the preceding enabled stage. Stable staging is optional and is also
+manually promoted; it never follows trunk automatically. This starter uses hosted
+dev + production, without stable staging. Forks may disable hosted dev as well.
+Deploy through GitHub Actions; see [deployment](docs/operations/deployment.md).
+Never deploy production directly.
 
 ## Packages
 

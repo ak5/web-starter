@@ -32,8 +32,8 @@ for your application's read, write, storage, and CPU usage.
 - LiveStore local SQLite on web and mobile, with a Cloudflare D1 event log and
   Durable Object sync coordination.
 - Drizzle migrations, unit tests, API integration tests, and Playwright tests.
-- PR previews sharing staging data, automatic staging on `main`, and manual
-  production promotion of a commit already deployed to staging.
+- PR previews sharing development data, automatic hosted dev on `main`, and
+  manual staging/production promotion with exact-commit qualification.
 
 This is a starting point for your own application. You provide the database,
 Cloudflare resources, verified email domain, and mobile signing configuration.
@@ -128,16 +128,19 @@ nice -n 10 pnpm test --workers=1  # requires a running local stack
 ```
 
 Open short-lived PRs against `main`. Public fork PRs run checks without deployment
-credentials; trusted same-repository PRs can receive staging previews. Database and browser
+credentials; trusted same-repository PRs can receive previews sharing dev data. Database and browser
 checks run against disposable local D1 databases without account credentials. See [contributing](docs/development/contributing.md),
 [architecture](docs/architecture/overview.md), and the [documentation index](docs/index.md).
 
 ## Deployment
 
-Configure your own GitHub environments, Cloudflare resources, and separate staging/production D1 databases
-before enabling deployments. GitHub-hosted runners run CI. Merges to `main` deploy
-staging; production requires manual promotion of a SHA with a successful staging
-deployment. See [deployment](docs/operations/deployment.md).
+`main` is the development trunk. Merges deploy hosted dev; trusted PR previews
+run their own code against dev data. This starter uses dev + production, without
+stable staging. Forks can independently disable hosted dev or enable stable
+staging. Staging and production deploy only through manually triggered workflows,
+with the exact SHA qualified by the preceding enabled stage. Configure your own
+GitHub environments, isolated data resources, secrets and branch protection
+before enabling deployment. See [deployment](docs/operations/deployment.md).
 
 Cloudflare Email Sending requires Workers Paid, manual activation, verified sender
 DNS, and deployment-token permissions. Follow [email setup](docs/operations/email-sending.md)

@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import test from 'node:test';
 
-function sync(overrides, existing) {
+function sync(overrides, existing, environment = 'staging') {
 	const directory = mkdtempSync(join(tmpdir(), 'worker-secrets-'));
 	const log = join(directory, 'calls.jsonl');
 	writeFileSync(
@@ -28,7 +28,7 @@ else {
 	try {
 		const result = spawnSync(
 			'bash',
-			['scripts/sync-cloudflare-worker-secrets.sh', '--env', 'staging'],
+			['scripts/sync-cloudflare-worker-secrets.sh', '--env', environment],
 			{
 				encoding: 'utf8',
 				timeout: 30_000,
@@ -80,4 +80,10 @@ test('refuses deployment when a required key exists in neither location', () => 
 	assert.equal(result.status, 1);
 	assert.match(result.stderr, /Missing required secret: JWT_SECRET/);
 	assert.equal(result.calls.length, 1);
+});
+
+test('accepts the development target without redirecting secrets to staging', () => {
+	const result = sync({}, ['JWT_SECRET', 'TOKEN_ENCRYPTION_KEY'], 'development');
+	assert.equal(result.status, 0, result.stderr);
+	assert.ok(result.calls.every((args) => args.at(-1) === 'development'));
 });

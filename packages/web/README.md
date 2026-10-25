@@ -25,3 +25,7 @@ Protected prefixes and auth-page redirects live in `src/hooks.server.ts`. Add a
 route under `src/routes/` and update this table in the same PR.
 
 See [local-first notes](../../docs/architecture/local-first.md) for browser requirements and device data retention.
+
+The shared environment banner identifies dev, staging and PR previews. It returns
+after navigation or reload; set `PUBLIC_ENV_BANNER=false` to hide it. Production
+has no label and shows no banner. See [deployment](../../docs/operations/deployment.md).

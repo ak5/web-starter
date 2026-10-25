@@ -32,6 +32,7 @@
 		"create:admin": "tsx scripts/create-admin.ts",
 		"gen": "wrangler types --env-file .env.example",
 		"cf-typegen": "pnpm gen",
+		"db:migrate:dev": "wrangler d1 migrations apply DB --remote --env development",
 		"db:migrate:staging": "wrangler d1 migrations apply DB --remote --env staging",
 		"db:migrate:prod": "wrangler d1 migrations apply DB --remote",
 		"test:db": "node --test --test-concurrency=1 --import tsx src/db/d1.test.ts src/routes/items.test.ts src/db/sync.test.ts"

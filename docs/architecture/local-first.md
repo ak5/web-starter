@@ -33,13 +33,19 @@ is not a Drizzle notes table or a D1 read replica. LiveStore creates its event-l
 tables on first use. Existing Drizzle migrations still provision identity and
 online items.
 
-Staging and production bind separate databases and Durable Object namespaces.
-PR previews share staging's D1 **and staging's `NotesSync` Durable Object binding**.
+Development, optional stable staging and production bind separate databases and
+Durable Object namespaces. PR previews share development's D1 **and development's
+`NotesSync` Durable Object binding**.
 Multiple independent Durable Objects must not coordinate the same D1 store.
-Deploy staging before enabling previews. Preview writes affect staging accounts
-and data; use disposable staging accounts.
+Deploy development before enabling previews. Preview writes affect development
+accounts and data; use disposable development accounts.
 
 ## Authentication
+
+The provider resolves the store ID to one logical Durable Object per user in
+each environment, created on demand and shared by that user's devices. The
+client polls over HTTP every three seconds. WebSockets are disabled, so this
+setup does not use WebSocket hibernation.
 
 Only POST HTTP sync is enabled. Each request verifies the existing JWT session
 cookie, the active user in D1, and the exact store ID. The Durable Object checks

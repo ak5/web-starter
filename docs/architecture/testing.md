@@ -48,7 +48,7 @@ Playwright with one worker. `migrate-check` checks the migration journal, applie
 the baseline locally, then applies it again to prove repeat safety.
 
 These jobs run without database or deployment secrets, including approved fork
-PRs. Only trusted same-repository previews receive staging deployment credentials.
+PRs. Only trusted same-repository previews receive development deployment credentials.
 Preview and production smoke tests are separate from the local test suites.
 
 ## Local-first notes
@@ -73,3 +73,8 @@ require SQLite, authentication, and their runtime modules to be linked. They che
 class registrations and the Expo Modules 2 annotations/build targets used by
 Application and SQLite. Merely
 installing a JavaScript package does not guarantee its native module is available.
+
+Environment banner browser checks cover dismissal, reappearance after client
+navigation and reload, and shared web/admin rendering. Promotion self-checks
+exercise all four hosted-dev/staging profiles and reject wrong-SHA, expired,
+failed, skipped and untrusted deployment qualifications.

@@ -1,12 +1,12 @@
 # Contributing
 
 Create a short-lived branch from `main`, open a PR into `main`, and keep CI green.
-PR previews run their own API/web/admin Workers with the shared staging database.
+PR previews run their own API/web/admin Workers with the shared development database.
 Only trusted same-repository PRs receive preview credentials; fork and Dependabot
 PRs run CI without preview deployments.
 
-Merging to `main` automatically tests and deploys staging. To release, manually
-run `promote.yml` from `main` with the full SHA of a successful staging deployment.
+Merging to `main` automatically tests and deploys hosted development. To release, manually
+run `promote.yml` from `main` with the full SHA qualified by the preceding enabled stage.
 See [deployment](../operations/deployment.md) for the promotion gate.
 
 ## CI — the `quality-gates` check
@@ -45,7 +45,7 @@ your machine.
 
 - **Rebase-and-merge** to keep history linear. No merge commits.
 - Rebase on `main` before merging if your branch has fallen behind.
-- Promote the tested staging SHA manually when ready for production.
+- Promote the qualified SHA manually; optional stable staging also requires manual promotion.
 
 ## Database migration policy
 

@@ -10,11 +10,11 @@ concurrency:
   cancel-in-progress: false
 jobs:
   preview:
-    if: vars.DEPLOY_WORKERS == 'true' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.user.login != 'dependabot[bot]'
+    if: vars.DEPLOY_WORKERS == 'true' && vars.HOSTED_DEV != 'false' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.user.login != 'dependabot[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment:
-      name: Staging Cloudflare
+      name: Dev Cloudflare
       url: ${{ steps.urls.outputs.web }}
     env:
       CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
@@ -62,6 +62,23 @@ jobs:
           sed -i "s|__PROD_DOMAIN__|${{ vars.PROD_DOMAIN }}|g" \
             packages/api/wrangler.jsonc packages/web/wrangler.jsonc packages/admin/wrangler.jsonc
 
+      - name: Configure non-production asset URL
+        env:
+          R2_PUBLIC_URL: ${{ vars.R2_PUBLIC_URL }}
+        run: |
+          node --input-type=module <<'JS'
+          import { readFileSync, writeFileSync } from 'node:fs';
+          const path = 'packages/api/wrangler.jsonc';
+          const config = JSON.parse(readFileSync(path, 'utf8'));
+          const target = process.env.TARGET || 'development';
+          if (target !== 'production') {
+            const url = new URL(process.env.R2_PUBLIC_URL);
+            if (url.protocol !== 'https:') throw new Error("Set R2_PUBLIC_URL to this environment's HTTPS bucket URL");
+            config.env[target].vars.PUBLIC_R2_URL = url.origin;
+            writeFileSync(path, JSON.stringify(config, null, '\t') + '\n');
+          }
+          JS
+
       - name: Configure PR Workers
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
@@ -69,7 +86,7 @@ jobs:
           node scripts/configure-preview.mjs
           node --input-type=module <<'JS' >> "$GITHUB_ENV"
           import { readFileSync } from 'node:fs';
-          const vars = JSON.parse(readFileSync('packages/api/wrangler.jsonc', 'utf8')).env.staging.vars;
+          const vars = JSON.parse(readFileSync('packages/api/wrangler.jsonc', 'utf8')).env.development.vars;
           console.log(`PUBLIC_API_URL=${vars.PUBLIC_API_URL}`);
           console.log(`SMOKE_APP_URL=${vars.PUBLIC_APP_URL}`);
           console.log(`SMOKE_ADMIN_URL=${vars.PUBLIC_ADMIN_URL}`);
@@ -78,21 +95,21 @@ jobs:
       - name: Deploy API
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: nice -n 10 pnpm --filter @ak5/api exec wrangler deploy --env staging
+        run: nice -n 10 pnpm --filter @ak5/api exec wrangler deploy --env development
 
       - name: Build web
         run: nice -n 10 pnpm build:web
       - name: Deploy Web
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: nice -n 10 pnpm --filter @ak5/web exec wrangler deploy --env staging
+        run: nice -n 10 pnpm --filter @ak5/web exec wrangler deploy --env development
 
       - name: Build admin
         run: nice -n 10 pnpm build:admin
       - name: Deploy Admin
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: nice -n 10 pnpm --filter @ak5/admin exec wrangler deploy --env staging
+        run: nice -n 10 pnpm --filter @ak5/admin exec wrangler deploy --env development
 
       # Push the GitHub Environment secrets onto the Workers (the source of truth
       # for runtime secrets). Runs after deploy so the first run can auto-create
@@ -103,7 +120,7 @@ jobs:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           TOKEN_ENCRYPTION_KEY: ${{ secrets.TOKEN_ENCRYPTION_KEY }}
           DISCORD_CLIENT_SECRET: ${{ secrets.DISCORD_CLIENT_SECRET }}
-        run: bash scripts/sync-cloudflare-worker-secrets.sh --env staging
+        run: bash scripts/sync-cloudflare-worker-secrets.sh --env development
       - name: Check deployed frontend runtime
         run: |
           curl --fail --silent --show-error --retry 3 --retry-all-errors --retry-delay 2 "$SMOKE_APP_URL/login" -o /dev/null
@@ -115,10 +132,10 @@ jobs:
         run: |
           node --input-type=module <<'JS' >> "$GITHUB_STEP_SUMMARY"
           import { readFileSync, appendFileSync } from 'node:fs';
-          console.log('### PR preview (shared staging database)');
+          console.log('### PR preview (shared development database)');
           for (const app of ['api', 'web', 'admin']) {
             const config = JSON.parse(readFileSync('packages/api/wrangler.jsonc', 'utf8'));
-            if (app === 'web') appendFileSync(process.env.GITHUB_OUTPUT, `web=${config.env.staging.vars.PUBLIC_APP_URL}\n`);
-            console.log(`- ${app}: ${config.env.staging.vars[app === 'api' ? 'PUBLIC_API_URL' : app === 'web' ? 'PUBLIC_APP_URL' : 'PUBLIC_ADMIN_URL']}`);
+            if (app === 'web') appendFileSync(process.env.GITHUB_OUTPUT, `web=${config.env.development.vars.PUBLIC_APP_URL}\n`);
+            console.log(`- ${app}: ${config.env.development.vars[app === 'api' ? 'PUBLIC_API_URL' : app === 'web' ? 'PUBLIC_APP_URL' : 'PUBLIC_ADMIN_URL']}`);
           }
           JS

@@ -1,3 +1,5 @@
+import { env } from 'cloudflare:workers';
+import { dev } from '$app/env';
 import { responseJsonBody } from '@ak5/webui';
 import { api } from './api';
 import type { Viewer } from './types';
@@ -36,6 +38,8 @@ export async function loadAppShell(event: ShellEvent) {
 		: null;
 
 	return {
+		environmentBanner:
+			env.PUBLIC_ENV_BANNER === 'false' ? '' : dev ? 'Development' : env.PUBLIC_DEPLOY_ENVIRONMENT,
 		auth,
 		viewer,
 		needGdpr: locals.needGdpr,

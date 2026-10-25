@@ -24,6 +24,6 @@ if (process.argv[2] === '--test') {
 	const path = 'packages/api/wrangler.jsonc';
 	writeFileSync(
 		path,
-		readFileSync(path, 'utf8').replace(/00000000-0000-0000-0000-00000000000[01]/g, id)
+		readFileSync(path, 'utf8').replace(/00000000-0000-0000-0000-00000000000[012]/g, id)
 	);
 }
