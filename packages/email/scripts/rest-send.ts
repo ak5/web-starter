@@ -1,4 +1,4 @@
-import { EmailDeliveryError } from '../src/send.js';
+import { EmailDeliveryError } from '../dist/index.js';
 
 /** Diagnostic for senders outside Workers. Runtime applications use the EMAIL binding. */
 export async function sendRestTestEmail(config: {

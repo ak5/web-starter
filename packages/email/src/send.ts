@@ -1,9 +1,15 @@
-import { render } from 'react-email';
-import * as React from 'react';
-import VerifyEmail, { type VerifyEmailProps } from './templates/verify-email.js';
-import ResetPassword, { type ResetPasswordProps } from './templates/reset-password.js';
-import LoginWith, { type LoginWithProps } from './templates/login-with.js';
-import InviteAccount, { type InviteAccountProps } from './templates/invite-account.js';
+import { Renderer } from '@better-svelte-email/server';
+import type { Component } from 'svelte';
+import VerifyEmail from './templates/verify-email.svelte';
+import ResetPassword from './templates/reset-password.svelte';
+import LoginWith from './templates/login-with.svelte';
+import InviteAccount from './templates/invite-account.svelte';
+import type {
+	VerifyEmailProps,
+	ResetPasswordProps,
+	LoginWithProps,
+	InviteAccountProps
+} from './types.js';
 
 export interface EmailSendBinding {
 	send(message: {
@@ -44,7 +50,7 @@ export interface TemplateProps {
 
 const TEMPLATE_REGISTRY: {
 	[K in TemplateName]: {
-		component: React.ComponentType<TemplateProps[K]>;
+		component: Component<TemplateProps[K]>;
 		subject: string;
 	};
 } = {
@@ -56,6 +62,9 @@ const TEMPLATE_REGISTRY: {
 
 export type { VerifyEmailProps, ResetPasswordProps, LoginWithProps, InviteAccountProps };
 
+// Templates use inline styles, so rendering needs no runtime Tailwind compilation.
+const renderer = new Renderer({ disableTailwind: true });
+
 /**
  * Render a template to HTML. Platform-agnostic.
  */
@@ -63,9 +72,10 @@ export async function renderTemplate<T extends TemplateName>(
 	template: T,
 	props: TemplateProps[T]
 ): Promise<{ html: string; subject: string }> {
-	const { component: Component, subject } = TEMPLATE_REGISTRY[template];
-	const html = await render(React.createElement(Component, props));
-	return { html, subject };
+	const { component, subject } = TEMPLATE_REGISTRY[template];
+	const html = await renderer.render(component, { props });
+	// Remove Svelte hydration markers while preserving Outlook conditional comments.
+	return { html: html.replace(/<!--(?:\[\??|\]|)-->/g, ''), subject };
 }
 
 /** Resolve the local mock `/send` endpoint from a configured base URL. */

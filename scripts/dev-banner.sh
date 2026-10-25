@@ -51,7 +51,7 @@ else
 	printf "    ${C}http://admin.${AK5_NS}.${AK5_SUFFIX}:${AK5_CADDY_PORT}${R}\n"
 	printf "    ${C}http://api.${AK5_NS}.${AK5_SUFFIX}:${AK5_CADDY_PORT}${R}      ${D}# /healthz, /me${R}\n"
 	printf "    ${C}http://mock.${AK5_NS}.${AK5_SUFFIX}:${AK5_CADDY_PORT}${R}     ${D}# email inbox${R}\n"
-	printf "    ${C}http://preview.${AK5_NS}.${AK5_SUFFIX}:${AK5_CADDY_PORT}${R}  ${D}# react-email preview${R}\n"
+	printf "    ${C}http://preview.${AK5_NS}.${AK5_SUFFIX}:${AK5_CADDY_PORT}${R}  ${D}# Svelte email preview${R}\n"
 fi
 
 printf "${G}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${R}\n"

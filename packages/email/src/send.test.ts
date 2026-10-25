@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { EmailDeliveryError, getMockSendUrl, sendEmail, sendTemplate } from './send.js';
+import { EmailDeliveryError, getMockSendUrl, sendEmail, sendTemplate } from '../dist/index.js';
 
 const config = { fromAddress: 'sender@example.test', fromName: 'Example app' };
 const recipient = 'private@example.test';

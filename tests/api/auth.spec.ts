@@ -1,8 +1,28 @@
 import { test, expect } from '@playwright/test';
 
 import { newApiContext, registerUser, uniqueEmail, uniqueUsername } from '../helpers/api';
+import { mockUrl } from '../helpers/env';
 
 test.describe('auth', () => {
+	test('registration email renders in the Worker and its captured PIN verifies the account', async ({
+		playwright
+	}) => {
+		const api = await newApiContext(playwright);
+		try {
+			const user = await registerUser(api);
+			expect((await (await api.get('/auth/me')).json()).emailConfirmed).toBe(false);
+			const captured = await api.get(`${mockUrl}/emails/to/${encodeURIComponent(user.email)}/pin`);
+			expect(captured.status()).toBe(200);
+			const { pin } = await captured.json();
+			expect(pin).toMatch(/^[A-Za-z0-9]{6}$/);
+			const verified = await api.post('/auth/verify-email', { data: { pin } });
+			expect(verified.status()).toBe(200);
+			expect((await (await api.get('/auth/me')).json()).emailConfirmed).toBe(true);
+		} finally {
+			await api.dispose();
+		}
+	});
+
 	test('register → me → logout', async ({ playwright }) => {
 		const api = await newApiContext(playwright);
 		const user = await registerUser(api);
