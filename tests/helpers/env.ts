@@ -26,3 +26,5 @@ export const webUrl =
 	slot.PUBLIC_WEB_URL ?? process.env.PUBLIC_WEB_URL ?? 'http://web.ak5.localhost:8359';
 export const adminUrl =
 	slot.PUBLIC_ADMIN_URL ?? process.env.PUBLIC_ADMIN_URL ?? 'http://admin.ak5.localhost:8359';
+export const mockUrl =
+	slot.AK5_MOCK_URL ?? process.env.AK5_MOCK_URL ?? 'http://mock.ak5.localhost:8359';

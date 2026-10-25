@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { EmailDeliveryError } from '../src/send.js';
+import { EmailDeliveryError } from '../dist/index.js';
 import { sendRestTestEmail } from './rest-send.js';
 
 const config = {

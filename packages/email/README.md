@@ -1,8 +1,9 @@
 # @ak5/email
 
-React Email templates + Cloudflare Email Sending through a native Worker binding.
-Templates and rendering use the unified `react-email` API; the local preview
-uses `@react-email/ui`.
+Better Svelte Email templates + Cloudflare Email Sending through a native Worker binding.
+Templates use Svelte 5 components and inline styles. Vite compiles a server bundle
+for Workers; TypeScript generates declarations. The renderer disables Tailwind
+processing because these templates already provide their final inline CSS.
 Dev/CI use a local mock. See [sender setup](../../docs/operations/email-sending.md)
 for manual account/domain onboarding and live inbox verification.
 
@@ -16,7 +17,8 @@ for manual account/domain onboarding and live inbox verification.
 | `InviteAccount` | "You are invited"        | Admin-created account invite  |
 
 Each template's prop interface is exported (`VerifyEmailProps`, etc.) and
-re-exported from the package barrel.
+re-exported from the package barrel. Components live in `src/templates/`; the
+shared layout lives in `src/components/` so it does not appear as a preview template.
 
 ## API
 
@@ -40,9 +42,15 @@ await sendEmail(config, recipient, subject, html, logger);
 ## Dev servers
 
 ```bash
-pnpm --filter @ak5/email preview   # React Email preview (port 8354)
-pnpm --filter @ak5/email mock      # mock send endpoint (port 8355)
+pnpm dev:email:preview   # Better Svelte Email preview (slot 1: port 8354)
+pnpm dev:email:mock      # mock send endpoint (slot 1: port 8355)
 ```
+
+The Vite preview discovers Svelte templates and renders their prop defaults in
+an iframe, with a template selector and live reload. `AK5_PREVIEW_PORT` selects the active slot's port; use the URLs in
+`.env.dev-slot`. The preview binds to loopback, matching the other local apps,
+and refuses occupied ports. `pnpm dev:email` watches the compiled server bundle
+and declaration output.
 
 The mock captures every email sent in dev. Endpoints:
 
@@ -78,13 +86,13 @@ throw `EmailDeliveryError`. Redacted structured failure events contain only
 `event`, `transport`, and `code`. Never log recipients, body, links, or raw errors.
 Authenticated sends await delivery; public recovery settles failures in the
 background without changing its response. `pnpm test:unit` includes transport,
-REST diagnostic, and caller failure tests.
+compiled-template, transport, REST diagnostic, and caller failure tests.
 
 ## Adding a template
 
-1. Create `src/templates/your-template.tsx` exporting the React component as
-   default + a props interface.
-2. Register in `src/send.ts` `TEMPLATE_REGISTRY` with a subject.
-3. Add to the `TemplateProps` type.
-4. Re-export from `src/index.ts`.
+1. Create `src/templates/your-template.svelte` with preview defaults in `$props()`.
+2. Define its props in `src/types.ts`.
+3. Register it in `src/send.ts` `TEMPLATE_REGISTRY` with a subject and add its
+   props to `TemplateProps`.
+4. Re-export the prop type from `src/index.ts` and add a rendering test.
 5. Update this README's table.

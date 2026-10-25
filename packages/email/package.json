@@ -9,41 +9,36 @@
 		".": {
 			"types": "./dist/index.d.ts",
 			"import": "./dist/index.js"
-		},
-		"./templates/*": {
-			"types": "./dist/templates/*.d.ts",
-			"import": "./dist/templates/*.js"
 		}
 	},
 	"files": [
 		"dist"
 	],
 	"scripts": {
-		"build": "tsc",
-		"dev": "tsc --watch",
-		"check": "tsc --noEmit",
+		"build": "vite build && tsc --emitDeclarationOnly",
+		"dev": "concurrently -k \"vite build --watch\" \"tsc --emitDeclarationOnly --watch --preserveWatchOutput\"",
+		"check": "svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
 		"format": "prettier --write .",
 		"format:check": "prettier --check .",
 		"lint": "prettier --check . && eslint --cache .",
 		"lint:nofmt": "eslint --cache .",
 		"lint:fix": "prettier --write . && eslint --cache --fix .",
 		"lint:fix:nofmt": "eslint --cache --fix .",
-		"dev:preview": "PORT=${AK5_PREVIEW_PORT:-8354} tsx scripts/preview.ts",
+		"dev:preview": "vite --host 127.0.0.1 --port ${AK5_PREVIEW_PORT:-8354} --strictPort",
 		"dev:mock": "PORT=${AK5_MOCK_PORT:-8355} tsx scripts/mock-server.ts",
-		"test:unit": "node --test --test-concurrency=1 --import tsx src/send.test.ts scripts/rest-send.test.ts",
-		"test:send": "tsx scripts/send-test.ts",
+		"test:unit": "pnpm build && node --test --test-concurrency=1 --import tsx scripts/preview.test.ts src/render.test.ts src/send.test.ts scripts/rest-send.test.ts",
+		"test:send": "pnpm build && tsx scripts/send-test.ts",
 		"preview": "pnpm dev:preview",
 		"mock": "pnpm dev:mock"
 	},
 	"dependencies": {
-		"react": "19.3.1",
-		"react-dom": "19.3.1",
-		"react-email": "6.11.3"
+		"@better-svelte-email/components": "2.3.0",
+		"@better-svelte-email/server": "2.3.0",
+		"svelte": "5.57.2"
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
 		"@hono/node-server": "^2.1.5",
-		"@types/react": "^19.3.0",
 		"eslint": "^10.13.0",
 		"eslint-config-prettier": "^10.1.8",
 		"globals": "^17.13.0",
@@ -52,6 +47,13 @@
 		"tsx": "^4.23.15",
 		"typescript": "npm:@typescript/typescript6@^6.0.2",
 		"typescript-eslint": "^8.72.0",
-		"@react-email/ui": "6.11.3"
+		"@sveltejs/vite-plugin-svelte": "^7.3.1",
+		"concurrently": "^10.0.6",
+		"eslint-plugin-svelte": "^3.23.1",
+		"parse5": "^8.0.1",
+		"prettier-plugin-svelte": "^4.1.1",
+		"svelte-check": "^4.7.7",
+		"vite": "^8.3.5",
+		"@types/node": "^26.6.5"
 	}
 }

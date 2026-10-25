@@ -8,7 +8,7 @@
  *   CLOUDFLARE_ACCOUNT_ID=... CLOUDFLARE_API_TOKEN=... pnpm --filter @ak5/email test:send --real --to you@example.com \
  *     --from sender@example.com
  */
-import { renderTemplate, sendTemplate, type EmailLogger } from '../src/send.js';
+import { renderTemplate, sendTemplate, type EmailLogger } from '../dist/index.js';
 
 import { sendRestTestEmail } from './rest-send.js';
 

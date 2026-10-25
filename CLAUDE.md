@@ -124,8 +124,9 @@ Never deploy production directly.
   factory, and the `createApiClient` Hono-client factory. **Any UI element or
   frontend SvelteKit helper used in 2+ apps MUST go here.** Built via
   `svelte-package`.
-- **`@ak5/email`** — Transactional email templates + native Cloudflare sender. Mock email
-  server + preview server in dev.
+- **`@ak5/email`** — Better Svelte Email templates + native Cloudflare sender. Vite
+  compiles the server bundle; TypeScript emits declarations. Mock email server +
+  Svelte template preview in dev.
 - **`@ak5/cli`** — Dev CLI wrapping the api endpoints. Run via `pnpm cli`.
 
 To add a third frontend persona, follow `docs/development/add-a-persona.md` — the

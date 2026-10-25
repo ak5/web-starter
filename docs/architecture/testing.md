@@ -28,6 +28,11 @@ bindings disabled and no local environment files loaded. It applies migrations
 to an empty D1 database and disposes of the runtime afterward. There are no
 provider credentials or test-skipping environment variables.
 
+Email unit tests build the Svelte server bundle and check all four templates for
+subjects, escaped recipient content, token links, Outlook markup, and mock PIN
+extraction. Transport tests verify the native sender, mock capture, and redacted
+failures. No external email is sent.
+
 Secret-sync unit tests use a fake Wrangler command to verify overrides, retained
 Worker keys, and failure when a required key is absent from both locations.
 

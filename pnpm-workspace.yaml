@@ -41,7 +41,6 @@ publicHoistPattern:
   - '*react-native*'
   - 'expo-*'
   - '*react*'
-  - '*@react-email/*'
 # These exact current releases are included in the verified dependency upgrade.
 minimumReleaseAgeExclude:
   - '@babel/core@8.0.9'
