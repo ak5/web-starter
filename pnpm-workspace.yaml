@@ -8,6 +8,8 @@ engineStrict: true
 updateNotifier: false
 workspaceConcurrency: 1
 overrides:
+  # The API uses Drizzle D1; Expo SQLite is only needed by the mobile app.
+  'drizzle-orm>expo-sqlite': '-'
   # Native hosts use React Native CLI; Expo's CLI and its signing dependencies are unnecessary.
   'expo>@expo/cli': '-'
   # Drizzle Kit ships its own config loader and also supports the installed tsx.
@@ -25,10 +27,10 @@ overrides:
   'fast-uri@>=3.0.0 <3.1.9': '^3.1.9'
 patchedDependencies:
   '@livestore/adapter-expo@0.5.0': patches/@livestore__adapter-expo@0.5.0.patch
-  # shortcut: RN/Expo pin Kotlin 2.2; keep compiler patches until upstream supports Gradle 9.8.
   '@react-native/gradle-plugin@0.88.0': patches/@react-native__gradle-plugin@0.88.0.patch
   expo-modules-autolinking@58.0.14: patches/expo-modules-autolinking@58.0.14.patch
   expo-modules-core@58.0.24: patches/expo-modules-core@58.0.24.patch
+  # shortcut: RN/Expo pin Kotlin 2.2; keep compiler patches until upstream supports Gradle 9.8.
 
 # LiveStore uses the same synchronous SQLite/Application APIs provided by Expo 58.
 # Native build and persistence tests verify this host combination.

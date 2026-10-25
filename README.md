@@ -97,26 +97,37 @@ branded files, removed packages, or your product features can require manual
 conflict resolution. Keep the shared history so future merges can identify what
 has already been applied.
 
+## Create a project
+
+```sh
+pnpm dlx "github:ak5/web-starter#path:/packages/create" my-app --scope @myco --slug myapp
+```
+
+New projects default to website only; pass `--mobile` to include native clients.
+In an existing fork, `pnpm mobile disable` removes mobile source and native dependencies;
+`pnpm mobile enable` restores it. See [project creation and profiles](docs/development/start-project.md).
+
 ## Native development
 
-The native app lives in `packages/mobile`. Install Xcode for iOS or the Android
+When enabled, the native app lives in `packages/mobile`. Install Xcode for iOS or the Android
 SDK 37 and JDK 25 for Android, then follow [mobile setup](packages/mobile/README.md).
 Start Metro with `pnpm dev:app`; use `pnpm app:ios` or `pnpm app:android` to run the
 app. Native development is separate from the web stack.
 
 ## Packages
 
-| Package       | Purpose                                                 |
-| ------------- | ------------------------------------------------------- |
-| `@ak5/api`    | Hono API, authentication, database, OAuth, and cron     |
-| `@ak5/web`    | SvelteKit public app                                    |
-| `@ak5/admin`  | SvelteKit admin portal                                  |
-| `@ak5/mobile` | Svelte / Symbiote Native / React Native app             |
-| `@ak5/sync`   | Shared LiveStore schema, events, and HTTP sync client   |
-| `@ak5/shared` | Shared contracts and utilities                          |
-| `@ak5/webui`  | Shared web components and SvelteKit helpers             |
-| `@ak5/email`  | Email templates, Cloudflare transport, mock and preview |
-| `@ak5/cli`    | Development API client                                  |
+| Package                   | Purpose                                                 |
+| ------------------------- | ------------------------------------------------------- |
+| `@ak5/api`                | Hono API, authentication, database, OAuth, and cron     |
+| `@ak5/web`                | SvelteKit public app                                    |
+| `@ak5/admin`              | SvelteKit admin portal                                  |
+| `@ak5/create-web-starter` | Dependency-free project creator                         |
+| `@ak5/mobile`             | Svelte / Symbiote Native / React Native app             |
+| `@ak5/sync`               | Shared LiveStore schema, events, and HTTP sync client   |
+| `@ak5/shared`             | Shared contracts and utilities                          |
+| `@ak5/webui`              | Shared web components and SvelteKit helpers             |
+| `@ak5/email`              | Email templates, Cloudflare transport, mock and preview |
+| `@ak5/cli`                | Development API client                                  |
 
 ## Checks and contributions
 

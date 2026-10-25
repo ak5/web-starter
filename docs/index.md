@@ -30,12 +30,13 @@ update this index in the **same PR**.
 
 ## development/ — how to run it locally
 
-| File                                             | One-liner                               |
-| ------------------------------------------------ | --------------------------------------- |
-| [setup.md](development/setup.md)                 | First run, dev slots, the stack         |
-| [conventions.md](development/conventions.md)     | File layout, naming, imports, commits   |
-| [contributing.md](development/contributing.md)   | Branching, CI, review, migration policy |
-| [add-a-persona.md](development/add-a-persona.md) | Recipe for a 3rd+ SvelteKit frontend    |
+| File                                             | One-liner                                           |
+| ------------------------------------------------ | --------------------------------------------------- |
+| [start-project.md](development/start-project.md) | One-command creation and reversible mobile profiles |
+| [setup.md](development/setup.md)                 | First run, dev slots, the stack                     |
+| [conventions.md](development/conventions.md)     | File layout, naming, imports, commits               |
+| [contributing.md](development/contributing.md)   | Branching, CI, review, migration policy             |
+| [add-a-persona.md](development/add-a-persona.md) | Recipe for a 3rd+ SvelteKit frontend                |
 
 ## operations/ — how to run it in prod
 

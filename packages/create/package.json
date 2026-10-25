@@ -1,0 +1,22 @@
+{
+	"name": "@ak5/create-web-starter",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"license": "MIT",
+	"bin": {
+		"create-web-starter": "bin/create.mjs"
+	},
+	"files": [
+		"bin"
+	],
+	"engines": {
+		"node": ">=22"
+	},
+	"scripts": {
+		"test:unit": "node --test test/*.test.mjs",
+		"check": "node --check bin/create.mjs && node --check test/create.test.mjs",
+		"format": "prettier --write .",
+		"format:check": "prettier --check ."
+	}
+}
