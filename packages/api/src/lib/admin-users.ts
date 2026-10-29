@@ -384,7 +384,7 @@ export async function adminStartImpersonation(
 	const [admin, target] = await Promise.all([
 		db.query.adminUsers.findFirst({
 			where: eq(adminUsers.publicId, input.adminPublicId),
-			columns: { id: true, publicId: true }
+			columns: { id: true, publicId: true, deletedAt: true, sessionVersion: true }
 		}),
 		db.query.users.findFirst({
 			where: and(eq(users.publicId, input.targetPublicId), isNull(users.deletedAt)),
@@ -393,11 +393,12 @@ export async function adminStartImpersonation(
 				publicId: true,
 				username: true,
 				email: true,
-				emailVerified: true
+				emailVerified: true,
+				sessionVersion: true
 			}
 		})
 	]);
-	if (!admin)
+	if (!admin || admin.deletedAt || admin.sessionVersion !== (adminPayload.sessionVersion ?? 0))
 		return { ok: false as const, error: 'admin_not_found' as const, status: 404 as const };
 	if (!target)
 		return { ok: false as const, error: 'user_not_found' as const, status: 404 as const };
@@ -408,7 +409,11 @@ export async function adminStartImpersonation(
 	});
 	const impersonationToken = await signJwt(
 		input.jwtSecret,
-		impersonationJwtClaims(target, admin.publicId, emailIdentity?.email),
+		{
+			...impersonationJwtClaims(target, admin.publicId, emailIdentity?.email),
+			sessionVersion: target.sessionVersion,
+			impersonatorSessionVersion: admin.sessionVersion
+		},
 		IMPERSONATION_SECONDS
 	);
 
@@ -505,11 +510,11 @@ async function adminActionSubjects(db: Database, adminPublicId: string, targetPu
 	return Promise.all([
 		db.query.adminUsers.findFirst({
 			where: eq(adminUsers.publicId, adminPublicId),
-			columns: { id: true, publicId: true }
+			columns: { id: true, publicId: true, deletedAt: true, sessionVersion: true }
 		}),
 		db.query.users.findFirst({
 			where: and(eq(users.publicId, targetPublicId), isNull(users.deletedAt)),
-			columns: { id: true, publicId: true }
+			columns: { id: true, publicId: true, deletedAt: true, sessionVersion: true }
 		})
 	]);
 }

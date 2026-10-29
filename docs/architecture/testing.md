@@ -99,3 +99,8 @@ D1 rate-limit regressions send concurrent requests through the real middleware,
 check account isolation, and exercise expiry cleanup. Auth regressions also cover
 deleted impersonators on API and sync requests. Shared JWT tests validate signed
 malformed claims, and encryption tests reject invalid keys and altered ciphertext.
+
+Credential revocation tests cover user/admin password changes and resets, old
+cookies and refreshed copies, impersonation, notes sync, first-password setup and
+D1 rollback. Frontend unit tests check rejected-session redirects, outage behavior
+and forwarding the replacement password cookie.

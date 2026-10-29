@@ -69,3 +69,11 @@ LiveStore HTTP RPC protocol. It uses the same user session cookie, validates
 store ownership and note events, and delegates to `NotesSync`. Web calls its
 same-origin proxy; native supplies a cookie header. WebSockets and client auth
 payloads are disabled. See [local-first notes](../local-first.md).
+
+## Password and session responses
+
+`POST /auth/set-password`, `POST /auth/change-password`, and
+`POST /auth/accept-invite` return a replacement `ak5_token` cookie after committing
+the credential and session-generation change. Clients must store/forward it.
+Older cookies, including refreshed copies, then receive 401. `GET /auth/me` is the
+frontend session-validity check. See [session revocation](../auth.md#session-revocation).

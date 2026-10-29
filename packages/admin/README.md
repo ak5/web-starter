@@ -3,7 +3,8 @@
 SvelteKit on Cloudflare Workers — the admin portal. A pure UI worker that talks
 to `@ak5/api` through the **admin-scoped** typed client (`hc<AdminApiType>`);
 calling a web-only route from here is a compile error. Everything except
-`/login` requires an admin JWT.
+`/login` requires a current admin session. The shared hook verifies the JWT and
+checks its generation with the API before accepting or refreshing it.
 
 ## Routes
 

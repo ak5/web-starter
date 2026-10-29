@@ -183,8 +183,13 @@ export const postAuth = new Hono<AppContext>()
 		requireRecentAuth(),
 		zValidator('json', changePasswordSchema),
 		async (c) => {
-			const result = await changePasswordPostAuth(c.var.db, activeAuth(c), c.req.valid('json'));
-			return apiBodyJson(c, result);
+			const result = await changePasswordPostAuth(
+				c.var.db,
+				c.env,
+				activeAuth(c),
+				c.req.valid('json')
+			);
+			return authJson(c, result);
 		}
 	)
 	.post(

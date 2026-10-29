@@ -1,8 +1,14 @@
 import { env } from 'cloudflare:workers';
 import { JWT_SECRET, PUBLIC_COOKIE_ORIGIN } from '$app/env/private';
 import { dev } from '$app/env';
+import { PUBLIC_API_URL } from '$app/env/public';
 import { sequence } from '@sveltejs/kit/hooks';
-import { createGdprHandle, createSvelteKitHandle, securityHeadersHandle } from '@ak5/webui';
+import {
+	createGdprHandle,
+	createSvelteKitHandle,
+	securityHeadersHandle,
+	validateApiSession
+} from '@ak5/webui';
 
 /**
  * Admin is a pure UI worker. Everything except `/login` requires an admin JWT.
@@ -12,6 +18,12 @@ import { createGdprHandle, createSvelteKitHandle, securityHeadersHandle } from '
 const jwtAuth = createSvelteKitHandle({
 	env: () => ({ JWT_SECRET, PUBLIC_COOKIE_ORIGIN }),
 	allowedJwtType: 'admin',
+	validateSession: (event, token) =>
+		validateApiSession(
+			PUBLIC_API_URL,
+			(dev ? undefined : (env.API?.fetch.bind(env.API) as typeof fetch)) ?? event.fetch,
+			token
+		),
 	isProtectedPath: (path) => !path.startsWith('/login'),
 	isAuthPage: (path) => path === '/login',
 	requiresEmailConfirmed: () => false,

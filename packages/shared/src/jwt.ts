@@ -25,6 +25,9 @@ export interface JwtPayload {
 	recentAuthAt: number;
 	/** Public ID of the admin currently impersonating this subject, if any. */
 	impersonatedBy?: string;
+	/** Account generation; preserved when a cookie is refreshed. */
+	sessionVersion?: number;
+	impersonatorSessionVersion?: number;
 	iat: number;
 	exp: number;
 }
@@ -38,6 +41,8 @@ const jwtPayloadSchema = z.object({
 	hasPassword: z.boolean(),
 	recentAuthAt: z.number().int().nonnegative(),
 	impersonatedBy: z.string().min(1).optional(),
+	sessionVersion: z.number().int().nonnegative().default(0),
+	impersonatorSessionVersion: z.number().int().nonnegative().optional(),
 	iat: z.number().int().nonnegative(),
 	exp: z.number().int().nonnegative()
 });
@@ -84,6 +89,9 @@ export interface IssueJwtInput {
 	hasPassword: boolean;
 	recentAuthAt: number;
 	impersonatedBy?: string;
+	/** Account generation; preserved when a cookie is refreshed. */
+	sessionVersion?: number;
+	impersonatorSessionVersion?: number;
 }
 
 export async function signJwt(
@@ -92,7 +100,12 @@ export async function signJwt(
 	expiresInSeconds = JWT_EXPIRY_SECONDS
 ): Promise<string> {
 	const now = Math.floor(Date.now() / 1000);
-	const payload: JwtPayload = { ...claims, iat: now, exp: now + expiresInSeconds };
+	const payload: JwtPayload = {
+		...claims,
+		sessionVersion: claims.sessionVersion ?? 0,
+		iat: now,
+		exp: now + expiresInSeconds
+	};
 	const headerB64 = base64urlEncode(enc.encode(JSON.stringify({ alg: 'HS256', typ: 'JWT' })));
 	const payloadB64 = base64urlEncode(enc.encode(JSON.stringify(payload)));
 	const data = `${headerB64}.${payloadB64}`;
