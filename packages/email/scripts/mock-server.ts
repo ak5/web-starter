@@ -79,6 +79,9 @@ app.delete('/emails', (c) => {
 });
 
 const port = Number(process.env.PORT ?? 8355);
-serve({ fetch: app.fetch, port }, (info) => {
-	console.log(`mock email server listening on http://localhost:${info.port}`);
-});
+export const server = serve(
+	{ fetch: app.fetch, port, hostname: process.env.DEV_HOST ?? '127.0.0.1' },
+	(info) => {
+		console.log(`mock email server listening on http://${info.address}:${info.port}`);
+	}
+);
