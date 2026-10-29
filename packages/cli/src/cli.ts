@@ -3,7 +3,7 @@
  * @ak5/cli — dev CLI wrapping the api endpoints.
  *
  * Multi-persona identity store at $XDG_CONFIG_HOME/ak5-cli/identities.json so a
- * developer can keep `--user` and `--admin` sessions side-by-side without
+ * developer can keep user and admin personas side-by-side without
  * re-login thrash.
  *
  * Usage:
@@ -19,7 +19,7 @@
  * Per-worktree identities: when run via `pnpm cli`, mise sets XDG_CONFIG_HOME to
  * <worktree>/.ak5-config so two checkouts don't share sessions.
  */
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync, renameSync, rmSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
 interface Identity {
@@ -109,16 +109,37 @@ function loadIdentities(prod: boolean): IdentitiesFile {
 	const path = identitiesPath(prod);
 	if (!existsSync(path)) return { identities: [] };
 	try {
-		return JSON.parse(readFileSync(path, 'utf-8')) as IdentitiesFile;
+		const file = JSON.parse(readFileSync(path, 'utf-8')) as IdentitiesFile;
+		if (
+			!Array.isArray(file?.identities) ||
+			file.identities.some(
+				(identity) =>
+					!identity ||
+					!['user', 'admin'].includes(identity.type) ||
+					!['persona', 'email', 'token', 'apiUrl', 'createdAt'].every(
+						(key) => typeof identity[key as keyof Identity] === 'string'
+					)
+			)
+		)
+			throw new Error('Invalid identity store');
+		return file;
 	} catch {
-		return { identities: [] };
+		throw new Error(
+			`Cannot read identity store at ${path}. Repair it or move it aside before retrying.`
+		);
 	}
 }
 
 function saveIdentities(file: IdentitiesFile, prod: boolean) {
 	const path = identitiesPath(prod);
-	mkdirSync(dirname(path), { recursive: true });
-	writeFileSync(path, JSON.stringify(file, null, 2));
+	mkdirSync(dirname(path), { recursive: true, mode: 0o700 });
+	const temporary = `${path}.${crypto.randomUUID()}.tmp`;
+	try {
+		writeFileSync(temporary, JSON.stringify(file, null, 2), { mode: 0o600, flag: 'wx' });
+		renameSync(temporary, path);
+	} finally {
+		rmSync(temporary, { force: true });
+	}
 }
 
 function getIdentity(persona: string, prod: boolean): Identity | undefined {
@@ -145,7 +166,9 @@ async function callApi(
 	identity: Identity | undefined,
 	body?: unknown
 ): Promise<{ status: number; data: unknown; cookies: string[] }> {
-	const apiUrl = identity?.apiUrl ?? defaultApiUrl(false);
+	if (!identity)
+		throw new Error('No identity for this persona and environment. Run cli login first.');
+	const apiUrl = identity.apiUrl;
 	const headers: Record<string, string> = { 'content-type': 'application/json' };
 	if (identity) headers.cookie = `ak5_token=${identity.token}`;
 	const res = await fetch(`${apiUrl}${path}`, {
@@ -154,6 +177,7 @@ async function callApi(
 		body: body == null ? undefined : JSON.stringify(body)
 	});
 	const cookies = res.headers.getSetCookie?.() ?? [];
+	if (!res.ok) process.exitCode = 1;
 	let data: unknown;
 	const text = await res.text();
 	try {
@@ -338,6 +362,7 @@ async function main() {
 					? `${mockBase}/emails/to/${encodeURIComponent(addr)}/pin`
 					: `${mockBase}/emails/to/${encodeURIComponent(addr)}/magic-link`;
 		const res = await fetch(url);
+		if (!res.ok) process.exitCode = 1;
 		out(await res.json(), flags.pretty);
 		return;
 	}

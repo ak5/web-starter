@@ -118,7 +118,7 @@ export function createProject(
 		run('git', ['init', '--quiet', '--initial-branch=main'], destination);
 		if (install) run('mise', ['exec', '--', 'pnpm', 'install'], destination);
 		console.log(
-			`\nCreated ${destination} (${mobile ? 'web + mobile' : 'website only'}).\nNext: cd ${JSON.stringify(destination)}\n  mise install\n  pnpm install\n  pnpm dev:init\n  pnpm db:migrate\n  pnpm dev:auto\n\nMobile can be enabled later with: pnpm mobile enable`
+			`\nCreated ${destination} (${mobile ? 'web + mobile' : 'website only'}).\nNext: cd ${JSON.stringify(destination)}\n  mise trust\n  mise install\n  pnpm install\n  pnpm dev:init\n  pnpm db:migrate\n  pnpm dev:auto\n\nMobile can be enabled later with: pnpm mobile enable`
 		);
 		return destination;
 	} finally {

@@ -31,7 +31,6 @@ export async function adminLogList(db: Database, query: AdminLogListQuery) {
 
 	return {
 		logs: rows.map((log) => ({
-			id: log.id,
 			timestamp: log.timestamp,
 			timestampLabel: displayDateTime(log.timestamp),
 			messageLabel: logMessageLabel(log.data),

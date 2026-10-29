@@ -19,6 +19,7 @@ creation. Installation is otherwise an explicit next step:
 
 ```sh
 cd my-app
+mise trust # review and trust the generated configuration
 mise install
 pnpm install
 pnpm dev:init

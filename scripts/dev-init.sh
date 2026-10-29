@@ -58,7 +58,7 @@ Optional provider secrets — fill only what you test locally:
 Then:
 
    pnpm db:migrate
-   pnpm create:admin
+   pnpm create:admin admin@example.com adminname '<strong-password>'
    pnpm dev:auto
 
 See docs/development/setup.md and docs/architecture/database.md.
