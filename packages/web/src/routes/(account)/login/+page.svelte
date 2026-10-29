@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { errorMessage } from '@ak5/webui';
 	import { page } from '$app/state';
 	import OAuthLogin from '#lib/OAuthLogin.svelte';
 
@@ -13,7 +14,7 @@
 <div class="card bg-base-200 p-6">
 	<h1 class="mb-4 text-2xl font-bold">Welcome back</h1>
 	{#if form?.error || oauthError}
-		<div role="alert" class="mb-4 alert alert-error">{form?.error ?? oauthError}</div>
+		<div role="alert" class="mb-4 alert alert-error">{form?.error ?? errorMessage(oauthError)}</div>
 	{/if}
 	<form method="POST" use:enhance class="flex flex-col gap-3">
 		<label for="email">Email</label>

@@ -52,10 +52,6 @@
 
 		<div class="space-y-2 border-t border-base-content/20 pt-4 text-center">
 			<div class="text-sm">
-				<a href="/terms-of-service" class="text-primary hover:underline">terms</a>
-				<span class="mx-2">|</span>
-				<a href="/privacy" class="text-primary hover:underline">privacy</a>
-				<span class="mx-2">|</span>
 				<ThemeToggle />
 			</div>
 			<p class="text-xs text-base-content/60">

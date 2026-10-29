@@ -27,6 +27,20 @@ A login provider needs four things:
 4. **A `/auth/options` entry** so the frontend knows the provider is enabled and
    can render its button.
 
+## Signup and linking
+
+A verified Discord email is required for a new account. Emails are normalized;
+an email already owned by an active account returns the user to login rather than
+merging accounts. Generated usernames include a public-ID suffix; Discord's name
+remains the display name. Signup follows the application's
+[policy flow](auth.md#signup-policies).
+
+A signed-in user can attach Discord as a login credential only within the
+15-minute recent-auth window. Impersonation sessions cannot attach credentials.
+The result appears at `/account/password`; users outside the window can request
+an email confirmation there and retry the Discord flow. No provider API data is
+imported beyond the login profile.
+
 ## The overlay boundary
 
 The overlay lives in its own module (`auth-oauth`) and the password core must not

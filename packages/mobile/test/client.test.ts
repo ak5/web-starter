@@ -52,7 +52,7 @@ const user: SessionUser = {
 
 test('keeps an unconfirmed signup session when verification delivery fails', async () => {
 	const f = fixture([json({ ok: true, verificationEmailSent: false }, 200, 'session'), json(user)]);
-	const result = await f.client.register('user@example.test', 'password', 'user_name', true);
+	const result = await f.client.register('user@example.test', 'password', 'user_name');
 	assert.deepEqual(result.result, { ok: true, verificationEmailSent: false });
 	assert.equal(f.saved(), 'session');
 	assert.equal(f.requests[1].headers.get('Cookie'), `${COOKIE_TOKEN}=session`);
@@ -61,7 +61,7 @@ test('keeps an unconfirmed signup session when verification delivery fails', asy
 test('rejects validator responses before requesting or caching a signup viewer', async () => {
 	const f = fixture([json({ success: false, error: { issues: [] } }, 400)], 'old-session');
 	await assert.rejects(
-		f.client.register('invalid', 'password', 'user_name', true),
+		f.client.register('invalid', 'password', 'user_name'),
 		(error: unknown) => error instanceof ApiError && error.status === 400
 	);
 	assert.equal(f.saved(), null);

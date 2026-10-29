@@ -47,8 +47,6 @@ this package to set overrides, or export them in the shell. If absent, the activ
 slot's direct API port is used; the iOS simulator connects to `127.0.0.1`, and
 the Android emulator connects to `10.0.2.2`. Physical devices need a reachable
 HTTPS API URL. Set `MOBILE_API_URL` before starting Metro to override either.
-`MOBILE_WEB_URL` overrides the web app URL used for legal policy links; it defaults
-to the same local host and the active slot’s web port.
 Never put API secrets or signing credentials in JavaScript configuration.
 
 ## Verify and distribute
@@ -65,12 +63,13 @@ verification, session restoration, pagination, JSON editing and deletion. Use
 only intended mail recipients. The auth code persists JWTs in iOS Keychain /
 Android Keystore via Symbiote secure-store; it never logs session values.
 
-Release builds require explicit HTTPS `MOBILE_API_URL` and `MOBILE_WEB_URL`, app-specific signing,
-identifiers and store metadata. Publish the app’s Terms, Privacy and Acceptable
-Use pages at `/terms-of-service`, `/privacy`, and `/acceptable-use` on the
-configured web host before distribution. Use `pnpm --filter @ak5/mobile ios:release` or
-`android:release` after configuring them. Production backend promotion remains
-the repository's manual workflow; mobile distribution is separate.
+Release builds require an explicit HTTPS `MOBILE_API_URL`, app-specific signing,
+identifiers and store metadata. Add your application's policies and any required
+signup acknowledgement before distribution; the starter does not provide policy
+text or record agreement. See [signup policies](../../docs/architecture/auth.md#signup-policies).
+Use `pnpm --filter @ak5/mobile ios:release` or `android:release` after configuring
+them. Production backend promotion remains the repository's manual workflow;
+mobile distribution is separate.
 
 ## Structure
 

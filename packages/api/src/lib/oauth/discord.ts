@@ -1,41 +1,16 @@
-/**
- * Discord OAuth — login provider for users (and the legacy admin path
- * before email/password admin login was added). The flow:
- *
- *   1. /oauth/discord                  → 302 to discord.com/oauth2/authorize
- *   2. discord redirects back with ?code=…
- *   3. POST to discord.com/api/oauth2/token to exchange code → access_token
- *   4. GET https://discord.com/api/users/@me → discord profile
- *   5. find or create local user row + auth_discord row, mint JWT, redirect
- *
- * The discord access_token is stored unencrypted (it expires in 7 days and
- * we re-fetch on demand via refresh_token); the refresh_token is stored
- * AES-encrypted via `encryptToken` because it is long-lived.
- */
+/** Discord login and account linking; refresh tokens are encrypted at rest. */
 import type { Context } from 'hono';
-import { deleteCookie, getCookie } from 'hono/cookie';
-import { and, eq } from 'drizzle-orm';
-import {
-	COOKIE_TOKEN,
-	LEGAL_SIGNUP_ACCEPTANCE_COOKIE,
-	LEGAL_VERSIONS,
-	publicId,
-	type JwtPayload
-} from '@ak5/shared';
+import { and, eq, isNull } from 'drizzle-orm';
+import { COOKIE_TOKEN, isRecentAuth, publicId, type JwtPayload } from '@ak5/shared';
 import type { Database } from '../../db';
 import { authDiscord, authEmail, users } from '../../db/schema';
 import type { AppContext, Env } from '../../types';
+import { emailSchema } from '../auth-form';
 import { apiErrorJson } from '../api-response';
 import { encryptToken } from '../crypto';
 import { jwtCookie, signJwt } from '../jwt';
 import { responseJson } from '../request-parsing';
-import {
-	cookieOptions,
-	issueOAuthState,
-	redirectToApp,
-	redirectToWeb,
-	validateOAuthState
-} from './state';
+import { issueOAuthState, redirectToApp, redirectToWeb, validateOAuthState } from './state';
 
 export interface DiscordTokenResponse {
 	access_token: string;
@@ -79,15 +54,11 @@ export async function handleDiscordOAuthCallbackResponse(c: Context<AppContext>)
 	if (oauthError) return redirectToWeb(c, `/login?error=${encodeURIComponent(oauthError)}`);
 	if (!code) return redirectToWeb(c, '/login?error=missing_code');
 
-	const acceptedLegal = getCookie(c, LEGAL_SIGNUP_ACCEPTANCE_COOKIE) === LEGAL_VERSIONS.terms;
-	deleteCookie(c, LEGAL_SIGNUP_ACCEPTANCE_COOKIE, cookieOptions(c));
-
 	const result = await handleDiscordOAuthCallback({
 		db: c.var.db,
 		env: c.env,
 		auth: c.var.auth,
-		code,
-		acceptedLegal
+		code
 	});
 
 	if (result.kind === 'disabled') return apiErrorJson(c, result);
@@ -121,7 +92,7 @@ export async function exchangeDiscordCode(args: {
 		headers: { 'content-type': 'application/x-www-form-urlencoded' },
 		body
 	});
-	if (!r.ok) throw new Error(`discord token exchange failed: ${r.status} ${await r.text()}`);
+	if (!r.ok) throw new Error(`discord token exchange failed: ${r.status}`);
 	return responseJson<DiscordTokenResponse>(r);
 }
 
@@ -186,17 +157,12 @@ async function userHasPassword(db: Database, userId: string) {
 }
 
 async function isDiscordEmailAlreadyUsed(db: Database, email: string) {
-	const [emailIdentity, discordIdentity] = await Promise.all([
-		db.query.authEmail.findFirst({
-			where: and(eq(authEmail.subjectType, 'user'), eq(authEmail.email, email)),
-			columns: { id: true }
-		}),
-		db.query.authDiscord.findFirst({
-			where: and(eq(authDiscord.subjectType, 'user'), eq(authDiscord.discordEmail, email)),
+	return Boolean(
+		await db.query.users.findFirst({
+			where: and(eq(users.email, email), isNull(users.deletedAt)),
 			columns: { id: true }
 		})
-	]);
-	return Boolean(emailIdentity || discordIdentity);
+	);
 }
 
 export async function handleDiscordOAuthCallback(args: {
@@ -204,7 +170,6 @@ export async function handleDiscordOAuthCallback(args: {
 	env: Env;
 	auth: JwtPayload | null;
 	code: string;
-	acceptedLegal: boolean;
 }): Promise<DiscordOAuthResult> {
 	const tokens = await exchangeDiscordCode({
 		code: args.code,
@@ -213,6 +178,8 @@ export async function handleDiscordOAuthCallback(args: {
 		redirectUri: `${args.env.PUBLIC_API_URL}/oauth/discord/callback`
 	});
 	const profile = await fetchDiscordProfile(tokens.access_token);
+	const providerEmail = emailSchema.safeParse(profile.email);
+	profile.email = providerEmail.success ? providerEmail.data : undefined;
 
 	const expiresAt = new Date(Date.now() + tokens.expires_in * 1000);
 	const encryptedRefresh = await encryptToken(tokens.refresh_token, args.env.TOKEN_ENCRYPTION_KEY);
@@ -223,10 +190,16 @@ export async function handleDiscordOAuthCallback(args: {
 	const activeUser = await getActiveDiscordOAuthUser(args.db, args.auth);
 
 	if (activeUser) {
+		if (args.auth?.impersonatedBy) {
+			return { kind: 'redirect', redirectTo: '/account/password?error=forbidden' };
+		}
+		if (!args.auth || !isRecentAuth(args.auth)) {
+			return { kind: 'redirect', redirectTo: '/account/password?error=recent_auth_required' };
+		}
 		if (existing && existing.subjectId !== activeUser.id) {
 			return {
 				kind: 'redirect',
-				redirectTo: '/dashboard/settings/security?error=discord_already_connected'
+				redirectTo: '/account/password?error=discord_already_connected'
 			};
 		}
 
@@ -263,7 +236,7 @@ export async function handleDiscordOAuthCallback(args: {
 			});
 		}
 
-		return { kind: 'connect', redirectTo: '/dashboard/settings/security?connected=discord' };
+		return { kind: 'connect', redirectTo: '/account/password?connected=discord' };
 	}
 
 	let userPub: string;
@@ -296,9 +269,6 @@ export async function handleDiscordOAuthCallback(args: {
 			})
 			.where(eq(authDiscord.id, existing.id));
 	} else {
-		if (!args.acceptedLegal) {
-			return { kind: 'redirect', redirectTo: '/register?error=legal_acceptance_required' };
-		}
 		if (!profile.email || !profile.verified) {
 			return { kind: 'redirect', redirectTo: '/register?error=verified_discord_email_required' };
 		}
@@ -308,9 +278,8 @@ export async function handleDiscordOAuthCallback(args: {
 
 		const userInternalId = crypto.randomUUID().replace(/-/g, '').slice(0, 21);
 		userPub = publicId('user');
-		username = (profile.username ?? `discord_${profile.id}`)
-			.slice(0, 20)
-			.replace(/[^a-zA-Z0-9_]/g, '_');
+		const base = (profile.username || 'discord').slice(0, 9).replace(/[^a-zA-Z0-9_]/g, '_');
+		username = `${base}_${userPub.slice(2)}`;
 		email = profile.email ?? '';
 		emailVerified = !!profile.verified;
 		hasPassword = false;
@@ -324,11 +293,7 @@ export async function handleDiscordOAuthCallback(args: {
 				avatar: discordAvatarUrl(profile),
 				avatarSource: 'discord',
 				email: email || null,
-				emailVerified,
-				termsAcceptedAt: new Date(),
-				termsVersion: LEGAL_VERSIONS.terms,
-				privacyVersion: LEGAL_VERSIONS.privacy,
-				acceptableUseVersion: LEGAL_VERSIONS.acceptableUse
+				emailVerified
 			}),
 			args.db.insert(authDiscord).values({
 				subjectType: 'user',

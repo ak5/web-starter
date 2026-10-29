@@ -9,7 +9,7 @@ export async function registerAction(event: RequestEvent) {
 	const username = formString(data, 'username');
 
 	const res = await api(event.fetch, event.request).auth.register.$post({
-		json: { email, password, username, legalAcceptance: true }
+		json: { email, password, username }
 	});
 
 	if (!res.ok) {

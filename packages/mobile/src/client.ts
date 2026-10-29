@@ -101,13 +101,12 @@ export function createClient(baseUrl: string, storage: SessionStorage, transport
 			if (!token) throw new ApiError(502, 'The server did not return a session. Please retry.');
 			return viewer();
 		},
-		async register(email: string, password: string, username: string, legalAcceptance: boolean) {
-			if (!legalAcceptance) throw new InputError('Accept the policies before creating an account.');
+		async register(email: string, password: string, username: string) {
 			await storage.clear();
 			token = null;
 			const result = await read(
 				await api.auth.register.$post({
-					json: { email, password, username, legalAcceptance: true }
+					json: { email, password, username }
 				})
 			);
 			if (!token) throw new ApiError(502, 'The server did not return a session. Please sign in.');

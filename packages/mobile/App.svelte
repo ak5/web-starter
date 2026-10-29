@@ -1,13 +1,11 @@
 <script lang="ts">
 	import LocalNotes from './src/LocalNotes.svelte';
 	import { onMount } from 'svelte';
-	import type { ISymbioteEvent } from '@symbiote-native/engine';
 	import { FlatList } from '@symbiote-native/svelte';
 	import type { ItemDto } from '@ak5/api';
 	import { ApiError, InputError, createClient, parseItemData } from './src/client';
 	import { sessionStorage } from './src/storage';
-	import { Linking } from 'react-native';
-	import { apiUrl, webUrl } from './src/config';
+	import { apiUrl } from './src/config';
 
 	const client = createClient(apiUrl, sessionStorage);
 	type User = NonNullable<Awaited<ReturnType<typeof client.restore>>>;
@@ -18,7 +16,6 @@
 	let error = $state('');
 	let notice = $state('');
 	let registering = $state(false);
-	let accepted = $state(false);
 	let email = $state('');
 	let username = $state('');
 	let password = $state('');
@@ -42,7 +39,6 @@
 		hasNext = false;
 		password = '';
 		pin = '';
-		accepted = false;
 		registering = false;
 	}
 
@@ -80,7 +76,7 @@
 	async function authenticate() {
 		await run(async () => {
 			if (registering) {
-				const result = await client.register(email.trim(), password, username.trim(), accepted);
+				const result = await client.register(email.trim(), password, username.trim());
 				user = result.user;
 				if (!result.result.verificationEmailSent)
 					notice = 'Account created. Email could not be sent. Use Resend code to retry.';
@@ -172,42 +168,8 @@
 						password = String(event.nativeEvent.text ?? '');
 					}}
 				/>
-				{#if registering}
-					<text class="body">Review and accept the policies before creating your account.</text>
-					{@render button(
-						'Terms of service',
-						() =>
-							void run(async () => {
-								await Linking.openURL(`${webUrl}/terms-of-service`);
-							})
-					)}
-					{@render button(
-						'Privacy policy',
-						() =>
-							void run(async () => {
-								await Linking.openURL(`${webUrl}/privacy`);
-							})
-					)}
-					{@render button(
-						'Acceptable use policy',
-						() =>
-							void run(async () => {
-								await Linking.openURL(`${webUrl}/acceptable-use`);
-							})
-					)}
-					<switch
-						accessibilityLabel="Accept Terms, Privacy and Acceptable Use policies"
-						value={accepted}
-						onValueChange={(event: ISymbioteEvent) => {
-							accepted = Boolean(event.nativeEvent.value);
-						}}
-					/>
-				{/if}
-				{@render button(
-					registering ? 'Create account' : 'Sign in',
-					() => void authenticate(),
-					registering && !accepted
-				)}
+
+				{@render button(registering ? 'Create account' : 'Sign in', () => void authenticate())}
 				{@render button(registering ? 'Have an account? Sign in' : 'Create an account', () => {
 					registering = !registering;
 					error = '';

@@ -88,7 +88,7 @@ test('signup delivery failure keeps committed account, unconfirmed session, and 
 		failingEnv(() => {
 			committedAtSend = state.isCommitted();
 		}),
-		{ username: 'tester', email: auth.email, password: 'password123', legalAcceptance: true }
+		{ username: 'tester', email: auth.email, password: 'password123' }
 	);
 	assert.equal(committedAtSend, true);
 	assert.equal(result.ok, true);

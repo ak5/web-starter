@@ -122,18 +122,37 @@ test('D1 preserves identity constraints, atomic writes and auth workflows', asyn
 	} as unknown as Env;
 	t.mock.method(console, 'error', () => {});
 	await t.test(
+		'password signup reports an email owned by an account without password auth',
+		async () => {
+			const result = await registerUserPreAuth(db, env, {
+				email: 'owner@example.test',
+				username: 'new_owner',
+				password: 'password1234'
+			});
+			assert.deepEqual(result, { ok: false, status: 409, body: { error: 'email_taken' } });
+		}
+	);
+
+	await t.test(
 		'failed verification delivery leaves an unconfirmed account able to log in',
 		async () => {
 			const result = await registerUserPreAuth(db, env, {
 				email: 'signup@example.test',
 				username: 'signup',
-				password: 'password1234',
-				legalAcceptance: true
+				password: 'password1234'
 			});
 			assert.equal(result.ok, true);
 			if (!result.ok) return;
 			assert.equal(result.body.verificationEmailSent, false);
 			assert.ok(result.setCookie);
+			const registered = await db.query.users.findFirst({
+				where: eq(users.publicId, result.body.publicId)
+			});
+			assert.ok(registered);
+			assert.equal(registered.termsAcceptedAt, null);
+			assert.equal(registered.termsVersion, null);
+			assert.equal(registered.privacyVersion, null);
+			assert.equal(registered.acceptableUseVersion, null);
 			assert.equal(
 				(
 					await loginUserPreAuth(db, env, {

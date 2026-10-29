@@ -5,18 +5,6 @@
 // Pagination
 export const DEFAULT_PAGE_SIZE = 20;
 
-// Legal document versions — bump when the corresponding policy text changes.
-export const LEGAL_VERSIONS = {
-	terms: '2026-01-01',
-	privacy: '2026-01-01',
-	acceptableUse: '2026-01-01'
-} as const;
-
-export const LEGAL_SIGNUP_ACCEPTANCE_COOKIE = 'ak5_legal_signup_accepted';
-
-export const LEGAL_ACCEPTANCE_ERROR =
-	'Please accept the Terms of Service, acknowledge the Privacy Policy, and agree to the Acceptable Use Policy.';
-
 // Time intervals (milliseconds)
 export const TIME_MS = {
 	ONE_MINUTE: 60 * 1000,

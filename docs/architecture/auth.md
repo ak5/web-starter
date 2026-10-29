@@ -115,6 +115,26 @@ API routes/lib **and** the web `OAuthLogin.svelte` button — can be deleted and
 the core still authenticates. `audit:split` enforces that no core auth file
 imports the overlay. See [platforms.md](platforms.md) for adding a provider.
 
+## Signup policies
+
+The starter creates accounts without recording agreement to policies. Policy text
+and its presentation belong to the application using the starter. Before accepting
+real users, publish the policies that describe your product and data handling, then
+implement any required acknowledgement consistently in website, native and OAuth
+signup. Never send an automatic `true` in place of a user's action.
+
+The nullable `terms_accepted_at`, `terms_version`, `privacy_version` and
+`acceptable_use_version` columns can hold the versions actually shown to a user.
+Starter signup leaves them null. Include the acknowledgement and account creation
+in the same transaction when adding that flow.
+
+Discord assigns a username with a public-ID suffix so a provider handle cannot
+collide with a password account. Email is normalized and checked against active
+users, including invited accounts. Connecting Discord while signed in requires
+recent authentication and rejects support impersonation; the callback returns to
+`/account/password` with a visible result. Password login remains available after
+connecting.
+
 ## Platform auth endpoints
 
 | Method | Route                         | Auth        | Purpose                      |

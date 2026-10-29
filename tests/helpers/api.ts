@@ -53,7 +53,7 @@ export async function registerUser(api: APIRequestContext): Promise<TestUser> {
 		password: 'password1234'
 	};
 	const res = await api.post('/auth/register', {
-		data: { ...user, legalAcceptance: true }
+		data: { ...user }
 	});
 	expect(res.status(), `register failed: ${await res.text()}`).toBe(200);
 	return user;
