@@ -98,3 +98,10 @@ payloads are disabled. See [local-first notes](../local-first.md).
 the credential and session-generation change. Clients must store/forward it.
 Older cookies, including refreshed copies, then receive 401. `GET /auth/me` is the
 frontend session-validity check. See [session revocation](../auth.md#session-revocation).
+
+## Avatar validation and account deletion
+
+`POST /me/avatar` accepts WebP uploads up to 5MB with matching filename, MIME type
+and file signature. Objects are served with `image/webp` metadata. This is a
+signature check rather than an image decoder. Admin user deletion and its audit
+entry commit atomically; see [retention](../security.md#avatar-uploads-and-retention).

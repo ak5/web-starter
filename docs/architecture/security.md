@@ -112,3 +112,17 @@ not an assertion that the published package is safe.
 When an upstream fixed release is available, update the dependency and remove the
 patch and exact advisory exception together. Keep the regression while the
 dependency remains. No broader severity or registry-error exclusions are enabled.
+
+## Avatar uploads and retention
+
+Avatar uploads require a `.webp` filename, `image/webp` MIME type, a RIFF/WebP
+signature and at most 5MB. R2 objects receive explicit `image/webp` HTTP metadata.
+The Worker checks the signature; it does not decode or re-encode images. Add an
+image-processing service if the application needs full decoding or normalization.
+
+Uploaded avatars are public CDN objects. Replacing an avatar changes the database
+reference; it does not remove the previous object. Account soft deletion revokes
+credentials and tokens but retains the user row, domain data and uploaded objects.
+A fork must define its retention/erasure policy and object cleanup before accepting
+production data. An R2 expiry rule also expires currently referenced images, so it
+must match the application's intended avatar lifetime.

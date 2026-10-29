@@ -279,16 +279,14 @@ export async function adminDeleteUser(db: Database, adminPublicId: string, targe
 	if (!admin)
 		return { ok: false as const, error: 'admin_not_found' as const, status: 404 as const };
 
-	const result = await softDeleteUserByPublicId(db, targetPublicId);
-	if (!result.ok) return { ok: false as const, error: result.error, status: result.status };
-
-	await db.insert(auditLog).values({
+	const result = await softDeleteUserByPublicId(db, targetPublicId, {
 		adminId: admin.id,
 		action: 'user.delete',
 		entityType: 'user',
-		entityId: result.publicId,
-		payload: { userPublicId: result.publicId, adminPublicId: admin.publicId }
+		entityId: targetPublicId,
+		payload: { userPublicId: targetPublicId, adminPublicId: admin.publicId }
 	});
+	if (!result.ok) return { ok: false as const, error: result.error, status: result.status };
 
 	return {
 		ok: true as const,
