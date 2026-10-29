@@ -230,7 +230,9 @@
 			<text-input
 				class="input"
 				accessibilityLabel="Verification code"
-				keyboardType="number-pad"
+				autoCapitalize="characters"
+				autoCorrect={false}
+				maxLength={6}
 				value={pin}
 				onChangeText={(event) => {
 					pin = String(event.nativeEvent.text ?? '');

@@ -40,72 +40,29 @@ Cloudflare resources, verified email domain, and mobile signing configuration.
 
 ## Create your project
 
-Install [mise](https://mise.jdx.dev), Git, and create an empty repository for your
-application. Clone this starter as a normal repository, then keep it as `upstream`
-so you can bring in future fixes. A GitHub fork is not required.
+Install [mise](https://mise.jdx.dev) and Git, then create an independent, branded
+project. The creator defaults to **website only**:
 
 ```sh
-git clone https://github.com/ak5/web-starter.git myapp
-cd myapp
-git remote rename origin upstream
-git remote add origin git@github.com:YOUR_ORG/YOUR_REPO.git
-mise trust             # review and trust this checkout
+mise exec node@26.12.1 pnpm@12.15.0 -- pnpm dlx "github:ak5/web-starter#path:/packages/create" my-app --scope @myco --slug myapp
+cd my-app
+mise trust             # review and trust the generated configuration
 mise install
 pnpm install
-pnpm rebrand --scope @myco --slug myapp
 pnpm dev:init
-```
-
-`rebrand` replaces the starter's brand tokens. Add `--no-oauth` to omit the
-Discord login overlay, or skip rebranding to keep the defaults. It deletes its
-own initializer after running.
-
-Apply the schema to local D1 and launch. Local database development needs no
-Cloudflare account or database credentials:
-
-```sh
 pnpm db:migrate
 pnpm dev:auto
 ```
 
-Read `.env.dev-slot` for your selected local URLs. The API, web, admin, and email
-preview run behind Caddy; the email mock keeps development mail local.
-See [local setup](docs/development/setup.md) for prerequisites and configuration.
+Add `--mobile` to include iOS/Android source or `--no-oauth` to omit Discord login.
+Read `.env.dev-slot` for the selected local URLs. Local D1 needs no Cloudflare
+account or database credentials; development email stays in the local inbox.
 
-Commit your application changes and push to your new origin:
-
-```sh
-git add .
-git commit -m "Initialize my application"
-git push -u origin main
-```
-
-### Bring in starter updates
-
-Keep starter updates separate from your product work and review them on a branch:
-
-```sh
-git fetch upstream
-git switch -c chore/starter-update
-git merge upstream/main
-# Resolve conflicts, review changes, and run the checks below.
-git push -u origin chore/starter-update
-```
-
-Open a PR in your own repository. Updates are ordinary Git merges; changes to
-branded files, removed packages, or your product features can require manual
-conflict resolution. Keep the shared history so future merges can identify what
-has already been applied.
-
-## Create a project
-
-```sh
-pnpm dlx "github:ak5/web-starter#path:/packages/create" my-app --scope @myco --slug myapp
-```
-
-New projects default to website only; pass `--mobile` to include native clients.
-In an existing fork, `pnpm mobile disable` removes mobile source and native dependencies;
-`pnpm mobile enable` restores it. See [project creation and profiles](docs/development/start-project.md).
+`pnpm mobile disable` removes native source and dependencies; `pnpm mobile enable`
+restores them from the pinned starter revision. For that workflow, manual cloning
+with shared Git history, and bringing in upstream fixes, see
+[project creation and profiles](docs/development/start-project.md). See
+[local setup](docs/development/setup.md) for the day-to-day commands.
 
 ## Native development
 
@@ -115,6 +72,9 @@ Start Metro with `pnpm dev:app`; use `pnpm app:ios` or `pnpm app:android` to run
 app. Native development is separate from the web stack.
 
 ## Packages
+
+The starter repository contains these packages. Generated projects omit the
+creator package; website-only projects also omit mobile.
 
 | Package                   | Purpose                                                 |
 | ------------------------- | ------------------------------------------------------- |
@@ -162,5 +122,9 @@ for your own sender domain.
 [MIT](LICENSE). Preserve the copyright and permission notices when distributing
 copies. Native bootstrap attribution is included in
 [the upstream license](packages/mobile/UPSTREAM-LICENSE.txt).
+
+The starter's MIT license covers its own code. Dependencies and copied upstream
+code keep their own licenses and notices. Review the licenses of the packages
+included in the artifacts you distribute; the root license does not replace them.
 
 Made with <3 by [ak5](https://alexander.verver.is).

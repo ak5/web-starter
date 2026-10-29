@@ -36,7 +36,8 @@ a connection string, or an external database server for local development.
 
 Clone a normal repository, keep the starter as `upstream`, and add your own
 empty repository as `origin`. This preserves shared history for future updates
-without creating a GitHub fork. Follow the [README install and update instructions](../../README.md#create-your-project).
+without creating a GitHub fork. Follow the [shared-history setup and update instructions](start-project.md#clone-with-shared-starter-history),
+or use the creator for an independent project.
 
 ## First run
 

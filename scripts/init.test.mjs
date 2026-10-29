@@ -16,6 +16,11 @@ test('rebrand keeps upstream, author credit and local files intact', (t) => {
 	);
 	writeFileSync(join(directory, '.git/config'), 'https://github.com/ak5/web-starter.git');
 	writeFileSync(join(directory, '.env'), 'local-only-ak5');
+	writeFileSync(join(directory, 'mise.local.toml'), 'local-only-ak5');
+	writeFileSync(
+		join(directory, 'pnpm-lock.yaml'),
+		"'@ak5/api': workspace:*\nintegrity: sha512-testak5checksum==\n"
+	);
 	writeFileSync(
 		join(directory, 'package.json'),
 		JSON.stringify({ scripts: { rebrand: 'node scripts/init.mjs' } })
@@ -44,6 +49,11 @@ test('rebrand keeps upstream, author credit and local files intact', (t) => {
 		'https://github.com/ak5/web-starter.git'
 	);
 	assert.equal(readFileSync(join(directory, '.env'), 'utf8'), 'local-only-ak5');
+	assert.equal(readFileSync(join(directory, 'mise.local.toml'), 'utf8'), 'local-only-ak5');
+	assert.equal(
+		readFileSync(join(directory, 'pnpm-lock.yaml'), 'utf8'),
+		"'@example/api': workspace:*\nintegrity: sha512-testak5checksum==\n"
+	);
 });
 
 test('rebrand reports installation failure and gives a recovery command', (t) => {
