@@ -42,3 +42,6 @@ Signup does not claim agreement to policies. Add your application's policies and
 acknowledgement flow before launch; see [auth](../../docs/architecture/auth.md#signup-policies).
 Discord callback errors appear on login/register, and account-link results appear
 on `/account/password`.
+
+List pages report API failures instead of presenting an empty list. Malformed
+JSON from the API is treated as an upstream failure.

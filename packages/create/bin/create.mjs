@@ -51,7 +51,7 @@ function run(command, args, cwd) {
 
 export function createProject(
 	directory,
-	{ scope, slug, mobile = false, oauth = true, install = false, repository = UPSTREAM } = {}
+	{ scope, slug, mobile = false, oauth = true, repository = UPSTREAM } = {}
 ) {
 	const destination = resolve(directory);
 	assert.ok(
@@ -116,7 +116,6 @@ export function createProject(
 				.join(' && ');
 		writeFileSync(manifestPath, JSON.stringify(manifest, null, '\t') + '\n');
 		run('git', ['init', '--quiet', '--initial-branch=main'], destination);
-		if (install) run('mise', ['exec', '--', 'pnpm', 'install'], destination);
 		console.log(
 			`\nCreated ${destination} (${mobile ? 'web + mobile' : 'website only'}).\nNext: cd ${JSON.stringify(destination)}\n  mise trust\n  mise install\n  pnpm install\n  pnpm dev:init\n  pnpm db:migrate\n  pnpm dev:auto\n\nMobile can be enabled later with: pnpm mobile enable`
 		);
@@ -129,7 +128,7 @@ export function createProject(
 export function main(argv = process.argv.slice(2)) {
 	if (argv.includes('--help') || argv.includes('-h')) {
 		console.log(
-			'create-web-starter <directory> [--scope @company] [--slug myapp] [--mobile|--web-only] [--no-oauth] [--install]\nDefaults: website only, OAuth enabled, dependencies installed separately.'
+			'create-web-starter <directory> [--scope @company] [--slug myapp] [--mobile|--web-only] [--no-oauth]\nDefaults: website only, OAuth enabled, dependencies installed separately.'
 		);
 		return;
 	}
@@ -146,7 +145,6 @@ export function main(argv = process.argv.slice(2)) {
 		} else if (argument === '--mobile') options.mobile = true;
 		else if (argument === '--web-only') options.mobile = false;
 		else if (argument === '--no-oauth') options.oauth = false;
-		else if (argument === '--install') options.install = true;
 		else {
 			assert.ok(
 				!argument.startsWith('-') && directory === undefined,

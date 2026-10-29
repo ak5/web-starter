@@ -58,7 +58,9 @@ export async function apiLoadJson<Response extends ResponseLike>(
 	fallback: string
 ): Promise<JsonOf<Response>> {
 	if (!res.ok) throw error(res.status, fallback);
-	return responseJsonBody<JsonOf<Response>>(res, {} as JsonOf<Response>);
+	return res.json().catch(() => {
+		throw error(502, fallback);
+	}) as Promise<JsonOf<Response>>;
 }
 
 export async function apiRedirectAction<Key extends FailureKey = 'error'>(

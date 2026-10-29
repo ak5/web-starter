@@ -128,3 +128,11 @@ code keep their own licenses and notices. Review the licenses of the packages
 included in the artifacts you distribute; the root license does not replace them.
 
 Made with <3 by [ak5](https://alexander.verver.is).
+
+Web and admin production builds emit `third-party-licenses.txt` beside their
+client assets. Keep that file with the deployed assets; it contains notices for
+the dependencies Vite bundles. Native distribution also needs the notices for
+its JavaScript and native dependencies. Inspect the installed workspace inventory
+with `pnpm -r --include-workspace-root licenses list --json`, then match it to the
+artifacts being shipped. Build tools in that inventory are not necessarily part
+of the distributed application.
