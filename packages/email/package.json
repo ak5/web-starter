@@ -26,7 +26,7 @@
 		"lint:fix:nofmt": "eslint --cache --fix .",
 		"dev:preview": "vite --host 127.0.0.1 --port ${AK5_PREVIEW_PORT:-8354} --strictPort",
 		"dev:mock": "PORT=${AK5_MOCK_PORT:-8355} tsx scripts/mock-server.ts",
-		"test:unit": "pnpm build && node --test --test-concurrency=1 --import tsx scripts/preview.test.ts src/render.test.ts src/send.test.ts scripts/rest-send.test.ts",
+		"test:unit": "pnpm build && node --test --test-concurrency=1 --import tsx scripts/mock-server.test.ts scripts/preview.test.ts src/render.test.ts src/send.test.ts scripts/rest-send.test.ts",
 		"test:send": "pnpm build && tsx scripts/send-test.ts",
 		"preview": "pnpm dev:preview",
 		"mock": "pnpm dev:mock"

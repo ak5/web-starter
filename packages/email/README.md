@@ -52,7 +52,9 @@ an iframe, with a template selector and live reload. `AK5_PREVIEW_PORT` selects 
 and refuses occupied ports. `pnpm dev:email` watches the compiled server bundle
 and declaration output.
 
-The mock captures every email sent in dev. Endpoints:
+The mock captures every email sent in dev. It defaults to `127.0.0.1`; an explicit
+`DEV_HOST` overrides that for a trusted shared development network. Its inbox is
+unauthenticated and includes recovery links. Endpoints:
 
 - `GET /emails` — list captured
 - `GET /emails/to/:address/pin` — extract PIN
@@ -66,9 +68,9 @@ The `@ak5/cli` integrates with the mock via `pnpm cli emails …`.
 Run a local mock delivery test:
 
 ```bash
-pnpm --filter @ak5/email mock
-pnpm --filter @ak5/email test:send --to test@example.com --mock-url http://localhost:8355
-curl http://localhost:8355/emails/to/test%40example.com/pin
+pnpm dev:email:mock
+pnpm email:test --to test@example.com --mock-url http://localhost:8355
+pnpm cli emails pin test@example.com
 ```
 
 Use `pnpm email:test --real --to intended-recipient@example.com --from sender@example.com`
@@ -86,7 +88,7 @@ throw `EmailDeliveryError`. Redacted structured failure events contain only
 `event`, `transport`, and `code`. Never log recipients, body, links, or raw errors.
 Authenticated sends await delivery; public recovery settles failures in the
 background without changing its response. `pnpm test:unit` includes transport,
-compiled-template, transport, REST diagnostic, and caller failure tests.
+compiled-template, local inbox binding, REST diagnostic, and caller failure tests.
 
 ## Adding a template
 

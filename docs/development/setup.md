@@ -76,6 +76,11 @@ surface on a single port per slot. Slot 1 lands on `:8359`; slot N on
 the hosts to `/etc/hosts`. Caddy binds `127.0.0.1` only — it is the only
 public-facing process.
 
+The mock inbox contains development verification codes and recovery links. It
+binds to `127.0.0.1` by default, including when started on its own. `DEV_HOST` can
+explicitly change that binding for a trusted shared development network; anyone
+who can reach the mock server can read its inbox.
+
 ## Multiple worktrees / slots
 
 Each git worktree gets its **own slot** and its **own `XDG_CONFIG_HOME`** (the
