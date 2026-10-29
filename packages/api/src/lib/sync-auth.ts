@@ -32,9 +32,9 @@ export async function authorizeSync(
 	if (!(await isActiveImpersonator(database, auth))) return false;
 	const user = await database.query.users.findFirst({
 		where: and(eq(users.publicId, auth.sub), isNull(users.deletedAt), isNull(users.bannedAt)),
-		columns: { id: true }
+		columns: { sessionVersion: true }
 	});
-	return Boolean(user);
+	return !!user && user.sessionVersion === (auth.sessionVersion ?? 0);
 }
 const id = z.string().regex(/^n-[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i);
 const event = z.discriminatedUnion('name', [

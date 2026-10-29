@@ -8,6 +8,8 @@ connection string or runtime database API token is needed.
 
 `packages/api/src/db/schema.ts` defines the SQLite schema. Identity tables are
 `users`, `admin_users`, `auth_email`, and the removable `auth_discord` provider.
+`users.session_version` and `admin_users.session_version` invalidate older JWTs
+when credentials change; see [auth](auth.md#session-revocation).
 `tokens` stores expiring, hashed secrets with exactly one user/admin owner.
 `api_keys`, `sessions`, `logs`, `config`, and `audit_log` support platform operations.
 `rate_limits` stores atomic, expiring auth attempt counters, indexed for scheduled cleanup.

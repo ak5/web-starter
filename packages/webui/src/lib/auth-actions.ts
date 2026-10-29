@@ -259,6 +259,7 @@ export async function accountPasswordAction(event: AccountPasswordEvent): Promis
 			event
 		);
 	}
+	forwardSetCookie(res, event.cookies);
 	return responseJsonBody(res, {});
 }
 

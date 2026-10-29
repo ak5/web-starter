@@ -40,7 +40,9 @@ function database(options: { existing?: boolean; active?: boolean; invite?: bool
 		query: {
 			users: {
 				findFirst: async () =>
-					options.active ? { id: 'user-internal', deletedAt: null, bannedAt: null } : undefined
+					options.active
+						? { id: 'user-internal', deletedAt: null, bannedAt: null, sessionVersion: 0 }
+						: undefined
 			},
 			adminUsers: {
 				findFirst: async () =>

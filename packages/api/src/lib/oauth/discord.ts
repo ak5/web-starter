@@ -151,6 +151,7 @@ export type DiscordOAuthResult =
 				emailConfirmed: boolean;
 				hasPassword: boolean;
 				recentAuthAt: number;
+				sessionVersion: number;
 			};
 	  }
 	| { kind: 'redirect'; redirectTo: string }
@@ -167,10 +168,12 @@ async function getActiveDiscordOAuthUser(db: Database, auth: JwtPayload | null) 
 			email: true,
 			emailVerified: true,
 			deletedAt: true,
-			bannedAt: true
+			bannedAt: true,
+			sessionVersion: true
 		}
 	});
-	if (!row || row.deletedAt || row.bannedAt) return null;
+	if (!row || row.deletedAt || row.bannedAt || row.sessionVersion !== (auth.sessionVersion ?? 0))
+		return null;
 	return row;
 }
 
@@ -268,12 +271,14 @@ export async function handleDiscordOAuthCallback(args: {
 	let email: string;
 	let emailVerified: boolean;
 	let hasPassword: boolean;
+	let sessionVersion = 0;
 
 	if (existing) {
 		const u = await args.db.query.users.findFirst({ where: eq(users.id, existing.subjectId) });
 		if (!u || u.deletedAt || u.bannedAt) {
 			return { kind: 'disabled', status: 403, error: 'user_disabled' };
 		}
+		sessionVersion = u.sessionVersion;
 		userPub = u.publicId;
 		username = u.username;
 		email = u.email ?? profile.email ?? '';
@@ -348,6 +353,7 @@ export async function handleDiscordOAuthCallback(args: {
 			type: 'user',
 			emailConfirmed: emailVerified,
 			hasPassword,
+			sessionVersion,
 			recentAuthAt: Math.floor(Date.now() / 1000)
 		}
 	};

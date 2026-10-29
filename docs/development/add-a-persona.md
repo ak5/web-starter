@@ -31,8 +31,13 @@ In `packages/api/src/app.ts`:
 ## 3. Widen the JWT type union
 
 The JWT carries a `type` discriminator. Add the persona's value to the `JwtType`
-union (`packages/shared/src/jwt.ts`) and to `requireAuth(type?)` so the post-login
-guard recognizes it. Decide the persona's cookie name if it needs its own.
+union and claim validator (`packages/shared/src/jwt.ts`) and to `requireAuth(type?)`
+so the post-login guard recognizes it. The identity must carry a session version
+and participate in password-change revocation. Decide the persona's cookie name if it needs its own.
+
+Keep the copied `createSvelteKitHandle` session validator: it calls
+`validateApiSession` over the API service binding (or local fetch). Signature
+verification alone cannot detect a deleted account or a revoked session.
 
 ## 4. Claim a dev slot + Caddy upstream
 

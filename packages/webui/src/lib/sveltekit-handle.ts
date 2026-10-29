@@ -20,7 +20,7 @@ import {
  * The factory enforces the rules in this order:
  *   1. The cookie's JWT must verify and `payload.type === allowedJwtType`.
  *      Anything else clears the cookie and treats the request as unauthenticated.
- *   2. Valid long-lived JWTs are refreshed using the same threshold as the api.
+ *   2. The API must accept the session; only then can a long-lived JWT refresh.
  *   3. If `isProtectedPath(pathname)` returns true and there is no user, the
  *      handler redirects to `/login` (preserving `?next=`).
  *   4. If `requiresEmailConfirmed(pathname)` returns true and the user has
@@ -38,6 +38,8 @@ export interface CreateHandleConfig {
 	env: () => { JWT_SECRET?: string; PUBLIC_COOKIE_ORIGIN?: string };
 	/** Which JWT `type` claim this app accepts. Mismatches are rejected. */
 	allowedJwtType: JwtType;
+	/** Check the account/session generation with the API before accepting a cookie. */
+	validateSession: (event: Parameters<Handle>[0]['event'], token: string) => Promise<boolean>;
 
 	/** Cookie name to read/write the JWT from. Defaults to `ak5_token`. */
 	cookieName?: string;
@@ -103,6 +105,7 @@ export function createSvelteKitHandle(config: CreateHandleConfig): Handle {
 	return async ({ event, resolve }) => {
 		const cookieHeader = event.request.headers.get('cookie');
 		const raw = parseCookie(cookieHeader, cookieName);
+		const initialCookie = event.cookies.get(cookieName);
 		const env = config.env();
 		const secret = getSecret(env);
 		const cookieOrigin = getCookieOrigin(env);
@@ -123,8 +126,6 @@ export function createSvelteKitHandle(config: CreateHandleConfig): Handle {
 				// Wrong type or invalid — clear the cookie so the user lands at /login cleanly.
 				activeToken = null;
 				payload = null;
-			} else if (shouldRefreshJwt(payload)) {
-				activeToken = await refreshJwt(payload, secret);
 			}
 		}
 
@@ -139,10 +140,28 @@ export function createSvelteKitHandle(config: CreateHandleConfig): Handle {
 			}
 		}
 
+		let sessionRejected = false;
+		if (payload && activeToken) {
+			if (!(await config.validateSession(event, activeToken))) {
+				payload = null;
+				activeToken = null;
+				sessionRejected = true;
+			} else if (shouldRefreshJwt(payload)) {
+				activeToken = await refreshJwt(payload, secret);
+			}
+		}
 		await config.attachLocals?.(event, payload, payload ? activeToken : null);
 
 		const { pathname, search } = event.url;
 		const applyAuthCookies = (response: Response) => {
+			if (raw || config.isProtectedPath(pathname) || config.isAuthPage?.(pathname)) {
+				response.headers.set('Cache-Control', 'no-store');
+			}
+			// An action may replace/revoke the cookie after the hook checked it.
+			if (event.cookies.get(cookieName) !== initialCookie) return response;
+			if (sessionRejected && parseCookie(cookieHeader, COOKIE_ADMIN_TOKEN)) {
+				response.headers.append('Set-Cookie', clearJwtCookie(COOKIE_ADMIN_TOKEN, cookieOrigin));
+			}
 			if (raw && !payload) {
 				response.headers.append('Set-Cookie', clearJwtCookie(cookieName, cookieOrigin));
 			}
@@ -158,9 +177,6 @@ export function createSvelteKitHandle(config: CreateHandleConfig): Handle {
 				) {
 					response.headers.append('Set-Cookie', clearJwtCookie(COOKIE_ADMIN_TOKEN, cookieOrigin));
 				}
-			}
-			if (raw || config.isProtectedPath(pathname) || config.isAuthPage?.(pathname)) {
-				response.headers.set('Cache-Control', 'no-store');
 			}
 			return response;
 		};

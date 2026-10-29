@@ -63,6 +63,26 @@ type-only RPC boundary makes role confusion a build failure, not a runtime check
   `impersonatedBy`. Verification validates the HS256 header, claim types and
   timestamps; expiry is exclusive (a token expires at `exp`, not one second later).
 
+## Session revocation
+
+Each user and admin has a `session_version` in D1, starting at zero. JWTs carry
+that generation as `sessionVersion`; refresh preserves it. The API and notes sync
+reject a generation that no longer matches. OAuth sign-in reads the current
+version when issuing a new session.
+
+Setting or changing a password, including reset/invite completion, commits the
+credential write, generation increment and deletion of outstanding one-time tokens
+in one D1 batch. The response supplies a replacement cookie for the caller; other
+sessions must sign in again. An impersonation cookie records both the user and
+acting admin generations, so either account's password change revokes it.
+
+Web and admin verify cookie signatures locally, then validate the session through
+`GET /auth/me` before accepting or refreshing it. Deployed frontends use their API
+service binding. A 401/403 clears rejected cookies and allows login; a service
+failure shows an error without clearing a valid cookie. Native clears rejected
+sessions on its next API request. Offline local data cannot be remotely erased;
+see [local-first notes](local-first.md#offline-behavior-and-device-data).
+
 ## Recent-auth window
 
 Sensitive actions (change password, change email, delete account) are wrapped in

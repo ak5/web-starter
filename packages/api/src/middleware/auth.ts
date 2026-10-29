@@ -35,17 +35,19 @@ export const requireAuth =
 		if (auth.type === 'user') {
 			const row = await c.var.db.query.users.findFirst({
 				where: eq(users.publicId, auth.sub),
-				columns: { deletedAt: true, bannedAt: true }
+				columns: { deletedAt: true, bannedAt: true, sessionVersion: true }
 			});
-			if (!row || row.deletedAt) return c.json({ error: 'unauthorized' }, 401);
+			if (!row || row.deletedAt || row.sessionVersion !== (auth.sessionVersion ?? 0))
+				return c.json({ error: 'unauthorized' }, 401);
 			if (row.bannedAt && !auth.impersonatedBy) return c.json({ error: 'user_disabled' }, 403);
 		}
 		if (auth.type === 'admin') {
 			const row = await c.var.db.query.adminUsers.findFirst({
 				where: eq(adminUsers.publicId, auth.sub),
-				columns: { deletedAt: true }
+				columns: { deletedAt: true, sessionVersion: true }
 			});
-			if (!row || row.deletedAt) return c.json({ error: 'unauthorized' }, 401);
+			if (!row || row.deletedAt || row.sessionVersion !== (auth.sessionVersion ?? 0))
+				return c.json({ error: 'unauthorized' }, 401);
 		}
 		await next();
 	};

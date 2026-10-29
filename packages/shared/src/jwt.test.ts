@@ -2,7 +2,14 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { createHmac } from 'node:crypto';
 
-import { clearJwtCookie, jwtCookie, signJwt, verifyJwt, type IssueJwtInput } from './jwt.js';
+import {
+	clearJwtCookie,
+	jwtCookie,
+	refreshJwt,
+	signJwt,
+	verifyJwt,
+	type IssueJwtInput
+} from './jwt.js';
 
 const SECRET = 'test-secret';
 const CLAIMS: IssueJwtInput = {
@@ -15,6 +22,18 @@ const CLAIMS: IssueJwtInput = {
 };
 
 describe('signJwt / verifyJwt', () => {
+	it('refresh preserves both session generations', async () => {
+		const token = await signJwt(SECRET, {
+			...CLAIMS,
+			sessionVersion: 4,
+			impersonatedBy: 'a-owner',
+			impersonatorSessionVersion: 2
+		});
+		const payload = (await verifyJwt(SECRET, token))!;
+		const refreshed = await verifyJwt(SECRET, await refreshJwt(payload, SECRET));
+		assert.equal(refreshed?.sessionVersion, 4);
+		assert.equal(refreshed?.impersonatorSessionVersion, 2);
+	});
 	it('round-trips the claims', async () => {
 		const token = await signJwt(SECRET, CLAIMS);
 		const payload = await verifyJwt(SECRET, token);

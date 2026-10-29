@@ -1,7 +1,7 @@
 # @ak5/web
 
 SvelteKit on Cloudflare Workers — the public app surface. A pure UI worker: it
-owns no DB, verifies the JWT cookie locally, and talks to `@ak5/api` through the
+owns no DB, verifies the JWT cookie and checks its session with the API, then talks to `@ak5/api` through the
 typed Hono client in `#lib/api` (`hc<WebApiType>`). Auth flows are wired through
 `@ak5/webui`'s action helpers.
 

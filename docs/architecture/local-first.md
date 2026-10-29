@@ -48,7 +48,7 @@ client polls over HTTP every three seconds. WebSockets are disabled, so this
 setup does not use WebSocket hibernation.
 
 Only POST HTTP sync is enabled. Each request verifies the existing JWT session
-cookie, the active user in D1, and the exact store ID. The Durable Object checks
+cookie, the active user and session generation in D1, and the exact store ID. The Durable Object checks
 again on push and pull. Admin sessions, banned/deleted users, expired sessions,
 unknown events, and invalid note arguments are rejected. Unconfirmed user sessions
 can use notes, just as they can access the authenticated web shell. Add product

@@ -52,7 +52,7 @@ export {
 	formStringAny
 } from './form-actions.js';
 export { forwardSetCookie } from './forward-cookie.js';
-export { createApiClient } from './api-client.js';
+export { createApiClient, validateApiSession } from './api-client.js';
 export type { ApiClient, ApiRequestEvent } from './api-client.js';
 export { apiRequestHeaders } from './api-headers.js';
 export { proxyJson, requestJsonBody, responseJsonBody } from './proxy-json.js';

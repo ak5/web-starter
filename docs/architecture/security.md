@@ -50,7 +50,8 @@ The auth cookie (`ak5_token`, admin stash `ak5_admin_token`) is:
 - 7-day max-age.
 
 Malformed cookie encodings and malformed JWT signatures are treated as invalid
-credentials. They do not turn an otherwise valid request into a server error.
+credentials. Account session generations also invalidate cookies after password
+changes and resets, even if a frontend refreshes the old cookie. They do not turn an otherwise valid request into a server error.
 
 ## No CSRF token
 

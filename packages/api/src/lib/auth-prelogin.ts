@@ -1,4 +1,4 @@
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq, isNull, sql } from 'drizzle-orm';
 import { EmailDeliveryError, sendTemplate } from '@ak5/email';
 import {
 	COOKIE_TOKEN,
@@ -10,7 +10,7 @@ import {
 } from '@ak5/shared';
 import type { z } from 'zod';
 import type { Database } from '../db';
-import { adminUsers, authEmail, users } from '../db/schema';
+import { adminUsers, authEmail, tokens, users } from '../db/schema';
 import type { Env } from '../types';
 import { LEGAL_VERSIONS } from './legal';
 import { hashPassword, verifyPassword } from './password';
@@ -142,17 +142,18 @@ export async function loginUserPreAuth(
 	input: LoginInput
 ): Promise<AuthWorkflowResult<{ ok: true; publicId: string }>> {
 	const { email, password } = input;
-	const row = await db.query.authEmail.findFirst({
-		where: and(eq(authEmail.subjectType, 'user'), eq(authEmail.email, email))
-	});
-	if (!row) return { ok: false, status: 401, body: { error: 'invalid_credentials' } };
-
-	const ok = await verifyPassword(row.passwordHashed, password);
-	if (!ok) return { ok: false, status: 401, body: { error: 'invalid_credentials' } };
-
-	const user = await db.query.users.findFirst({
-		where: eq(users.id, row.subjectId)
-	});
+	// Read the credential and session generation together; a concurrent password change
+	// must not let an old password mint a token with the new generation.
+	const [match] = await db
+		.select({ identity: authEmail, account: users })
+		.from(authEmail)
+		.innerJoin(users, eq(users.id, authEmail.subjectId))
+		.where(and(eq(authEmail.subjectType, 'user'), eq(authEmail.email, email)))
+		.limit(1);
+	if (!match || !(await verifyPassword(match.identity.passwordHashed, password))) {
+		return { ok: false, status: 401, body: { error: 'invalid_credentials' } };
+	}
+	const user = match.account;
 	if (!user || user.deletedAt || user.bannedAt) {
 		return { ok: false, status: 401, body: { error: 'invalid_credentials' } };
 	}
@@ -165,6 +166,7 @@ export async function loginUserPreAuth(
 		type: 'user',
 		emailConfirmed: user.emailVerified,
 		hasPassword: true,
+		sessionVersion: user.sessionVersion,
 		recentAuthAt: now
 	});
 
@@ -181,17 +183,18 @@ export async function loginAdminPreAuth(
 	input: LoginInput
 ): Promise<AuthWorkflowResult<{ ok: true; publicId: string }>> {
 	const { email, password } = input;
-	const row = await db.query.authEmail.findFirst({
-		where: and(eq(authEmail.subjectType, 'admin'), eq(authEmail.email, email))
-	});
-	if (!row) return { ok: false, status: 401, body: { error: 'invalid_credentials' } };
-
-	const ok = await verifyPassword(row.passwordHashed, password);
-	if (!ok) return { ok: false, status: 401, body: { error: 'invalid_credentials' } };
-
-	const admin = await db.query.adminUsers.findFirst({
-		where: eq(adminUsers.id, row.subjectId)
-	});
+	// Read the credential and session generation together; a concurrent password change
+	// must not let an old password mint a token with the new generation.
+	const [match] = await db
+		.select({ identity: authEmail, account: adminUsers })
+		.from(authEmail)
+		.innerJoin(adminUsers, eq(adminUsers.id, authEmail.subjectId))
+		.where(and(eq(authEmail.subjectType, 'admin'), eq(authEmail.email, email)))
+		.limit(1);
+	if (!match || !(await verifyPassword(match.identity.passwordHashed, password))) {
+		return { ok: false, status: 401, body: { error: 'invalid_credentials' } };
+	}
+	const admin = match.account;
 	if (!admin || admin.deletedAt) {
 		return { ok: false, status: 401, body: { error: 'invalid_credentials' } };
 	}
@@ -204,6 +207,7 @@ export async function loginAdminPreAuth(
 		type: 'admin',
 		emailConfirmed: true,
 		hasPassword: true,
+		sessionVersion: admin.sessionVersion,
 		recentAuthAt: now
 	});
 
@@ -324,15 +328,21 @@ export async function acceptInvitePreAuth(
 			return { ok: false, status: 404, body: { error: 'user_not_found' } };
 		if (user.bannedAt) return { ok: false, status: 403, body: { error: 'user_disabled' } };
 
-		await db.batch([
+		const [, [updated]] = await db.batch([
 			db
 				.update(authEmail)
 				.set({ passwordHashed: await hashPassword(password), verified: true })
 				.where(eq(authEmail.id, identity.id)),
 			db
 				.update(users)
-				.set({ emailVerified: true, lastLoginAt: new Date() })
+				.set({
+					emailVerified: true,
+					lastLoginAt: new Date(),
+					sessionVersion: sql`${users.sessionVersion} + 1`
+				})
 				.where(eq(users.id, subjectId))
+				.returning({ sessionVersion: users.sessionVersion }),
+			db.delete(tokens).where(eq(tokens.userId, subjectId))
 		]);
 
 		const jwt = await signJwt(env.JWT_SECRET, {
@@ -342,6 +352,7 @@ export async function acceptInvitePreAuth(
 			type: 'user',
 			emailConfirmed: true,
 			hasPassword: true,
+			sessionVersion: updated.sessionVersion,
 			recentAuthAt: now
 		});
 		return {
@@ -363,15 +374,21 @@ export async function acceptInvitePreAuth(
 		return { ok: false, status: 404, body: { error: 'admin_not_found' } };
 	}
 
-	await db.batch([
+	const [, [updated]] = await db.batch([
 		db
 			.update(authEmail)
 			.set({ passwordHashed: await hashPassword(password), verified: true })
 			.where(eq(authEmail.id, identity.id)),
 		db
 			.update(adminUsers)
-			.set({ emailVerified: true, lastLoginAt: new Date() })
+			.set({
+				emailVerified: true,
+				lastLoginAt: new Date(),
+				sessionVersion: sql`${adminUsers.sessionVersion} + 1`
+			})
 			.where(eq(adminUsers.id, subjectId))
+			.returning({ sessionVersion: adminUsers.sessionVersion }),
+		db.delete(tokens).where(eq(tokens.adminId, subjectId))
 	]);
 
 	const jwt = await signJwt(env.JWT_SECRET, {
@@ -381,6 +398,7 @@ export async function acceptInvitePreAuth(
 		type: 'admin',
 		emailConfirmed: true,
 		hasPassword: true,
+		sessionVersion: updated.sessionVersion,
 		recentAuthAt: now
 	});
 	return {
