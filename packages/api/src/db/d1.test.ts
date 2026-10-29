@@ -2,10 +2,13 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { eq } from 'drizzle-orm';
 import { db as makeDb } from './index';
-import { adminUsers, auditLog, authEmail, items, tokens, users } from './schema';
+import { adminUsers, auditLog, authEmail, items, logs, tokens, users } from './schema';
 import { createTestDatabase } from './testing';
 import { listAllItems } from '../lib/items';
 import { adminHealthReport } from '../lib/admin-health';
+import { adminAuditLog } from '../lib/admin-audit-log';
+import { adminLogList } from '../lib/admin-logs';
+import { adminTokenDiagnostics } from '../lib/admin-token-diagnostics';
 import { consumeToken, issueToken } from '../lib/tokens';
 import { registerUserPreAuth, loginUserPreAuth } from '../lib/auth-prelogin';
 import { adminInviteAccount } from '../lib/admin-users';
@@ -162,6 +165,35 @@ test('D1 preserves identity constraints, atomic writes and auth workflows', asyn
 			await db.query.auditLog.findFirst({ where: eq(auditLog.entityId, account.publicId) })
 		);
 	});
+
+	await t.test(
+		'admin diagnostic responses omit internal record IDs and token secrets',
+		async () => {
+			await db.insert(logs).values({
+				id: 'internal-log-id',
+				timestamp: new Date(),
+				level: 'info',
+				context: {},
+				data: { message: 'test' }
+			});
+			const logList = await adminLogList(db, {});
+			const audit = await adminAuditLog(db, {});
+			const tokenInfo = await adminTokenDiagnostics(db, 'invite@example.test');
+			assert.equal(logList.logs.length, 1);
+			assert.ok(audit.entries.length > 0);
+			assert.equal(tokenInfo.ok, true);
+			if (!tokenInfo.ok) return;
+			assert.ok(tokenInfo.diagnostics.tokens.length > 0);
+			for (const row of [...logList.logs, ...audit.entries, ...tokenInfo.diagnostics.tokens]) {
+				assert.ok(!('id' in row));
+				assert.ok(!('tokenHash' in row));
+				assert.ok(!('userId' in row));
+				assert.ok(!('adminId' in row));
+			}
+			assert.equal(audit.entries[0].admin?.publicId, 'a-admin');
+			assert.match(tokenInfo.diagnostics.identities[0].publicId ?? '', /^u-/);
+		}
+	);
 
 	await t.test('soft deletion removes credentials and tokens atomically', async () => {
 		const account = await db.query.users.findFirst({

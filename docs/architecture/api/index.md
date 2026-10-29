@@ -70,6 +70,12 @@ GraphQL errors and missing result data return `configured: true, available: fals
 with an error message. Successful empty results remain `available: true` with an
 empty `workers` array; an unavailable integration must not be shown as zero traffic.
 
+The `/admin/logs`, `/admin/audit-log` and local-only `/admin/tokens/:email`
+responses omit internal record IDs. Audit actors and token subjects use account
+public IDs. Token diagnostics expose purpose, expiry, attempt counts and payload
+key names, never token hashes or payload values. These are read-only lists;
+records are not addressed by a returned database primary key.
+
 ## LiveStore sync
 
 `POST /sync?storeId=notes-v1-<user-public-id>&transport=http` accepts the official

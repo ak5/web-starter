@@ -37,7 +37,6 @@ export async function adminAuditLog(db: Database, query: AdminAuditLogQuery) {
 
 	return {
 		entries: rows.map((entry) => ({
-			id: entry.id,
 			action: entry.action,
 			entityType: entry.entityType,
 			entityId: entry.entityId,

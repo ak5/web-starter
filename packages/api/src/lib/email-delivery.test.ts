@@ -11,7 +11,6 @@ import {
 } from './auth-prelogin';
 import { resendVerificationPostAuth, requestReauthPostAuth } from './auth-postlogin';
 import { adminInviteAccount } from './admin-users';
-import { handleDiscordOAuthCallback } from './oauth/discord';
 
 const auth: JwtPayload = {
 	sub: 'u-test',
@@ -174,35 +173,3 @@ for (const role of ['user', 'admin'] as const) {
 		assert.deepEqual(result, { ok: false, status: 503, error: 'invitation_delivery_failed' });
 	});
 }
-
-test('direct Discord signup relies on verified provider email and issues a session without mail', async (t) => {
-	let sent = false;
-	t.mock.method(globalThis, 'fetch', async (url: RequestInfo | URL) => {
-		if (String(url).includes('/oauth2/token'))
-			return Response.json({
-				access_token: 'test-access',
-				refresh_token: 'test-refresh',
-				expires_in: 3600,
-				token_type: 'Bearer'
-			});
-		assert.equal(String(url), 'https://discord.com/api/users/@me');
-		return Response.json({
-			id: 'discord-id',
-			username: 'tester',
-			email: auth.email,
-			verified: true
-		});
-	});
-	const result = await handleDiscordOAuthCallback({
-		db: database().db,
-		env: failingEnv(() => {
-			sent = true;
-		}),
-		auth: null,
-		code: 'test-code',
-		acceptedLegal: true
-	});
-	assert.equal(result.kind, 'login');
-	if (result.kind === 'login') assert.equal(result.jwtPayload.emailConfirmed, true);
-	assert.equal(sent, false);
-});

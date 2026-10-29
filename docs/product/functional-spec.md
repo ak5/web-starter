@@ -1,8 +1,9 @@
 # Functional spec — the example surface
 
-This describes what the starter **ships out of the box**: a minimal but complete
-account platform. It exists so a fresh `pnpm dev:auto` is visibly alive and so the
-auth/admin spine is wired end to end.
+This describes the example screens and API capabilities shipped by the starter.
+A fresh `pnpm dev:auto` starts the web app, admin portal and local email tools.
+The API also exposes account and administration operations for a consuming app
+to build on.
 
 **The deal:** this is the _platform baseline_. Replace the product surface (the
 landing page and the user dashboard) with your domain. **Keep the auth and admin
@@ -35,26 +36,33 @@ core — present but deletable without touching the email + password path.
 
 ## Authed user dashboard
 
-After login, the user lands on a minimal dashboard that confirms the session
-("you're signed in") and exposes account self-service: edit profile, set/change
-password, and delete account. This is the placeholder you replace with your
-product's authed surface — the session, profile, and account-management plumbing
-underneath it stays.
+After login, the dashboard confirms the session, shows the user's name, email and
+verification status, and links to email verification when needed. The navigation
+links to password settings, the items demo and notes. Profile editing, avatar
+upload and account deletion are API operations; the starter has no screens for
+them. Build those into your product's account UI as needed.
 
 ## Admin portal
 
-A separate admin surface (its own SvelteKit app, its own identity table) for
-operating the platform:
+A separate SvelteKit app uses its own admin identity table. Its screens provide
+sign-in, password recovery/settings, a read-only list of the latest 100 active
+or banned users, and a read-only items view. The user list has no search or page
+controls. Deleted users are excluded.
 
-- **User list** — browse/search users (paginated, 0-indexed).
+The authenticated admin API additionally supports these operations. They do not
+yet have admin screens:
+
+- **Create accounts** — create a user or admin with an initial password.
 - **Invite** — invite a new user (or admin) by email.
 - **Ban / unban** — toggle a user's `banned_at`; banned users are rejected at the
   post-login guard, which DB-checks ban/deletion as the source of truth.
 - **Impersonate** — act as a user for support/debugging. The admin's own token is
   parked aside, the user token carries an `impersonatedBy` marker, an audit-log row
   is written on start and stop, and stopping swaps the cookies back.
-- **Audit log** — an append-only record of admin actions (invites, bans,
-  impersonation start/stop) for accountability.
+- **Audit log** — paginated records of invitations, bans, unbans, deletions and
+  impersonation start/stop. Direct account creation is not currently audited.
+- **Diagnostics** — database health, Cloudflare Workers, and local development
+  services and token metadata.
 
 This whole admin spine is platform infrastructure — keep it and extend it with
 your domain's admin needs rather than rebuilding it.

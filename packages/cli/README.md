@@ -9,6 +9,13 @@ sessions side-by-side without re-login thrash. When run through `pnpm cli`, mise
 points `XDG_CONFIG_HOME` at `<worktree>/.ak5-config`, so two checkouts never
 share sessions.
 
+Credentials are written atomically with owner-only file permissions (`0600`).
+An unreadable or malformed store stops the command and is preserved for recovery;
+repair it or move it aside to start a new store. `--prod` selects a separate store
+and the production API URL. Authenticated commands require a saved persona for
+that environment and never fall back to development when one is missing.
+API failures produce a nonzero exit status so shell scripts can detect them.
+
 ## Commands
 
 ```bash
