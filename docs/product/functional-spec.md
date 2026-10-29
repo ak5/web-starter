@@ -1,7 +1,7 @@
 # Functional spec — the example surface
 
 This describes what the starter **ships out of the box**: a minimal but complete
-account platform. It exists so a fresh `pnpm dev` is visibly alive and so the
+account platform. It exists so a fresh `pnpm dev:auto` is visibly alive and so the
 auth/admin spine is wired end to end.
 
 **The deal:** this is the _platform baseline_. Replace the product surface (the
@@ -21,13 +21,14 @@ The full email + password account lifecycle, served by the api and the web
 surface:
 
 - **Register** — create an account with email + password.
-- **Verify email** — a verification link is mailed on register; clicking it marks
-  the email verified. Unverified accounts can sign in but are nudged to verify.
+- **Verify email** — a six-character code is mailed on register; entering it at
+  `/account/verify` marks the email verified. Unverified accounts can sign in but are nudged to verify.
 - **Login** — email + password; issues the session cookie.
 - **Forgot / reset password** — request a reset link by email, set a new password
   from the link.
 - **Magic-link reauth** — for sensitive actions, a recent-auth window is enforced;
-  a magic link re-establishes recency without a full re-login.
+  an emailed link opens a confirmation page, whose POST re-establishes recency
+  without a full re-login.
 
 OAuth login (Discord) is shipped as a **removable overlay** on top of this
 core — present but deletable without touching the email + password path.

@@ -13,6 +13,7 @@
 			{#if data.auth}
 				<a href="/" class="btn btn-ghost btn-sm">Users</a>
 				<a href="/items" class="btn btn-ghost btn-sm">Items</a>
+				<a href="/account/password" class="btn btn-ghost btn-sm">Password</a>
 				<form method="POST" action="/logout">
 					<button type="submit" class="btn btn-ghost btn-sm">Sign out</button>
 				</form>

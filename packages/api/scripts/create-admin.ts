@@ -2,9 +2,9 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { getPlatformProxy } from 'wrangler';
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq, isNull, sql } from 'drizzle-orm';
 import { db } from '../src/db';
-import { adminUsers, authEmail } from '../src/db/schema';
+import { adminUsers, authEmail, tokens } from '../src/db/schema';
 import { hashPassword } from '../src/lib/password';
 import { publicId } from '../src/lib/public-id';
 
@@ -60,7 +60,16 @@ try {
 					.where(eq(authEmail.id, identity.id))
 			: database
 					.insert(authEmail)
-					.values({ subjectType: 'admin', subjectId: id, email, passwordHashed, verified: true })
+					.values({ subjectType: 'admin', subjectId: id, email, passwordHashed, verified: true }),
+		...(existing
+			? [
+					database
+						.update(adminUsers)
+						.set({ sessionVersion: sql`${adminUsers.sessionVersion} + 1` })
+						.where(eq(adminUsers.id, id)),
+					database.delete(tokens).where(eq(tokens.adminId, id))
+				]
+			: [])
 	]);
 	console.log(`publicId=${pub}`);
 } finally {

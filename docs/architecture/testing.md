@@ -104,3 +104,8 @@ Credential revocation tests cover user/admin password changes and resets, old
 cookies and refreshed copies, impersonation, notes sync, first-password setup and
 D1 rollback. Frontend unit tests check rejected-session redirects, outage behavior
 and forwarding the replacement password cookie.
+
+`tests/web/account-recovery.spec.ts` follows captured mock emails through both web
+and admin: recovery, invitation, password change, reauthentication and consumed-link
+errors. Its local-only bootstrap fixture verifies that resetting an existing admin
+invalidates the old cookie. It creates unique test accounts and does not send mail.

@@ -20,7 +20,7 @@ import {
  * All data fetching/mutations go through `#lib/api.js` → the api worker.
  */
 
-const PROTECTED_PREFIXES = ['/dashboard', '/account', '/notes', '/sync'];
+const PROTECTED_PREFIXES = ['/dashboard', '/account', '/notes', '/sync', '/auth/magic'];
 const AUTH_PAGE_PATHS = ['/login', '/register'];
 
 const jwtAuth = createSvelteKitHandle({
@@ -32,7 +32,8 @@ const jwtAuth = createSvelteKitHandle({
 			(dev ? undefined : (env.API?.fetch.bind(env.API) as typeof fetch)) ?? event.fetch,
 			token
 		),
-	isProtectedPath: (path) => matchesPathPrefix(path, PROTECTED_PREFIXES),
+	isProtectedPath: (path) =>
+		path !== '/account/password' && matchesPathPrefix(path, PROTECTED_PREFIXES),
 	isAuthPage: (path) => AUTH_PAGE_PATHS.includes(path),
 	requiresEmailConfirmed: () => false,
 	requiresPassword: () => false,

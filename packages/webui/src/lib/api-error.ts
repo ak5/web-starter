@@ -1,4 +1,5 @@
 import { responseJsonBody } from './proxy-json.js';
+import { errorMessage } from './error-messages.js';
 
 type ApiErrorResponseLike = {
 	json(): Promise<unknown>;
@@ -22,6 +23,6 @@ export async function apiErrorMessage(
 ) {
 	body ??= await apiErrorBody(res);
 	if (typeof body.message === 'string' && body.message) return body.message;
-	if (typeof body.error === 'string' && body.error) return body.error;
+	if (typeof body.error === 'string' && body.error) return errorMessage(body.error, fallback);
 	return fallback;
 }

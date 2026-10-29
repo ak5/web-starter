@@ -10,19 +10,27 @@ auth wiring.
 
 ## Routes
 
-| Route             | Auth   | Purpose                                |
-| ----------------- | ------ | -------------------------------------- |
-| `/`               | public | Starter overview and author credit     |
-| `/login`          | guest  | Sign in (email + password)             |
-| `/register`       | guest  | Create an account                      |
-| `/account/verify` | user   | Enter verification code or resend      |
-| `/dashboard`      | user   | Authed example dashboard (protected)   |
-| `/notes`          | user   | Local SQLite notes with LiveStore sync |
-| `/sync`           | user   | POST proxy to the API sync service     |
-| `/logout`         | user   | Clear the session (POST) → `/`         |
+| Route                 | Auth                   | Purpose                                |
+| --------------------- | ---------------------- | -------------------------------------- |
+| `/`                   | public                 | Starter overview and author credit     |
+| `/login`              | guest                  | Sign in (email + password)             |
+| `/register`           | guest                  | Create an account                      |
+| `/account/verify`     | user                   | Enter verification code or resend      |
+| `/dashboard`          | user                   | Authed example dashboard (protected)   |
+| `/notes`              | user                   | Local SQLite notes with LiveStore sync |
+| `/sync`               | user                   | POST proxy to the API sync service     |
+| `/logout`             | user                   | Clear the session (POST) → `/`         |
+| `/forgot-password`    | public                 | Request a reset link by email          |
+| `/account/password`   | session or reset token | Set, reset or change password          |
+| `/invite`             | public                 | Open the invitation password form      |
+| `/auth/magic/[token]` | session                | Confirm a reauthentication link        |
+| `/items`              | session                | Example item list and CRUD             |
 
-Protected prefixes and auth-page redirects live in `src/hooks.server.ts`. Add a
-route under `src/routes/` and update this table in the same PR.
+Recovery and invitation pages accept emailed tokens while signed out.
+`/account/password` requires either a session or a reset token; the route loader
+checks that boundary. `/auth/magic/[token]` requires a session and an explicit
+confirmation POST. The hooks reject revoked sessions before redirecting.
+Add a route under `src/routes/` and update this table in the same PR.
 
 See [local-first notes](../../docs/architecture/local-first.md) for browser requirements and device data retention.
 

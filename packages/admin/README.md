@@ -2,20 +2,27 @@
 
 SvelteKit on Cloudflare Workers — the admin portal. A pure UI worker that talks
 to `@ak5/api` through the **admin-scoped** typed client (`hc<AdminApiType>`);
-calling a web-only route from here is a compile error. Everything except
-`/login` requires a current admin session. The shared hook verifies the JWT and
+calling a web-only route from here is a compile error. Account recovery pages are public; operational pages require a current admin session. The shared hook verifies the JWT and
 checks its generation with the API before accepting or refreshing it.
 
 ## Routes
 
-| Route     | Auth  | Purpose                            |
-| --------- | ----- | ---------------------------------- |
-| `/`       | admin | Admin home — user list (protected) |
-| `/login`  | guest | Admin sign in                      |
-| `/logout` | admin | Clear the session (POST) → `/`     |
+| Route                 | Auth                   | Purpose                            |
+| --------------------- | ---------------------- | ---------------------------------- |
+| `/`                   | admin                  | Admin home — user list (protected) |
+| `/login`              | guest                  | Admin sign in                      |
+| `/logout`             | admin                  | Clear the session (POST) → `/`     |
+| `/forgot-password`    | public                 | Request a reset link by email      |
+| `/account/password`   | session or reset token | Set, reset or change password      |
+| `/invite`             | public                 | Open the invitation password form  |
+| `/auth/magic/[token]` | session                | Confirm a reauthentication link    |
+| `/items`              | session                | Example item list and CRUD         |
 
-Auth gating lives in `src/hooks.server.ts` (`isProtectedPath` = everything but
-`/login`). Add a route under `src/routes/` and update this table in the same PR.
+Recovery and invitation pages accept emailed tokens while signed out.
+`/account/password` requires either a session or a reset token; the route loader
+checks that boundary. `/auth/magic/[token]` requires a session and an explicit
+confirmation POST. The hooks reject revoked sessions before redirecting.
+Add a route under `src/routes/` and update this table in the same PR.
 
 The shared environment banner identifies dev, staging and PR previews. It returns
 after navigation or reload; set `PUBLIC_ENV_BANNER=false` to hide it. Production

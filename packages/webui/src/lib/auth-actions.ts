@@ -173,11 +173,17 @@ export async function acceptInviteAction(event: AcceptInviteEvent) {
 	throw redirect(303, body.redirectTo);
 }
 
-export async function forgotPasswordAction(event: ForgotPasswordEvent): Promise<unknown> {
+export async function forgotPasswordAction(event: ForgotPasswordEvent) {
 	const data = await event.request.formData();
 	const email = String(data.get('email') ?? '');
 	const res = await event.forgotPassword({ email });
-	return responseJsonBody(res, {});
+	if (!res.ok)
+		return fail(res.status, {
+			error: await apiErrorMessage(res, 'Could not request a reset link.')
+		});
+	return responseJsonBody<{ successMessage: string }>(res, {
+		successMessage: 'If that account exists, a reset link has been sent.'
+	});
 }
 
 export async function loginAction(event: LoginEvent) {
@@ -188,7 +194,7 @@ export async function loginAction(event: LoginEvent) {
 	const res = await event.login({ email, password });
 	if (!res.ok) {
 		const body = (await apiErrorBody(res)) as { error?: string };
-		return fail(401, {
+		return fail(res.status, {
 			error: errorMessage(body.error, 'Invalid credentials'),
 			...(event.failureIncludesEmail ? { email } : {})
 		});
@@ -202,11 +208,12 @@ export async function loginAction(event: LoginEvent) {
 	);
 }
 
-export async function accountPasswordAction(event: AccountPasswordEvent): Promise<unknown> {
+export async function accountPasswordAction(event: AccountPasswordEvent) {
 	const data = await event.request.formData();
 	const token = String(data.get('token') ?? '');
 	const newPassword = String(data.get('newPassword') ?? '');
 	const password2 = String(data.get('password2') ?? '');
+	if (newPassword !== password2) return fail(400, { error: 'Passwords do not match.' });
 
 	if (token) {
 		const res = await event.acceptInvite({
@@ -245,7 +252,10 @@ export async function accountPasswordAction(event: AccountPasswordEvent): Promis
 			);
 		}
 		forwardSetCookie(res, event.cookies);
-		return responseJsonBody(res, {});
+		return responseJsonBody<{ ok: boolean; successMessage: string }>(res, {
+			ok: true,
+			successMessage: 'Password updated.'
+		});
 	}
 
 	const currentPassword = String(data.get('currentPassword') ?? '');
@@ -260,7 +270,10 @@ export async function accountPasswordAction(event: AccountPasswordEvent): Promis
 		);
 	}
 	forwardSetCookie(res, event.cookies);
-	return responseJsonBody(res, {});
+	return responseJsonBody<{ ok: boolean; successMessage: string }>(res, {
+		ok: true,
+		successMessage: 'Password updated.'
+	});
 }
 
 export async function logoutAction(event: LogoutEvent): Promise<never> {

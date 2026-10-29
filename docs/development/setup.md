@@ -101,8 +101,11 @@ when debugging the proxy).
 The admin tables start empty. Seed one:
 
 ```sh
-pnpm create:admin
+pnpm create:admin admin@example.com adminname '<strong-password>'
 ```
+
+Rerunning this command updates that admin’s password and signs out existing
+sessions. Recovery links issued before the change are invalidated too.
 
 ## Environment notes
 
@@ -111,7 +114,8 @@ pnpm create:admin
   for you; if you ever desync them, run `pnpm -w run rotate-jwt-secret` to
   regenerate and rewrite all three.
 - The api owns every data-touching secret (provider keys); web and
-  admin hold only `JWT_SECRET`, used to verify cookies.
+  admin hold `JWT_SECRET` to verify and refresh cookies; they are trusted token
+  issuers and check session validity with the API.
 - `COOKIE_ORIGIN` (api) / `PUBLIC_COOKIE_ORIGIN` (apps) control the cookie
   `Domain`/`Secure` attributes. `pnpm dev` writes `.ak5.localhost` (Domain set,
   Secure off — dev is plain HTTP).
