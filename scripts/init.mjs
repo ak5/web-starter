@@ -134,10 +134,18 @@ function main() {
 	selfDestruct();
 
 	if (opts.install) {
-		console.log('\nReinstalling dependencies (package names changed)…\n');
-		spawnSync('pnpm', ['install'], { cwd: ROOT, stdio: 'inherit' });
-		console.log('\nFormatting…\n');
-		spawnSync('pnpm', ['format'], { cwd: ROOT, stdio: 'inherit' });
+		for (const step of ['install', 'format']) {
+			console.log(`\nRunning pnpm ${step}…\n`);
+			const result = spawnSync('pnpm', [step], { cwd: ROOT, stdio: 'inherit' });
+			if (result.error || result.status !== 0) {
+				console.error(
+					`Branding is applied, but pnpm ${step} failed. Fix the reported error, then run pnpm install and pnpm format.`
+				);
+				if (result.error) console.error(result.error.message);
+				process.exitCode = result.status || 1;
+				return;
+			}
+		}
 	}
 
 	console.log(`\nDone. This repo is now branded ${scope} / ${slug}.`);

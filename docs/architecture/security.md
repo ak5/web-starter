@@ -6,25 +6,36 @@ schema, the type system, or `audit:split` — rather than by convention.
 ## Public IDs — no PK leak
 
 Every entity carries a prefixed `public_id` (`u-`, `a-`, `t-`, …) generated with
-`customAlphabet('0123456789abcdefghijklmnopqrstuvwxyz', 10)`. Internal sequential
+`customAlphabet('0123456789abcdefghijklmnopqrstuvwxyz', 10)`. Internal nanoid
 PKs exist only for joins and **never** appear in JSON, URLs, JWTs, or cookies.
-This removes ID-enumeration as an attack and decouples the API surface from the
-storage layout. Generator: `packages/shared/src/public-id.ts`.
+Random IDs make guessing harder and decouple the API surface from storage. They
+are not authorization: every private resource still needs an ownership/role check. Generator: `packages/shared/src/public-id.ts`.
 
 ## Rate limiting
 
-A **KV-backed sliding window per IP per action** guards pre-login routes. The KV
-key is `ratelimit:<action>:<ip>` (IP from `cf-connecting-ip`, falling back to
-`x-forwarded-for`), so different endpoints don't share a bucket. Over the cap
-returns `429 { error: 'rate_limited' }`. Caps are per-action (login, register,
-forgot-password each have their own window).
+D1 stores one counter per action and caller. An atomic upsert admits at most the
+configured number of requests in a fixed window starting with the first attempt.
+Blocked requests neither increment the counter nor extend the window. A rejection
+returns `429 {error: "rate_limited", retryAfter: 300}` with `Retry-After: 300`;
+waiting that long is sufficient even if the window expires sooner.
+
+Public login, registration, password recovery and invite acceptance use the caller
+IP (`cf-connecting-ip`, falling back to `x-forwarded-for` for local/proxy traffic).
+Only trust those headers from Cloudflare or a proxy you control. Signed-in email
+verification, mail retries, reauthentication and password operations use the account
+ID, so switching IPs does not reset their allowance. Actions have separate buckets;
+the caps live beside their routes in `routes/auth/index.ts`. Scheduled cleanup
+removes expired counters. Database errors fail closed rather than bypass the limit.
+
+This is application-level abuse protection. Add edge protection for sustained
+floods so rejected traffic does not exhaust the database. Development and trusted
+PR previews share these counters along with their database.
 
 ## Validation backstop
 
-Every **mutating** route carries a `zValidator('json', …)` zod schema. Even if a
-caller bypasses the typed client, the body is validated server-side before any
-handler logic runs. The RPC types and the zod schemas describe the same shape —
-the schema is the runtime backstop for the compile-time contract.
+Routes accepting JSON use `zValidator('json', …)` schemas; avatar uploads use a
+multipart schema. Body-free mutations need no body parser. Validation runs before
+handler logic and remains necessary when a caller bypasses the typed client.
 
 ## Cookie security
 
@@ -38,6 +49,9 @@ The auth cookie (`ak5_token`, admin stash `ak5_admin_token`) is:
   (api/web/admin share it); absent for bare `localhost`/IPv4.
 - 7-day max-age.
 
+Malformed cookie encodings and malformed JWT signatures are treated as invalid
+credentials. They do not turn an otherwise valid request into a server error.
+
 ## No CSRF token
 
 There is **no CSRF token** by design: `SameSite=Lax` plus the rule that **all
@@ -48,11 +62,15 @@ subrequests) closes the classic CSRF vector without per-form tokens.
 
 - `@ak5/api` owns **every data-touching secret**: OAuth provider
   secrets, encryption keys.
-- `@ak5/web` / `@ak5/admin` hold **only `JWT_SECRET`**, and only to **verify**
-  cookies — they can never write data even if compromised.
+- `@ak5/web` / `@ak5/admin` hold `JWT_SECRET` to verify and refresh cookies.
+  HS256 uses the same key for signing and verification: all three Workers are
+  trusted token issuers. A compromised frontend Worker can mint credentials
+  accepted by the API; it must be protected as part of the authentication boundary.
 - `JWT_SECRET` is shared across all three workers. **Rotating it is a global
   logout** — every existing token fails verification at once.
 - At-rest provider refresh tokens (OAuth overlay) are encrypted (AES-256-GCM).
+  `TOKEN_ENCRYPTION_KEY` must be exactly 64 hexadecimal characters; malformed keys
+  fail before encryption or decryption. Generate one with `openssl rand -hex 32`.
 
 ## Content Security Policy
 
@@ -63,8 +81,9 @@ uniformly. Each persona can tighten its own policy.
 ## Impersonation safety
 
 Admin impersonation parks the admin JWT in `ak5_admin_token`, issues a user JWT
-carrying `impersonatedBy`, and writes `audit_log` rows on start and stop. Every
-impersonated action is attributable to the acting admin; `stop-impersonate` swaps
+carrying `impersonatedBy`, and writes `audit_log` rows on start and stop. API and
+sync access require that admin to remain active. Other actions carry the actor ID
+in their auth context but are not automatically audited. `stop-impersonate` swaps
 the original admin token back. See [auth.md](auth.md).
 
 ## Password policy

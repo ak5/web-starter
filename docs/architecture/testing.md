@@ -90,3 +90,12 @@ restoration. Mobile-profile tests check preservation of source/local files,
 web configuration, native patch registrations, Dependabot entries, links and
 conflict rejection. CI only runs the native bundle job when the mobile package
 is in the active workspace.
+
+D1 auth boundary tests cover inactive users/admins, token ownership (including
+identical PINs on different accounts), and malformed cookies. Shared helper and
+frontend hook tests also verify malformed credentials fail without server errors.
+
+D1 rate-limit regressions send concurrent requests through the real middleware,
+check account isolation, and exercise expiry cleanup. Auth regressions also cover
+deleted impersonators on API and sync requests. Shared JWT tests validate signed
+malformed claims, and encryption tests reject invalid keys and altered ciphertext.

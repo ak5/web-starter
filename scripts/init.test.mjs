@@ -45,3 +45,36 @@ test('rebrand keeps upstream, author credit and local files intact', (t) => {
 	);
 	assert.equal(readFileSync(join(directory, '.env'), 'utf8'), 'local-only-ak5');
 });
+
+test('rebrand reports installation failure and gives a recovery command', (t) => {
+	const directory = mkdtempSync(join(tmpdir(), 'starter-rebrand-failure-'));
+	t.after(() => rmSync(directory, { recursive: true, force: true }));
+	mkdirSync(join(directory, 'bin'));
+	writeFileSync(
+		join(directory, 'package.json'),
+		JSON.stringify({ scripts: { rebrand: 'node scripts/init.mjs' } })
+	);
+	const commandLog = join(directory, 'commands');
+	writeFileSync(
+		join(directory, 'bin/pnpm'),
+		'#!/bin/sh\nprintf "%s\\n" "$1" >> "$SETUP_TEST_LOG"\nexit 47\n',
+		{ mode: 0o755 }
+	);
+	const result = spawnSync(process.execPath, [resolve('scripts/init.mjs')], {
+		cwd: directory,
+		encoding: 'utf8',
+		env: {
+			...process.env,
+			PATH: join(directory, 'bin') + ':' + process.env.PATH,
+			SETUP_TEST_LOG: commandLog
+		}
+	});
+	assert.equal(result.status, 47);
+	assert.equal(readFileSync(commandLog, 'utf8'), 'install\n');
+	assert.match(result.stderr, /pnpm install and pnpm format/);
+	assert.doesNotMatch(result.stdout, /Done\. This repo/);
+	assert.equal(
+		JSON.parse(readFileSync(join(directory, 'package.json'), 'utf8')).scripts.rebrand,
+		undefined
+	);
+});

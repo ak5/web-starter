@@ -21,7 +21,10 @@ CHECK ((user_id IS NOT NULL) + (admin_id IS NOT NULL) = 1)
 ```
 
 A token is for a user **or** an admin, never both, never neither. The
-discriminator is structural, not a string flag.
+discriminator is structural, not a string flag. Verification PINs and re-auth
+links are consumed atomically for the authenticated identity only. A mismatch
+does not consume another account’s token. Password reset links identify their
+account by the bearer secret.
 
 Provider auth tables (`auth_email`, the OAuth overlay's `auth_<provider>`) are
 discriminated by **`subject_type` + `subject_id`** — the same row shape attaches
@@ -36,10 +39,12 @@ a credential to either identity table without duplicating columns.
   one set of routes (`/auth/me`, `/auth/logout`, `/auth/change-password`, …)
   serves both. The gate is `requireAuth(type?)`.
 
-`requireAuth(type?)` does more than check the cookie. When a `type` is given it
+`requireAuth(type?)` does more than check the cookie. It always
 **DB-checks the identity row** as the source of truth: a user with `deleted_at`
 or `banned_at` (and no active impersonation) is rejected even with a valid,
-unexpired JWT. Deletion and bans take effect immediately, not at token expiry.
+unexpired JWT. Deletion and bans take effect immediately, not at token expiry. Logout remains
+available to clear cookies even when the session is invalid or the account is
+inactive.
 
 ## Scoped sub-routers — wrong calls don't compile
 
@@ -55,7 +60,8 @@ type-only RPC boundary makes role confusion a build failure, not a runtime check
 - Carried in the `ak5_token` httpOnly cookie, 7-day max-age.
 - `sub` is always a **public ID** (`u-…` / `a-…`), never an internal PK.
 - Payload includes `type`, `recentAuthAt`, and (during impersonation)
-  `impersonatedBy`.
+  `impersonatedBy`. Verification validates the HS256 header, claim types and
+  timestamps; expiry is exclusive (a token expires at `exp`, not one second later).
 
 ## Recent-auth window
 
@@ -75,9 +81,11 @@ An admin can act as a user for support:
 4. `POST /auth/stop-impersonate` swaps the parked admin JWT back into
    `ak5_token` and clears the stash.
 
-Because `impersonatedBy` rides in the token, `requireAuth` lets an impersonated
-session through even if the target user is banned, while still attributing every
-action to the acting admin.
+The API checks that the acting admin is still active on each impersonated request,
+including notes sync. Deleting that admin revokes their impersonation access.
+`requireAuth` lets an active admin inspect a banned target; notes sync still rejects
+banned users. Start and stop are audited. Other actions carry `impersonatedBy` in
+the auth context but are not automatically written to the audit log.
 
 ## OAuth login is a removable overlay
 
@@ -98,9 +106,9 @@ imports the overlay. See [platforms.md](platforms.md) for adding a provider.
 | POST   | `/auth/admin/forgot-password` | pre-login   | Issue an admin reset token   |
 | GET    | `/auth/options`               | pre-login   | Enabled login methods        |
 | POST   | `/auth/accept-invite`         | pre-login   | Set password from an invite  |
-| POST   | `/auth/magic-login`           | pre-login   | Consume a magic-link token   |
+| POST   | `/auth/magic-login`           | post-login  | Consume a magic-link token   |
 | GET    | `/auth/me`                    | post-login  | Current identity             |
-| POST   | `/auth/logout`                | post-login  | Clear the cookie             |
+| POST   | `/auth/logout`                | public      | Clear the cookie             |
 | POST   | `/auth/verify-email`          | post-login  | Consume a verification token |
 | POST   | `/auth/resend-verification`   | post-login  | Re-send verification email   |
 | POST   | `/auth/set-password`          | post-login  | First password set           |
@@ -159,3 +167,10 @@ access to that user's exact notes store. Native offline restore can use a secure
 cached viewer after a network failure; a server rejection clears the session.
 [Local-first notes](local-first.md) describes the trust boundary and retained
 local data after sign out.
+
+## Auth request limits
+
+Public credential endpoints limit attempts per IP. Signed-in verification, email
+retries and password endpoints limit attempts per account, independent of IP.
+Each action uses its own five-minute window and returns 429 with `Retry-After`
+when full. See [security](security.md#rate-limiting) for storage and deployment boundaries.

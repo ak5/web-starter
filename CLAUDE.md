@@ -58,7 +58,8 @@ attributes on auth cookies. Three dev shapes plus prod:
 The api uses `COOKIE_ORIGIN`; the SvelteKit apps use `PUBLIC_COOKIE_ORIGIN`. See
 `packages/shared/src/cookie.ts`. **The api owns every data-touching secret**
 (provider secrets, encryption keys); web/admin hold only
-`JWT_SECRET`, and only to verify cookies — never to write data.
+`JWT_SECRET` to verify and refresh cookies. HS256 makes all three Workers trusted
+token issuers; a frontend compromise can mint API credentials.
 
 ## Dev ports
 

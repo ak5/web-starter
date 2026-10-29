@@ -33,3 +33,27 @@ test('auth hook reads app runtime variables without a platform object', async ()
 	delete env.PUBLIC_COOKIE_ORIGIN;
 	await assert.rejects(async () => handle(input), /PUBLIC_COOKIE_ORIGIN is not configured/);
 });
+
+test('malformed auth cookies reach login and cannot open protected pages', async () => {
+	const handle = createSvelteKitHandle({
+		env: () => ({ JWT_SECRET: 'test-secret', PUBLIC_COOKIE_ORIGIN: '' }),
+		allowedJwtType: 'user',
+		isProtectedPath: (path) => path === '/private'
+	});
+	for (const cookie of ['ak5_token=%ZZ', 'ak5_token=a.b.%%%', 'ak5_admin_token=%ZZ']) {
+		for (const path of ['/login', '/private']) {
+			const url = new URL(path, 'https://app.example.com');
+			const event = {
+				request: new Request(url, { headers: { cookie } }),
+				url,
+				locals: {},
+				cookies: { get: () => undefined }
+			} as unknown as Parameters<Handle>[0]['event'];
+			const response = await handle({
+				event,
+				resolve: async () => new Response('ok')
+			} as Parameters<Handle>[0]);
+			assert.equal(response.status, path === '/login' ? 200 : 303);
+		}
+	}
+});

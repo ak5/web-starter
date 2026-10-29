@@ -10,6 +10,7 @@ connection string or runtime database API token is needed.
 `users`, `admin_users`, `auth_email`, and the removable `auth_discord` provider.
 `tokens` stores expiring, hashed secrets with exactly one user/admin owner.
 `api_keys`, `sessions`, `logs`, `config`, and `audit_log` support platform operations.
+`rate_limits` stores atomic, expiring auth attempt counters, indexed for scheduled cleanup.
 `items` is a replaceable per-user CRUD example.
 
 Internal nanoid keys are for joins; APIs only expose prefixed public IDs. JSON

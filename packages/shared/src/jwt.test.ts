@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
+import { createHmac } from 'node:crypto';
 
 import { clearJwtCookie, jwtCookie, signJwt, verifyJwt, type IssueJwtInput } from './jwt.js';
 
@@ -77,4 +78,36 @@ describe('jwtCookie', () => {
 	it('clearJwtCookie expires the cookie', () => {
 		assert.match(clearJwtCookie('ak5_token', '.ak5web.com'), /Max-Age=0/);
 	});
+});
+
+it('rejects invalid signature encodings without throwing', async () => {
+	for (const raw of ['a.b.%%%', 'a.b.☃', 'a.b.a']) assert.equal(await verifyJwt(SECRET, raw), null);
+});
+
+it('rejects signed tokens with invalid headers, claims or expiration boundaries', async () => {
+	const now = Math.floor(Date.now() / 1000);
+	const valid = { ...CLAIMS, iat: now, exp: now + 300 };
+	const signed = (payload: unknown, header: unknown = { alg: 'HS256', typ: 'JWT' }) => {
+		const data = [header, payload]
+			.map((part) => Buffer.from(JSON.stringify(part)).toString('base64url'))
+			.join('.');
+		return `${data}.${createHmac('sha256', SECRET).update(data).digest('base64url')}`;
+	};
+	for (const payload of [
+		null,
+		[],
+		{},
+		{ ...valid, exp: now },
+		{ ...valid, exp: null },
+		{ ...valid, exp: 'forever' },
+		{ ...valid, type: 'owner' },
+		{ ...valid, sub: '' },
+		{ ...valid, recentAuthAt: now + 60 },
+		{ ...valid, hasPassword: 'yes' }
+	]) {
+		assert.equal(await verifyJwt(SECRET, signed(payload)), null);
+	}
+	for (const header of [null, { alg: 'none' }, { alg: 'HS512', typ: 'JWT' }]) {
+		assert.equal(await verifyJwt(SECRET, signed(valid, header)), null);
+	}
 });
