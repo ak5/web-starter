@@ -1,6 +1,6 @@
 import { lt } from 'drizzle-orm';
 import type { Database } from '../db';
-import { tokens } from '../db/schema';
+import { rateLimits, tokens } from '../db/schema';
 import type { Logger } from '../lib/logger';
 
 export interface JobDeps {
@@ -17,12 +17,16 @@ export async function purgeExpiredTokens(deps: JobDeps): Promise<void> {
 	await deps.db.delete(tokens).where(lt(tokens.expiresAt, new Date()));
 }
 
+export async function purgeExpiredRateLimits(deps: JobDeps): Promise<void> {
+	await deps.db.delete(rateLimits).where(lt(rateLimits.expiresAt, new Date()));
+}
+
 /**
  * Dispatch scheduled jobs by cron expression. Add `if (cron === '…')` branches
- * for additional jobs; keep each job idempotent and guard shared work with a KV
- * lock (see `KV_LOCKS` in `@ak5/shared`).
+ * for additional jobs; keep repeated and concurrent runs safe with atomic writes.
  */
 export async function runAllCronJobs(cron: string, deps: JobDeps): Promise<void> {
 	await purgeExpiredTokens(deps);
+	await purgeExpiredRateLimits(deps);
 	deps.logger.log('info', 'cron tick complete', { cron });
 }

@@ -130,14 +130,8 @@ export async function verifyEmailPostAuth(
 	if ('error' in subject)
 		return { ok: false, status: subject.status, body: { error: subject.error } };
 
-	const row = await consumeToken(db, 'verify_email', pin);
+	const row = await consumeToken(db, 'verify_email', pin, subjectTokenRef(subject));
 	if (!row) return { ok: false, status: 400, body: { error: 'invalid_pin' } };
-	if (
-		(subject.subjectType === 'user' && row.userId !== subject.subjectId) ||
-		(subject.subjectType === 'admin' && row.adminId !== subject.subjectId)
-	) {
-		return { ok: false, status: 400, body: { error: 'invalid_pin' } };
-	}
 	if (subject.subjectType === 'user') {
 		await db.update(users).set({ emailVerified: true }).where(eq(users.id, subject.subjectId));
 		await db
@@ -320,17 +314,11 @@ export async function magicLoginPostAuth(
 	auth: JwtPayload,
 	token: string
 ): Promise<PostAuthResult<{ ok: true }>> {
-	const row = await consumeToken(db, 'magic_login', token);
-	if (!row) return { ok: false, status: 400, body: { error: 'invalid_token' } };
 	const subject = await getActiveAuthSubjectByAuth(db, auth);
 	if ('error' in subject)
 		return { ok: false, status: subject.status, body: { error: subject.error } };
-	if (
-		(subject.subjectType === 'user' && row.userId !== subject.subjectId) ||
-		(subject.subjectType === 'admin' && row.adminId !== subject.subjectId)
-	) {
-		return { ok: false, status: 400, body: { error: 'invalid_token' } };
-	}
+	const row = await consumeToken(db, 'magic_login', token, subjectTokenRef(subject));
+	if (!row) return { ok: false, status: 400, body: { error: 'invalid_token' } };
 	const jwt = await signJwt(env.JWT_SECRET, {
 		...auth,
 		recentAuthAt: Math.floor(Date.now() / 1000)

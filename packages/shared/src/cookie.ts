@@ -46,5 +46,9 @@ export function parseCookie(
 ): string | undefined {
 	if (!cookieHeader) return undefined;
 	const match = cookieHeader.match(new RegExp(`(?:^|;\\s*)${name}=([^;]*)`));
-	return match?.[1] ? decodeURIComponent(match[1]) : undefined;
+	try {
+		return match?.[1] ? decodeURIComponent(match[1]) : undefined;
+	} catch {
+		return undefined;
+	}
 }

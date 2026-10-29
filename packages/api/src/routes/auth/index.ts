@@ -111,6 +111,7 @@ export const adminPreAuth = new Hono<AppContext>()
 
 export const inviteAuth = new Hono<AppContext>().post(
 	'/accept-invite',
+	rateLimit({ key: 'accept_invite', maxAttempts: 10, windowSeconds: 300 }),
 	zValidator('json', acceptInviteSchema),
 	async (c) => {
 		const result = await acceptInvitePreAuth(c.var.db, c.env, c.req.valid('json'));
@@ -123,13 +124,13 @@ export const inviteAuth = new Hono<AppContext>().post(
 // ============================================================================
 
 export const postAuth = new Hono<AppContext>()
-	.use(requireAuth())
-	.get('/me', async (c) => {
-		return c.json(authSubjectSummary(activeAuth(c)));
-	})
 	.post('/logout', async (c) => {
 		const result = logoutPostAuth(c.env);
 		return authJsonWithCookies(c, result);
+	})
+	.use(requireAuth())
+	.get('/me', async (c) => {
+		return c.json(authSubjectSummary(activeAuth(c)));
 	})
 	.post('/stop-impersonate', async (c) => {
 		const result = await stopImpersonationPostAuth(
@@ -140,30 +141,45 @@ export const postAuth = new Hono<AppContext>()
 		);
 		return authJsonWithCookies(c, result);
 	})
-	.post('/verify-email', zValidator('json', verifyEmailSchema), async (c) => {
-		const result = await verifyEmailPostAuthWithInput(
-			c.var.db,
-			c.env,
-			activeAuth(c),
-			c.req.valid('json')
-		);
-		return authJson(c, result);
-	})
-	.post('/resend-verification', async (c) => {
-		const result = await resendVerificationPostAuth(c.var.db, c.env, activeAuth(c));
-		return apiBodyJson(c, result);
-	})
-	.post('/set-password', zValidator('json', setPasswordSchema), async (c) => {
-		const result = await setPasswordPostAuthWithInput(
-			c.var.db,
-			c.env,
-			activeAuth(c),
-			c.req.valid('json')
-		);
-		return authJson(c, result);
-	})
+	.post(
+		'/verify-email',
+		rateLimit({ key: 'verify_email', scope: 'account', maxAttempts: 10, windowSeconds: 300 }),
+		zValidator('json', verifyEmailSchema),
+		async (c) => {
+			const result = await verifyEmailPostAuthWithInput(
+				c.var.db,
+				c.env,
+				activeAuth(c),
+				c.req.valid('json')
+			);
+			return authJson(c, result);
+		}
+	)
+	.post(
+		'/resend-verification',
+		rateLimit({ key: 'resend_verification', scope: 'account', maxAttempts: 3, windowSeconds: 300 }),
+		async (c) => {
+			const result = await resendVerificationPostAuth(c.var.db, c.env, activeAuth(c));
+			return apiBodyJson(c, result);
+		}
+	)
+	.post(
+		'/set-password',
+		rateLimit({ key: 'set_password', scope: 'account', maxAttempts: 5, windowSeconds: 300 }),
+		zValidator('json', setPasswordSchema),
+		async (c) => {
+			const result = await setPasswordPostAuthWithInput(
+				c.var.db,
+				c.env,
+				activeAuth(c),
+				c.req.valid('json')
+			);
+			return authJson(c, result);
+		}
+	)
 	.post(
 		'/change-password',
+		rateLimit({ key: 'change_password', scope: 'account', maxAttempts: 10, windowSeconds: 300 }),
 		requireRecentAuth(),
 		zValidator('json', changePasswordSchema),
 		async (c) => {
@@ -171,16 +187,25 @@ export const postAuth = new Hono<AppContext>()
 			return apiBodyJson(c, result);
 		}
 	)
-	.post('/request-reauth', async (c) => {
-		const result = await requestReauthPostAuth(c.var.db, c.env, activeAuth(c));
-		return apiBodyJson(c, result);
-	})
-	.post('/magic-login', zValidator('json', magicLoginSchema), async (c) => {
-		const result = await magicLoginPostAuthWithInput(
-			c.var.db,
-			c.env,
-			activeAuth(c),
-			c.req.valid('json')
-		);
-		return authJson(c, result);
-	});
+	.post(
+		'/request-reauth',
+		rateLimit({ key: 'request_reauth', scope: 'account', maxAttempts: 3, windowSeconds: 300 }),
+		async (c) => {
+			const result = await requestReauthPostAuth(c.var.db, c.env, activeAuth(c));
+			return apiBodyJson(c, result);
+		}
+	)
+	.post(
+		'/magic-login',
+		rateLimit({ key: 'magic_login', scope: 'account', maxAttempts: 10, windowSeconds: 300 }),
+		zValidator('json', magicLoginSchema),
+		async (c) => {
+			const result = await magicLoginPostAuthWithInput(
+				c.var.db,
+				c.env,
+				activeAuth(c),
+				c.req.valid('json')
+			);
+			return authJson(c, result);
+		}
+	);

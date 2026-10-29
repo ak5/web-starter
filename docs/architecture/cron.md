@@ -1,7 +1,8 @@
 # Cron
 
-The starter ships the **mechanism** for scheduled work; it doesn't ship any
-business job. This doc describes the pattern so you can add one.
+The starter purges expired one-time auth tokens and rate-limit counters on every
+scheduled tick. Both operations are idempotent indexed deletes. Add business jobs
+to the same runner as needed.
 
 ## How it runs
 
@@ -35,19 +36,15 @@ different jobs by schedule.
 2. Write the job as a function taking the shared deps `{ db, kv, logger }`.
 3. Dispatch it from the runner — branch on `cron` if it should only run on a
    specific schedule.
-4. Guard it with a lock (below). Document the job in this file.
+4. Make concurrent and repeated runs safe (below). Document the job in this file.
 
 ## Idempotency & locking
 
-Cron jobs must be **safe to run twice** — Cloudflare can double-invoke during
-deploys, and an operator may trigger a run manually. Two defenses:
+Cron jobs must be **safe to run twice**, including concurrently. Use atomic writes
+and stable operation IDs so a retry converges on the same result. A read followed
+by a KV write is not a lock: [KV is eventually consistent](https://developers.cloudflare.com/kv/concepts/how-kv-works/)
+and two runners can both enter. If a job needs exclusive ownership, use an atomic
+D1 claim or a Durable Object, and make its external side effects retry-safe too.
 
-- **KV locks.** Acquire a short-TTL KV key (`lock:<job>`) at the top of the job;
-  bail if it's already held. The TTL auto-releases the lock if the worker dies
-  mid-run, so a crash can't wedge the job permanently.
-- **Idempotent writes.** Design the work so a partial or repeated run converges
-  to the same state — upserts keyed by a stable id, "process rows where status =
-  pending" rather than "process the next N", etc.
-
-Keep jobs short and chunked: Workers have wall-clock limits, so prefer many small
+Keep jobs short and chunked: Workers have execution limits, so prefer many small
 idempotent passes over one long sweep.

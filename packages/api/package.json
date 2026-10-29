@@ -35,7 +35,7 @@
 		"db:migrate:dev": "wrangler d1 migrations apply DB --remote --env development",
 		"db:migrate:staging": "wrangler d1 migrations apply DB --remote --env staging",
 		"db:migrate:prod": "wrangler d1 migrations apply DB --remote",
-		"test:db": "node --test --test-concurrency=1 --import tsx src/db/d1.test.ts src/routes/items.test.ts src/db/sync.test.ts"
+		"test:db": "node --test --test-concurrency=1 --import tsx src/db/d1.test.ts src/db/auth-boundaries.test.ts src/db/rate-limit.test.ts src/routes/items.test.ts src/db/sync.test.ts"
 	},
 	"dependencies": {
 		"@ak5/email": "workspace:*",

@@ -2,9 +2,10 @@
  * JWT shape + sign / verify helpers shared across all workers.
  *
  * Uses HS256 via Web Crypto so the same code runs in Cloudflare Workers,
- * Node >=20, and the browser. The API signs and verifies JWTs; web + admin
- * share the same JWT_SECRET only to verify cookies and gate their own pages.
+ * Node >=20, and the browser. API, web and admin share the signing secret;
+ * frontends verify and refresh cookies and are trusted token issuers too.
  */
+import { z } from 'zod';
 
 export type JwtType = 'user' | 'admin';
 
@@ -27,6 +28,19 @@ export interface JwtPayload {
 	iat: number;
 	exp: number;
 }
+
+const jwtPayloadSchema = z.object({
+	sub: z.string().min(1),
+	email: z.string(),
+	name: z.string().optional(),
+	type: z.enum(['user', 'admin']),
+	emailConfirmed: z.boolean(),
+	hasPassword: z.boolean(),
+	recentAuthAt: z.number().int().nonnegative(),
+	impersonatedBy: z.string().min(1).optional(),
+	iat: z.number().int().nonnegative(),
+	exp: z.number().int().nonnegative()
+});
 
 const enc = new TextEncoder();
 const dec = new TextDecoder();
@@ -93,27 +107,40 @@ export async function verifyJwt(secret: string, raw: string): Promise<JwtPayload
 	const [headerB64, payloadB64, sigB64] = parts;
 	const data = `${headerB64}.${payloadB64}`;
 	const key = await hmacKey(secret);
-	const ok = await crypto.subtle.verify(
-		'HMAC',
-		key,
-		toAB(base64urlDecode(sigB64)),
-		toAB(enc.encode(data))
-	);
-	if (!ok) return null;
-	let payload: JwtPayload;
+	let signature: Uint8Array;
 	try {
-		payload = JSON.parse(dec.decode(base64urlDecode(payloadB64))) as JwtPayload;
+		signature = base64urlDecode(sigB64);
 	} catch {
 		return null;
 	}
-	if (payload.exp < Math.floor(Date.now() / 1000)) return null;
-	return payload;
+	const ok = await crypto.subtle.verify('HMAC', key, toAB(signature), toAB(enc.encode(data)));
+	if (!ok) return null;
+	try {
+		const header = JSON.parse(dec.decode(base64urlDecode(headerB64)));
+		if (header?.alg !== 'HS256' || header?.typ !== 'JWT') return null;
+		const parsed = jwtPayloadSchema.safeParse(JSON.parse(dec.decode(base64urlDecode(payloadB64))));
+		if (!parsed.success) return null;
+		const payload = parsed.data;
+		const now = Math.floor(Date.now() / 1000);
+		if (
+			payload.exp <= now ||
+			payload.exp <= payload.iat ||
+			payload.iat > now ||
+			payload.recentAuthAt > now
+		)
+			return null;
+		if (payload.impersonatedBy && payload.type !== 'user') return null;
+		return payload;
+	} catch {
+		return null;
+	}
 }
 
 /** True if the JWT's strong-auth timestamp is inside the sensitive-action window. */
 export function isRecentAuth(payload: JwtPayload): boolean {
 	const now = Math.floor(Date.now() / 1000);
-	return now - payload.recentAuthAt < RECENT_AUTH_WINDOW_MINUTES * 60;
+	const elapsed = now - payload.recentAuthAt;
+	return elapsed >= 0 && elapsed < RECENT_AUTH_WINDOW_MINUTES * 60;
 }
 
 /** True once a non-impersonation token is past the refresh threshold. */

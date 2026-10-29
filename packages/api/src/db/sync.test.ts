@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { eq } from 'drizzle-orm';
 import { db } from './index';
-import { users } from './schema';
+import { adminUsers, users } from './schema';
 import { createTestDatabase } from './testing';
 import { authorizeSync, validateNoteEvents } from '../lib/sync-auth';
 import { signJwt } from '../lib/jwt';
@@ -25,6 +25,16 @@ test('notes sync checks the real identity, expiry and exact store ownership', as
 	};
 	const token = await signJwt(env.JWT_SECRET, claims);
 	const headers = (value: string) => new Headers({ cookie: `ak5_token=${value}` });
+	await database
+		.insert(adminUsers)
+		.values({ id: 'admin', publicId: 'a-admin', username: 'admin', email: 'admin@example.test' });
+	const impersonation = await signJwt(env.JWT_SECRET, { ...claims, impersonatedBy: 'a-admin' });
+	assert.equal(await authorizeSync(env, headers(impersonation), 'notes-v1-u-owner00000'), true);
+	await database
+		.update(adminUsers)
+		.set({ deletedAt: new Date() })
+		.where(eq(adminUsers.id, 'admin'));
+	assert.equal(await authorizeSync(env, headers(impersonation), 'notes-v1-u-owner00000'), false);
 	assert.equal(await authorizeSync(env, headers(token), 'notes-v1-u-owner00000'), true);
 	assert.equal(await authorizeSync(env, headers(token), 'notes-v1-u-other00000'), false);
 	assert.equal(await authorizeSync(env, new Headers(), 'notes-v1-u-owner00000'), false);

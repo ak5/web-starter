@@ -76,3 +76,10 @@ pnpm rebrand --scope @myco --slug myapp --no-mobile
 With mobile enabled, root mise includes the pinned Ruby and Java versions.
 Website-only mode excludes these tools. After enabling mobile, run `mise install`
 and follow [mobile setup](../../packages/mobile/README.md).
+
+## Recover from setup failures
+
+If rebranding completes but dependency installation or formatting fails, the
+command exits unsuccessfully and keeps the branded source. Fix the error shown,
+then run `pnpm install` and `pnpm format` from the project root. The one-time
+initializer has already removed itself; do not rebrand the project again.

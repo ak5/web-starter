@@ -52,19 +52,30 @@ export async function issueToken(
 
 /**
  * Consume a token by its plaintext value + purpose. Returns the row on success
- * (and deletes it). Returns null if no live row matched.
+ * (and deletes it). Session-bound tokens must also match their subject.
+ * Returns null without deleting anything if no live row matched.
  */
 export async function consumeToken(
 	db: Database,
 	purpose: typeof tokens.$inferInsert.purpose,
-	plaintext: string
+	plaintext: string,
+	subject?: TokenSubject
 ): Promise<typeof tokens.$inferSelect | null> {
 	const hash = await sha256Hex(plaintext);
 	const candidate = db
 		.select({ id: tokens.id })
 		.from(tokens)
 		.where(
-			and(eq(tokens.purpose, purpose), eq(tokens.tokenHash, hash), gt(tokens.expiresAt, new Date()))
+			and(
+				eq(tokens.purpose, purpose),
+				eq(tokens.tokenHash, hash),
+				gt(tokens.expiresAt, new Date()),
+				subject
+					? 'userId' in subject
+						? eq(tokens.userId, subject.userId)
+						: eq(tokens.adminId, subject.adminId)
+					: undefined
+			)
 		)
 		.limit(1);
 	const rows = await db.delete(tokens).where(eq(tokens.id, candidate)).returning();

@@ -10,16 +10,6 @@ import {
 import { getWorkerAnalytics, listWorkers } from './cloudflare';
 import type { Env } from '../types';
 
-export function adminOpenRouterIntegration() {
-	return {
-		available: false,
-		configured: false,
-		message: 'OpenRouter is not used by ak5-web yet.',
-		statusLabel: 'Not configured',
-		statusBadgeClass: 'badge-ghost'
-	};
-}
-
 export async function adminCloudflareIntegration(env: Env) {
 	if (!env.CLOUDFLARE_API_TOKEN || !env.CLOUDFLARE_ACCOUNT_ID) {
 		return {

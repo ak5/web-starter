@@ -1,6 +1,5 @@
 /**
  * AES-256-GCM token encryption for OAuth refresh tokens stored in the DB.
- * Mirrors the legacy `packages/web/src/lib/server/crypto/encryption.ts`.
  */
 
 const enc = new TextEncoder();
@@ -9,7 +8,7 @@ const dec = new TextDecoder();
 function hexToBytes(hex: string): Uint8Array {
 	const out = new Uint8Array(hex.length / 2);
 	for (let i = 0; i < out.length; i++) {
-		out[i] = parseInt(hex.substr(i * 2, 2), 16);
+		out[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
 	}
 	return out;
 }
@@ -34,6 +33,9 @@ function toAB(bytes: Uint8Array): ArrayBuffer {
 }
 
 async function key(hexKey: string): Promise<CryptoKey> {
+	if (!/^[a-f0-9]{64}$/i.test(hexKey)) {
+		throw new Error('TOKEN_ENCRYPTION_KEY must contain exactly 64 hexadecimal characters');
+	}
 	return crypto.subtle.importKey('raw', toAB(hexToBytes(hexKey)), { name: 'AES-GCM' }, false, [
 		'encrypt',
 		'decrypt'

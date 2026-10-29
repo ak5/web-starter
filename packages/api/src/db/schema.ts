@@ -211,6 +211,16 @@ export const tokens = sqliteTable(
 // Operational tables
 // ============================================================================
 
+export const rateLimits = sqliteTable(
+	'rate_limits',
+	{
+		key: text('key').primaryKey(),
+		attempts: integer('attempts').notNull(),
+		expiresAt: ts('expires_at').notNull()
+	},
+	(t) => [index('rate_limits_expiry_idx').on(t.expiresAt)]
+);
+
 export const logs = sqliteTable(
 	'logs',
 	{

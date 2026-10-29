@@ -12,18 +12,20 @@ Routes group by **who may call them and when**, not by feature:
 | Group          | Scope      | Gate                   | Examples                                                                      |
 | -------------- | ---------- | ---------------------- | ----------------------------------------------------------------------------- |
 | **pre-login**  | role-split | none (rate-limited)    | `/auth/login`, `/auth/admin/login`, `/auth/register`, `/auth/forgot-password` |
-| **post-login** | unified    | `requireAuth()`        | `/auth/me`, `/auth/logout`, `/auth/change-password`                           |
-| **me-core**    | user JWT   | `requireAuth('user')`  | `PATCH /me/profile`, `POST /me/avatar`, `DELETE /me`                          |
+| **post-login** | unified    | `requireAuth()`        | `/auth/me`, `/auth/verify-email`, `/auth/change-password`                     |
+| **me-core**    | either JWT | `requireAuth()`        | `PATCH /me/profile`, `POST /me/avatar`, `DELETE /me`                          |
 | **items**      | user JWT   | `requireAuth('user')`  | `GET/POST /items`, `GET/PATCH/DELETE /items/:id` (example resource)           |
 | **admin-core** | admin JWT  | `requireAuth('admin')` | `/admin/users`, `/admin/invite`, `/admin/impersonate/:id`, `/admin/audit-log` |
 
 - **pre-login** is split by role because there's no token yet to disambiguate
-  the caller. These routes are the rate-limit surface.
+  the caller. These routes are rate-limited by IP.
 - **post-login** is unified — the JWT's `type` carries the role, so one route set
-  serves both identities.
-- **me-core** and **admin-core** are the authenticated business surface, pinned
-  to a single identity type by `requireAuth('user' | 'admin')`, which also
-  DB-checks `deleted_at` / `banned_at` (see [../auth.md](../auth.md)).
+  serves both identities. Verification, mail retries and password operations are
+  rate-limited by account. `/auth/logout` clears cookies without requiring a valid
+  session, so expired or disabled accounts can sign out.
+- **me-core** and **admin-core** are the authenticated business surface. `/me` supports
+  both identities; `/admin` requires an admin. Every `requireAuth` guard checks
+  the active account in D1, including `deleted_at` / `banned_at` (see [../auth.md](../auth.md)).
 
 ## Scoping
 
@@ -35,7 +37,7 @@ call routes in its own scope — calling outside it is a **compile error**.
 ## Cross-cutting middleware
 
 Every request passes through `withDb` (attaches the DB), `withAuth` (parses the
-cookie into `c.var.auth`, null when absent), and zod validation on mutations.
+cookie into `c.var.auth`, null when absent), and body validation appropriate to each route (JSON schemas or multipart checks).
 Route guards (`requireAuth`, `requireRecentAuth`) sit per-route on top.
 
 ## Per-area docs
