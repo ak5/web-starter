@@ -71,3 +71,8 @@ materialization, and account data retention.
 User policy-version columns are nullable. Starter signup leaves them empty;
 applications can record the policy versions shown and acknowledged during their
 own [signup flow](auth.md#signup-policies).
+
+Admin account deletion batches its audit entry with the soft-delete and credential
+removal. A rejected audit write rolls the entire operation back. Soft deletion
+retains profile/domain rows and public uploaded objects; see
+[retention](security.md#avatar-uploads-and-retention).

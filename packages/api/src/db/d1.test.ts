@@ -11,7 +11,7 @@ import { adminLogList } from '../lib/admin-logs';
 import { adminTokenDiagnostics } from '../lib/admin-token-diagnostics';
 import { consumeToken, issueToken } from '../lib/tokens';
 import { registerUserPreAuth, loginUserPreAuth } from '../lib/auth-prelogin';
-import { adminInviteAccount } from '../lib/admin-users';
+import { adminDeleteUser, adminInviteAccount } from '../lib/admin-users';
 import { softDeleteUserById } from '../lib/account-deletion';
 import type { Env } from '../types';
 
@@ -213,6 +213,31 @@ test('D1 preserves identity constraints, atomic writes and auth workflows', asyn
 			assert.match(tokenInfo.diagnostics.identities[0].publicId ?? '', /^u-/);
 		}
 	);
+
+	await t.test('failed deletion audit rolls back account and credential removal', async () => {
+		await issueToken(
+			db,
+			{ userId: 'owner' },
+			'verify_email',
+			'delete-sentinel',
+			new Date(Date.now() + 60000)
+		);
+		await local.binding
+			.prepare(
+				"CREATE TRIGGER reject_delete_audit BEFORE INSERT ON audit_log WHEN NEW.action = 'user.delete' BEGIN SELECT RAISE(ABORT, 'audit rejected'); END"
+			)
+			.run();
+		try {
+			await assert.rejects(adminDeleteUser(db, 'a-admin', 'u-owner'));
+			assert.equal(
+				(await db.query.users.findFirst({ where: eq(users.id, 'owner') }))?.deletedAt,
+				null
+			);
+			assert.ok(await db.query.tokens.findFirst({ where: eq(tokens.userId, 'owner') }));
+		} finally {
+			await local.binding.prepare('DROP TRIGGER reject_delete_audit').run();
+		}
+	});
 
 	await t.test('soft deletion removes credentials and tokens atomically', async () => {
 		const account = await db.query.users.findFirst({
