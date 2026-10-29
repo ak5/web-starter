@@ -27,10 +27,12 @@ function authHeaders(env: Env): Record<string, string> {
 export async function listWorkers(env: Env): Promise<CfWorkerScript[]> {
 	const url = `${CF_API_BASE}/accounts/${env.CLOUDFLARE_ACCOUNT_ID}/workers/scripts`;
 	const res = await fetch(url, { headers: authHeaders(env) });
-	if (!res.ok) return [];
+	if (!res.ok) throw new Error(`Cloudflare Workers request failed (${res.status}).`);
 
-	const data = await responseJson<{ result?: CfWorkerScript[] }>(res);
-	return data.result ?? [];
+	const data = await responseJson<{ success?: boolean; result?: CfWorkerScript[] }>(res);
+	if (data.success !== true || !Array.isArray(data.result))
+		throw new Error('Cloudflare Workers response did not contain a successful result.');
+	return data.result;
 }
 
 export async function getWorkerAnalytics(env: Env, since: string): Promise<CfWorkerAnalytics[]> {
@@ -57,9 +59,10 @@ export async function getWorkerAnalytics(env: Env, since: string): Promise<CfWor
 		headers: authHeaders(env),
 		body: JSON.stringify({ query })
 	});
-	if (!res.ok) return [];
+	if (!res.ok) throw new Error(`Cloudflare analytics request failed (${res.status}).`);
 
 	const data = await responseJson<{
+		errors?: unknown[];
 		data?: {
 			viewer?: {
 				accounts?: Array<{
@@ -73,7 +76,9 @@ export async function getWorkerAnalytics(env: Env, since: string): Promise<CfWor
 		};
 	}>(res);
 
-	const rows = data.data?.viewer?.accounts?.[0]?.workersInvocationsAdaptive ?? [];
+	const rows = data.data?.viewer?.accounts?.[0]?.workersInvocationsAdaptive;
+	if (data.errors?.length || !Array.isArray(rows))
+		throw new Error('Cloudflare analytics response did not contain a successful result.');
 	return rows.map((row) => ({
 		scriptName: row.dimensions.scriptName,
 		requests: row.sum.requests,

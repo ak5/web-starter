@@ -62,6 +62,14 @@ forgot-password responses do not disclose account existence or delivery failure.
 fails after the account, token, and creation audit commit. Do not repeat creation;
 the recipient can request a password reset. See [auth](../auth.md).
 
+## Cloudflare diagnostics
+
+`GET /admin/integrations/cloudflare` requires an admin session. Missing credentials
+return `configured: false, available: false`. HTTP errors, Cloudflare REST failures,
+GraphQL errors and missing result data return `configured: true, available: false`
+with an error message. Successful empty results remain `available: true` with an
+empty `workers` array; an unavailable integration must not be shown as zero traffic.
+
 ## LiveStore sync
 
 `POST /sync?storeId=notes-v1-<user-public-id>&transport=http` accepts the official
