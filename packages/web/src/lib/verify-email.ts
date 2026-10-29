@@ -1,5 +1,5 @@
 import { fail, redirect, type RequestEvent } from '@sveltejs/kit';
-import { apiErrorMessage, errorMessage, forwardSetCookie } from '@ak5/webui';
+import { apiErrorMessage, forwardSetCookie } from '@ak5/webui';
 import { api } from './api';
 
 export function loadVerification(event: RequestEvent) {
@@ -17,7 +17,7 @@ export const verificationActions = {
 		const res = await api(event.fetch, event.request).auth['verify-email'].$post({ json: { pin } });
 		if (!res.ok)
 			return fail(res.status, {
-				error: errorMessage(await apiErrorMessage(res, 'Email request failed'))
+				error: await apiErrorMessage(res, 'Email request failed')
 			});
 		forwardSetCookie(res, event.cookies);
 		throw redirect(303, '/dashboard');
@@ -26,7 +26,7 @@ export const verificationActions = {
 		const res = await api(event.fetch, event.request).auth['resend-verification'].$post();
 		if (!res.ok)
 			return fail(res.status, {
-				error: errorMessage(await apiErrorMessage(res, 'Email request failed'))
+				error: await apiErrorMessage(res, 'Email request failed')
 			});
 		throw redirect(303, '/account/verify?delivery=sent');
 	}

@@ -24,7 +24,8 @@ const jwtAuth = createSvelteKitHandle({
 			(dev ? undefined : (env.API?.fetch.bind(env.API) as typeof fetch)) ?? event.fetch,
 			token
 		),
-	isProtectedPath: (path) => !path.startsWith('/login'),
+	isProtectedPath: (path) =>
+		!['/login', '/forgot-password', '/account/password', '/invite'].includes(path),
 	isAuthPage: (path) => path === '/login',
 	requiresEmailConfirmed: () => false,
 	requiresPassword: () => false,

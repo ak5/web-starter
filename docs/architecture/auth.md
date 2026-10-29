@@ -194,3 +194,19 @@ Public credential endpoints limit attempts per IP. Signed-in verification, email
 retries and password endpoints limit attempts per account, independent of IP.
 Each action uses its own five-minute window and returns 429 with `Retry-After`
 when full. See [security](security.md#rate-limiting) for storage and deployment boundaries.
+
+## Browser recovery routes
+
+Both web and admin provide `/forgot-password`, `/account/password` and `/invite`.
+Reset and invitation links work signed out. Invalid or consumed links keep the
+password form open with an error and a link to request a replacement. Password
+confirmation is checked before submitting a credential update to the API.
+
+`/auth/magic/[token]` opens a confirmation page for the current session. A POST
+consumes the token, forwards the fresh cookie and returns to the password form.
+A GET or an email-link preview does not consume it. An expired confirmation can
+be retried by requesting another email. API failures retain their status and are
+translated into readable messages by the shared UI helpers.
+
+The operator `create:admin` command also revokes older sessions and one-time tokens
+when it updates an existing admin's password.

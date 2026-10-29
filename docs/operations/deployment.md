@@ -238,7 +238,8 @@ For a configured remote D1 database, authenticate Wrangler, set `D1_DATABASE_ID`
 to the intended target, and add `--remote` to the same command. The flag is
 explicit and uses the target D1 remote binding. Protect shell history and never
 commit a bootstrap password. The script creates or updates the email credential
-with an atomic batch and prints only the public ID. It is operator tooling, not
+with an atomic batch and prints only the public ID. Updating an existing admin
+also advances its session generation and deletes outstanding one-time tokens. It is operator tooling, not
 a public bootstrap endpoint.
 
 ## Observability and recovery
