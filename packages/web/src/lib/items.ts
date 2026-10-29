@@ -3,21 +3,18 @@
  * Server-side throughout so the JWT cookie travels to the api; the route module
  * just re-exports these (keeps the route thin per the split-boundary audit).
  */
-import { fail } from '@sveltejs/kit';
+import { error, fail } from '@sveltejs/kit';
 import type { Actions, ServerLoad } from '@sveltejs/kit';
+import { apiLoadJson } from '@ak5/webui';
 import { api } from './api';
 
-type ItemRow = { id: string; data: Record<string, unknown>; createdAt: string };
-
 export const loadItems: ServerLoad = async ({ fetch, request }) => {
-	try {
-		const res = await api(fetch, request).items.$get();
-		if (!res.ok) return { items: [] };
-		const body = (await res.json()) as { items?: ItemRow[] };
-		return { items: body.items ?? [] };
-	} catch {
-		return { items: [] };
-	}
+	const body = await apiLoadJson(
+		await api(fetch, request).items.$get(),
+		'Could not load items. Please retry.'
+	);
+	if (!('items' in body)) error(502, 'Could not load items. Please retry.');
+	return { items: body.items };
 };
 
 export const itemsActions: Actions = {

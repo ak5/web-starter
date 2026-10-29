@@ -43,6 +43,7 @@ const apiOrigins = Array.from(
 ) as NonNullable<CspSources>;
 
 export default defineConfig({
+	build: { license: { fileName: 'third-party-licenses.txt' } },
 	plugins: [
 		tailwindcss(),
 		sveltekit({

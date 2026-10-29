@@ -260,3 +260,11 @@ manage the Worker's Durable Object bindings in addition to D1/Worker deployment.
 Provision development before PR previews: previews bind to development's `NotesSync`
 script as well as its database, keeping one ordering authority per store. Never
 point a second independent sync namespace at the same stores in D1. Production and optional stable staging each keep their own namespace and D1 database. See [local-first notes](../architecture/local-first.md).
+
+## Dependency notices
+
+Web and admin builds generate `third-party-licenses.txt` in each client output.
+Publish it with the assets at `/third-party-licenses.txt`. The starter code is MIT;
+third-party libraries and icons retain their own licenses. See the
+[repository license notes](../../README.md#license) before distributing native
+binaries or copying bundled assets into another distribution.

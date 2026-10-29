@@ -14,8 +14,8 @@ Node/pnpm versions through mise. Deployment credentials and local environment
 files are not copied from another checkout.
 
 Add `--mobile` to start with the mobile app enabled, `--no-oauth` to omit the
-Discord login overlay, or `--install` to install dependencies through mise after
-creation. Installation is otherwise an explicit next step:
+Discord login overlay. Review and trust the generated mise configuration, then
+install its tools and dependencies:
 
 ```sh
 cd my-app

@@ -27,3 +27,6 @@ Add a route under `src/routes/` and update this table in the same PR.
 The shared environment banner identifies dev, staging and PR previews. It returns
 after navigation or reload; set `PUBLIC_ENV_BANNER=false` to hide it. Production
 has no label and shows no banner. See [deployment](../../docs/operations/deployment.md).
+
+List pages report API failures instead of presenting an empty list. Malformed
+JSON from the API is treated as an upstream failure.
