@@ -73,3 +73,6 @@ pnpm check:all
 For the native mobile client, use [mobile setup](../../packages/mobile/README.md).
 It consumes the same typed user API and renders Svelte through Symbiote / React
 Native; it does not need a SvelteKit Worker or the browser UI package.
+
+Include `@source '../../webui/src';` in the new app's `src/app.css` so Tailwind
+generates the shared components' utilities as well as the app's own classes.

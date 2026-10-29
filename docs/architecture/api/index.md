@@ -50,6 +50,13 @@ PR that adds the router, and link it from here.
 - [items.md](items.md) — the example user-scoped CRUD resource (a demo to
   replace with your real domain).
 
+## Signup contract
+
+`POST /auth/register` accepts `email`, `password` and `username`. The starter does
+not require or record policy acceptance. `GET /auth/options` returns password and
+username constraints. Add application policy handling across all signup paths as
+described in [auth](../auth.md#signup-policies).
+
 ## Email delivery responses
 
 `POST /auth/register` returns `{ok: true, publicId, verificationEmailSent}` and a

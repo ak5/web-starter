@@ -37,3 +37,8 @@ See [local-first notes](../../docs/architecture/local-first.md) for browser requ
 The shared environment banner identifies dev, staging and PR previews. It returns
 after navigation or reload; set `PUBLIC_ENV_BANNER=false` to hide it. Production
 has no label and shows no banner. See [deployment](../../docs/operations/deployment.md).
+
+Signup does not claim agreement to policies. Add your application's policies and
+acknowledgement flow before launch; see [auth](../../docs/architecture/auth.md#signup-policies).
+Discord callback errors appear on login/register, and account-link results appear
+on `/account/password`.

@@ -67,3 +67,7 @@ Local-first notes persist events to this D1 database through a per-store Durable
 Object. LiveStore owns its `eventlog_*` tables; Drizzle owns the identity and
 online item tables. See [local-first notes](local-first.md) for ordering, client
 materialization, and account data retention.
+
+User policy-version columns are nullable. Starter signup leaves them empty;
+applications can record the policy versions shown and acknowledged during their
+own [signup flow](auth.md#signup-policies).

@@ -4,12 +4,19 @@ import {
 	forgotPasswordAction,
 	loadAccountPassword,
 	magicLoginCallback,
-	apiJsonAction
+	apiJsonAction,
+	errorMessage
 } from '@ak5/webui';
 import { api } from './api';
 
 export function loadPassword(event: RequestEvent) {
-	return { ...loadAccountPassword(event), reauth: event.url.searchParams.get('reauth') };
+	const code = event.url.searchParams.get('error');
+	return {
+		...loadAccountPassword(event),
+		reauth: event.url.searchParams.get('reauth'),
+		connection: event.url.searchParams.get('connected'),
+		connectionError: code ? { code, error: errorMessage(code, 'Could not connect Discord.') } : null
+	};
 }
 
 export const passwordActions = {

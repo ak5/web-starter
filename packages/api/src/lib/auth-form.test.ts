@@ -6,8 +6,7 @@ import { loginSchema, registerSchema } from './auth-form';
 const valid = {
 	email: 'ada@example.com',
 	password: 'password1234',
-	username: 'ada_lovelace',
-	legalAcceptance: true as const
+	username: 'ada_lovelace'
 };
 
 describe('registerSchema', () => {
@@ -18,13 +17,6 @@ describe('registerSchema', () => {
 	it('normalises the email (trim + lowercase)', () => {
 		const parsed = registerSchema.parse({ ...valid, email: '  Ada@Example.COM ' });
 		assert.equal(parsed.email, 'ada@example.com');
-	});
-
-	it('makes legalAcceptance optional but rejects an explicit false', () => {
-		const { legalAcceptance, ...withoutAcceptance } = valid;
-		void legalAcceptance;
-		assert.equal(registerSchema.safeParse(withoutAcceptance).success, true);
-		assert.equal(registerSchema.safeParse({ ...valid, legalAcceptance: false }).success, false);
 	});
 
 	it('enforces username length (5–20) and charset', () => {

@@ -18,8 +18,6 @@ Imported as `import Foo from '@ak5/webui/components/Foo.svelte'`.
 | `CurrencyInput`       | Currency input with normalization                                    |
 | `EnvironmentBanner`   | Optional environment label; dismissal resets on navigation or reload |
 | `Footer`              | Shared footer with legal links                                       |
-| `GDPRCookies`         | Cookie consent banner                                                |
-| `GoogleTag`           | GA / GTM embed                                                       |
 | `IconSocial`          | Social-platform icon renderer                                        |
 | `ImageUpload`         | Webp-only upload with size validation                                |
 | `Modal`               | Generic modal wrapper                                                |
@@ -51,3 +49,9 @@ pnpm --filter @ak5/webui dev      # svelte-package --watch
 ```
 
 Auto-rebuilds in `pnpm dev` so consumers hot-reload from the new dist/.
+
+The shared navbar wraps its actions onto additional rows on narrow screens.
+
+Each consuming app's Tailwind stylesheet must include `@source '../../webui/src';`
+(relative to `src/app.css`). Shared package classes are outside the app's default
+scan; without this source, controls and responsive layouts lose their utilities.

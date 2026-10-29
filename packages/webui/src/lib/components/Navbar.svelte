@@ -15,11 +15,11 @@
 </script>
 
 <header class="navbar border-b border-base-200 bg-base-100">
-	<div class="container mx-auto flex items-center px-4">
+	<div class="container mx-auto flex flex-wrap items-center gap-2 px-4">
 		<a {href} class="flex-1 text-xl font-bold tracking-tight transition-colors hover:text-primary">
 			{brand}
 		</a>
-		<div class="flex items-center gap-2">
+		<div class="flex w-full flex-wrap items-center gap-2 sm:w-auto">
 			{#if actions}{@render actions()}{/if}
 			<ThemeToggle />
 		</div>

@@ -1,18 +1,10 @@
 import { and, eq, isNull, sql } from 'drizzle-orm';
 import { EmailDeliveryError, sendTemplate } from '@ak5/email';
-import {
-	COOKIE_TOKEN,
-	LEGAL_ACCEPTANCE_ERROR,
-	LEGAL_SIGNUP_ACCEPTANCE_COOKIE,
-	PASSWORD_MAX_LENGTH,
-	publicId,
-	TIME_MS
-} from '@ak5/shared';
+import { COOKIE_TOKEN, PASSWORD_MAX_LENGTH, publicId, TIME_MS } from '@ak5/shared';
 import type { z } from 'zod';
 import type { Database } from '../db';
 import { adminUsers, authEmail, tokens, users } from '../db/schema';
 import type { Env } from '../types';
-import { LEGAL_VERSIONS } from './legal';
 import { hashPassword, verifyPassword } from './password';
 import { acceptInviteSchema, forgotPasswordSchema, loginSchema, registerSchema } from './auth-form';
 import { jwtCookie, signJwt } from './jwt';
@@ -47,14 +39,6 @@ export function preLoginAuthOptions() {
 			minLength: 5,
 			maxLength: 20,
 			pattern: '^[a-zA-Z0-9_]+$'
-		},
-		legalAcceptance: {
-			error: LEGAL_ACCEPTANCE_ERROR,
-			signupCookie: {
-				name: LEGAL_SIGNUP_ACCEPTANCE_COOKIE,
-				value: LEGAL_VERSIONS.terms,
-				maxAgeSeconds: 60 * 10
-			}
 		}
 	};
 }
@@ -64,18 +48,15 @@ export async function registerUserPreAuth(
 	env: Env,
 	input: RegisterInput
 ): Promise<AuthWorkflowResult<{ ok: true; publicId: string; verificationEmailSent: boolean }>> {
-	const { email, password, username, legalAcceptance } = input;
-	if (legalAcceptance !== true) {
-		return { ok: false, status: 400, body: { error: 'legal_acceptance_required' } };
-	}
+	const { email, password, username } = input;
 
 	const existingUser = await db.query.users.findFirst({
 		where: and(eq(users.username, username), isNull(users.deletedAt))
 	});
 	if (existingUser) return { ok: false, status: 409, body: { error: 'username_taken' } };
 
-	const existingEmail = await db.query.authEmail.findFirst({
-		where: and(eq(authEmail.subjectType, 'user'), eq(authEmail.email, email))
+	const existingEmail = await db.query.users.findFirst({
+		where: and(eq(users.email, email), isNull(users.deletedAt))
 	});
 	if (existingEmail) return { ok: false, status: 409, body: { error: 'email_taken' } };
 
@@ -89,11 +70,7 @@ export async function registerUserPreAuth(
 			username,
 			email,
 			emailVerified: false,
-			role: 'user',
-			termsAcceptedAt: new Date(),
-			termsVersion: LEGAL_VERSIONS.terms,
-			privacyVersion: LEGAL_VERSIONS.privacy,
-			acceptableUseVersion: LEGAL_VERSIONS.acceptableUse
+			role: 'user'
 		}),
 		db.insert(authEmail).values({
 			subjectType: 'user',

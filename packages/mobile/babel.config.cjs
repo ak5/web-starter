@@ -6,7 +6,6 @@ const slotFile = resolve(__dirname, '../../.env.dev-slot');
 const slot = existsSync(slotFile) ? readFileSync(slotFile, 'utf8') : '';
 const flags = {
 	'process.env.DEBUG': process.env.DEBUG === '1' ? '1' : '0',
-	'process.env.MOBILE_WEB_URL': process.env.MOBILE_WEB_URL || '',
 	'process.env.MOBILE_API_URL': process.env.MOBILE_API_URL || '',
 	'process.env.MOBILE_API_PORT': slot.match(/^AK5_API_PORT=(\d+)$/m)?.[1] || '8350'
 };

@@ -4,12 +4,8 @@ if (existsSync('.env')) process.loadEnvFile('.env');
 const [platform, mode] = process.argv.slice(2);
 if (!['ios', 'android'].includes(platform)) throw new Error('Expected ios or android');
 const release = mode === 'release';
-if (
-	release &&
-	(!process.env.MOBILE_API_URL?.startsWith('https://') ||
-		!process.env.MOBILE_WEB_URL?.startsWith('https://'))
-)
-	throw new Error('Release builds require explicit HTTPS MOBILE_API_URL and MOBILE_WEB_URL');
+if (release && !process.env.MOBILE_API_URL?.startsWith('https://'))
+	throw new Error('Release builds require explicit HTTPS MOBILE_API_URL');
 let port;
 if (!release) {
 	const config = readFileSync('.env.dev-slot', 'utf8');
