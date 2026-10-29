@@ -3,9 +3,7 @@ import type { EmailLogger } from '@ak5/email';
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 /**
- * Lightweight worker-side logger. Mirrors the legacy `Logger` class in
- * `packages/web/src/lib/server/log.ts`: stdout for local dev, Discord webhook
- * for prod errors, optional async DB write (later — using `logs` table).
+ * Structured stdout with optional Discord notification for errors.
  */
 export class Logger implements EmailLogger {
 	constructor(

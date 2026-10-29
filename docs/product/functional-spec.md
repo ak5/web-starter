@@ -22,7 +22,7 @@ The full email + password account lifecycle, served by the api and the web
 surface:
 
 - **Register** — create an account with email + password.
-- **Verify email** — a six-character code is mailed on register; entering it at
+- **Verify email** — a six-character alphanumeric code is mailed on register; entering it at
   `/account/verify` marks the email verified. Unverified accounts can sign in but are nudged to verify.
 - **Login** — email + password; issues the session cookie.
 - **Forgot / reset password** — request a reset link by email, set a new password
