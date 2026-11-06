@@ -27,7 +27,7 @@ jobs:
       - name: Validate deployment target
         run: |
           case "$TARGET" in development|staging|production) ;; *) exit 1 ;; esac
-      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4
+      - uses: jdx/mise-action@f5be966e4a917d54244728e6a5fdcd1d93a35e6c # v5.2.6
         with:
           install_args: node pnpm caddy lefthook ripgrep
       - run: nice -n 10 pnpm install --frozen-lockfile
