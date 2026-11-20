@@ -1,15 +1,10 @@
 {
 	"extends": "@react-native/typescript-config",
 	"compilerOptions": {
-		"types": ["node", "svelte"],
-		"plugins": [
-			{
-				"name": "@symbiote-native/css-parser/typescript-plugin"
-			}
-		],
-		"allowImportingTsExtensions": true,
+		"types": ["node"],
+		"jsx": "react-jsx",
 		"ignoreDeprecations": "6.0"
 	},
-	"include": ["src/**/*.ts", "test/**/*.ts", "**/*.svelte"],
-	"exclude": ["**/node_modules", "**/Pods", "e2e"]
+	"include": ["App.tsx", "src/**/*.ts", "src/**/*.tsx", "test/**/*.ts"],
+	"exclude": ["**/node_modules", "**/Pods"]
 }

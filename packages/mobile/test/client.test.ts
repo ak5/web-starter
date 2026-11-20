@@ -1,6 +1,7 @@
 import { spawnSync } from 'node:child_process';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { URL } from 'node:url';
 import { ApiError, InputError, createClient, parseItemData, type SessionUser } from '../src/client';
 import { COOKIE_TOKEN } from '@ak5/shared/cookie';
 

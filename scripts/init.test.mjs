@@ -88,3 +88,30 @@ test('rebrand reports installation failure and gives a recovery command', (t) =>
 		undefined
 	);
 });
+
+test('rebrand can remove Discord OAuth from the React Router starter', (t) => {
+	const directory = mkdtempSync(join(tmpdir(), 'starter-rebrand-oauth-'));
+	t.after(() => rmSync(directory, { recursive: true, force: true }));
+	const files = [
+		'packages/web/src/lib/OAuthLogin.tsx',
+		'packages/web/src/routes/login.tsx',
+		'packages/web/src/routes/register.tsx',
+		'packages/api/src/app.ts'
+	];
+	for (const file of files) {
+		mkdirSync(join(directory, file, '..'), { recursive: true });
+		writeFileSync(join(directory, file), readFileSync(file, 'utf8'));
+	}
+	const result = spawnSync(
+		process.execPath,
+		[resolve('scripts/init.mjs'), '--no-oauth', '--no-install'],
+		{ cwd: directory, encoding: 'utf8' }
+	);
+	assert.equal(result.status, 0, result.stderr);
+	for (const file of files.slice(1, 3)) {
+		const route = readFileSync(join(directory, file), 'utf8');
+		assert.doesNotMatch(route, /OAuthLogin|rootLoader|useRouteLoaderData|apiUrl/);
+		assert.match(route, /export const action/);
+	}
+	assert.doesNotMatch(readFileSync(join(directory, files[3]), 'utf8'), /oauthRoutes/);
+});

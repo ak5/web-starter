@@ -1,8 +1,8 @@
 # @ak5/admin
 
-SvelteKit on Cloudflare Workers — the admin portal. A pure UI worker that talks
+React Router on Cloudflare Workers — the admin portal. A pure UI worker that talks
 to `@ak5/api` through the **admin-scoped** typed client (`hc<AdminApiType>`);
-calling a web-only route from here is a compile error. Account recovery pages are public; operational pages require a current admin session. The shared hook verifies the JWT and
+calling a web-only route from here is a compile error. Account recovery pages are public; operational pages require a current admin session. The shared middleware verifies the JWT and
 checks its generation with the API before accepting or refreshing it.
 
 ## Routes
@@ -21,8 +21,8 @@ checks its generation with the API before accepting or refreshing it.
 Recovery and invitation pages accept emailed tokens while signed out.
 `/account/password` requires either a session or a reset token; the route loader
 checks that boundary. `/auth/magic/[token]` requires a session and an explicit
-confirmation POST. The hooks reject revoked sessions before redirecting.
-Add a route under `src/routes/` and update this table in the same PR.
+confirmation POST. The server middleware rejects revoked sessions before redirecting.
+Add the route in `src/routes.ts` and update this table in the same PR.
 
 The shared environment banner identifies dev, staging and PR previews. It returns
 after navigation or reload; set `PUBLIC_ENV_BANNER=false` to hide it. Production

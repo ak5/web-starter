@@ -4,14 +4,16 @@ import type { schema } from './schema';
 
 export function subscribeNotesSync(
 	store: Store<typeof schema>,
-	onUpdate: (pending: number) => void
+	onUpdate: (pending: number, localPending: number) => void
 ) {
 	// shortcut: LiveStore 0.5 exposes backend acknowledgements through internals; use a public subscription when available.
 	const leader = store[StoreInternalsSymbol].clientSession.leaderThread.syncState;
 	const backend = Stream.concat(Stream.fromEffect(leader), leader.changes);
 	const fiber = Stream.zipLatest(store.syncStatusStream(), backend).pipe(
 		Stream.tap(([session, remote]) =>
-			Effect.sync(() => onUpdate(session.pendingCount + remote.pending.length))
+			Effect.sync(() =>
+				onUpdate(session.pendingCount + remote.pending.length, session.pendingCount)
+			)
 		),
 		Stream.runDrain,
 		Effect.runFork

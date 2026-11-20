@@ -21,7 +21,16 @@ const ACTIVE = 'packages/mobile';
 const UPSTREAM = 'https://github.com/ak5/web-starter.git';
 const STATE = '.starter-mobile.json';
 const nativePatch =
-	/^  ['"]?(?:@livestore\/adapter-expo|@react-native\/gradle-plugin|expo-modules-autolinking|expo-modules-core)@/;
+	/^  ['"]?(?:@livestore\/adapter-expo|@react-native\/gradle-plugin|deepmerge|expo-modules-autolinking|expo-modules-core)@/;
+
+function containsMobileSource(root, revision) {
+	return (
+		spawnSync('git', ['cat-file', '-e', `${revision}:${ACTIVE}/App.tsx`], {
+			cwd: root,
+			env: gitEnvironment()
+		}).status === 0
+	);
+}
 
 function patchSection(text) {
 	const lines = text.split('\n');
@@ -76,7 +85,19 @@ export function setMobileEnabled(root, enabled, { repository = UPSTREAM } = {}) 
 	let state;
 	if (!enabled) {
 		const template = JSON.parse(readFileSync(join(root, '.starter-template.json'), 'utf8'));
-		assert.match(template.revision, /^[a-f0-9]{40}$/, 'Expected a pinned starter commit.');
+		const revision =
+			template.revision ??
+			spawnSync('git', ['rev-parse', 'HEAD'], {
+				cwd: root,
+				env: gitEnvironment(),
+				encoding: 'utf8'
+			}).stdout?.trim();
+		assert.match(revision, /^[a-f0-9]{40}$/, 'Expected a pinned starter commit.');
+		if (!template.revision)
+			assert.ok(
+				containsMobileSource(root, revision),
+				'Commit the current starter before disabling mobile.'
+			);
 		const patches = lines.slice(start + 1, end).filter((line) => nativePatch.test(line));
 		const kept = lines.slice(start + 1, end).filter((line) => !nativePatch.test(line));
 		if (!kept.some((line) => /^  [^#\s]/.test(line))) lines[start] = 'patchedDependencies: {}';
@@ -92,7 +113,7 @@ export function setMobileEnabled(root, enabled, { repository = UPSTREAM } = {}) 
 				.filter((line) => !/^(?:ruby|java)\s*=/.test(line))
 				.join('\n')
 		);
-		state = { ...template, patches, dependabot: removed, tools };
+		state = { ...template, revision, patches, dependabot: removed, tools };
 	} else {
 		state = JSON.parse(readFileSync(statePath, 'utf8'));
 		assert.match(state.revision, /^[a-f0-9]{40}$/, 'Expected a pinned starter commit.');
@@ -143,9 +164,11 @@ export function setMobileEnabled(root, enabled, { repository = UPSTREAM } = {}) 
 	try {
 		if (enabled) {
 			temporary = mkdtempSync(join(tmpdir(), 'starter-mobile-restore-'));
+			const source =
+				repository === UPSTREAM && containsMobileSource(root, state.revision) ? root : repository;
 			for (const args of [
 				['init', '--quiet'],
-				['remote', 'add', 'origin', repository],
+				['remote', 'add', 'origin', source],
 				['fetch', '--quiet', '--depth=1', 'origin', state.revision],
 				['sparse-checkout', 'set', 'packages/mobile'],
 				['checkout', '--quiet', '--detach', 'FETCH_HEAD']
@@ -156,8 +179,8 @@ export function setMobileEnabled(root, enabled, { repository = UPSTREAM } = {}) 
 					'Could not download the pinned mobile source; the disabled profile is unchanged.'
 				);
 			assert.ok(
-				existsSync(join(temporary, ACTIVE, 'package.json')),
-				'Pinned starter has no mobile package.'
+				existsSync(join(temporary, ACTIVE, 'App.tsx')),
+				'Pinned starter has no React Native app.'
 			);
 			walkReplace(join(temporary, ACTIVE), makeReplacer(state.scope, state.slug));
 			try {

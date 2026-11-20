@@ -24,7 +24,7 @@ trap 'rm -f "$broken"' EXIT
 if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
 	files="$(git ls-files --cached --others --exclude-standard '*.md')"
 else
-	files="$(find . -type d \( -name node_modules -o -name .svelte-kit -o -name dist -o -name build -o -name .git \) -prune -o -type f -name '*.md' -print | sed 's#^\./##')"
+	files="$(find . -type d \( -name node_modules -o -name .react-router -o -name dist -o -name build -o -name .git \) -prune -o -type f -name '*.md' -print | sed 's#^\./##')"
 fi
 
 while IFS= read -r f; do

@@ -9,7 +9,7 @@ pre-commit:
               jobs:
                 - name: web
                   root: packages/web/src/
-                  glob: '**/*.{ts,js,svelte}'
+                  glob: '**/*.{ts,tsx,js}'
                   run: nice -n 10 pnpm exec prettier --write {staged_files}
                   stage_fixed: true
                 - name: shared
@@ -24,7 +24,7 @@ pre-commit:
                   stage_fixed: true
                 - name: webui
                   root: packages/webui/
-                  glob: '**/*.{ts,js,svelte}'
+                  glob: '**/*.{ts,tsx,js}'
                   run: nice -n 10 pnpm exec prettier --write {staged_files}
                   stage_fixed: true
                 - name: api
@@ -34,7 +34,7 @@ pre-commit:
                   stage_fixed: true
                 - name: admin
                   root: packages/admin/
-                  glob: '**/*.{ts,js,svelte}'
+                  glob: '**/*.{ts,tsx,js}'
                   run: nice -n 10 pnpm exec prettier --write {staged_files}
                   stage_fixed: true
                 - name: cli
@@ -49,7 +49,7 @@ pre-commit:
                   stage_fixed: true
                 - name: mobile
                   root: packages/mobile/
-                  glob: '**/*.{ts,js,cjs,mjs,svelte}'
+                  glob: '**/*.{ts,tsx,js,jsx,cjs,mjs}'
                   run: nice -n 10 pnpm exec prettier --write {staged_files}
                   stage_fixed: true
                 - name: root

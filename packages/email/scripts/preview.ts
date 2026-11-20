@@ -1,5 +1,7 @@
 import { readdirSync } from 'node:fs';
 import { join, sep } from 'node:path';
+import { createElement } from 'react';
+import { render } from 'react-email';
 import type { Plugin } from 'vite';
 
 /** Preview the same server-rendered components used for delivery. */
@@ -15,8 +17,8 @@ export function emailPreview(): Plugin {
 				if (request.method !== 'GET') return next();
 				try {
 					const templates = readdirSync(join(source, 'templates'))
-						.filter((file) => /^[a-zA-Z0-9_-]+\.svelte$/.test(file))
-						.map((file) => file.slice(0, -7));
+						.filter((file) => /^[a-zA-Z0-9_-]+\.tsx$/.test(file))
+						.map((file) => file.slice(0, -4));
 					const pathname = new URL(request.url ?? '/', 'http://localhost').pathname;
 					let html: string;
 					if (pathname === '/') {
@@ -26,11 +28,8 @@ export function emailPreview(): Plugin {
 					} else {
 						const name = pathname.slice(1);
 						if (!templates.includes(name)) return next();
-						const { default: component } = await server.ssrLoadModule(
-							`/src/templates/${name}.svelte`
-						);
-						const { Renderer } = await server.ssrLoadModule('@better-svelte-email/server');
-						html = await new Renderer({ disableTailwind: true }).render(component);
+						const { default: component } = await server.ssrLoadModule(`/src/templates/${name}.tsx`);
+						html = await render(createElement(component));
 					}
 					response.setHeader('Content-Type', 'text/html; charset=utf-8');
 					response.end(await server.transformIndexHtml(pathname, html));

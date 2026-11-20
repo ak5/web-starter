@@ -10,8 +10,8 @@ on Cloudflare (wrangler + `account_id` + `name`), so there's no manual create st
 | Worker | Package      | Holds                                            |
 | ------ | ------------ | ------------------------------------------------ |
 | api    | `@ak5/api`   | DB, JWT issuance, OAuth callbacks, cron, secrets |
-| web    | `@ak5/web`   | public SvelteKit surface                         |
-| admin  | `@ak5/admin` | admin SvelteKit surface                          |
+| web    | `@ak5/web`   | public React Router surface                      |
+| admin  | `@ak5/admin` | admin React Router surface                       |
 
 There is exactly **one api worker** regardless of how many frontend personas you
 have. Each worker has its own `wrangler.jsonc`.
@@ -24,10 +24,11 @@ before deployment.
 another Worker on the same account over a public URL (error 1042), so web/admin
 each bind the api worker as a service (`services: [{ binding: "API", … }]` in
 their `wrangler.jsonc`, pointing at `ak5-api` for production, `ak5-api-stg` for
-development, or `ak5-api-staging` for stable staging). `src/lib/api.ts` routes server-side calls through that binding (via
-`getRequestEvent().locals.apiFetch`, populated by the server hook from `cloudflare:workers`) and falls back to the public `PUBLIC_API_URL`
-fetch in dev/browser. Without the binding, every SSR api call (login, data loads)
-fails on Cloudflare.
+development, or `ak5-api-staging` for stable staging). The frontend request context
+uses the binding for loaders and actions. Local Caddy slots register their
+Workers in separate development registries, so web and admin reach their own
+API Worker and preserve client IP forwarding. The built local preview uses
+the slot's loopback API port. Browser links use `PUBLIC_API_URL`.
 
 ## Branch & environment model
 
@@ -149,7 +150,7 @@ Web and admin use the same dismissible banner. Development is labelled
 Production has an empty label and shows none. Set `PUBLIC_ENV_BANNER=false` in
 the selected frontend Wrangler environment to turn it off; local `.env` accepts
 the same setting. `PUBLIC_DEPLOY_ENVIRONMENT` controls the displayed label.
-Dismissal is in component memory only: every completed SvelteKit navigation and
+Dismissal is in component memory only: every completed React Router navigation and
 full page reload restores the banner. Nothing is stored in cookies or storage.
 
 ## D1 and account setup
@@ -268,3 +269,17 @@ Publish it with the assets at `/third-party-licenses.txt`. The starter code is M
 third-party libraries and icons retain their own licenses. See the
 [repository license notes](../../README.md#license) before distributing native
 binaries or copying bundled assets into another distribution.
+
+## Browser Worker builds
+
+The web and admin builds use React Router SSR and the Cloudflare Vite plugin.
+GitHub Actions selects the frontend environment with `CLOUDFLARE_ENV`.
+`pnpm build:frontends` builds both Workers against the same environment and
+compiles their shared libraries once. Each build writes a Wrangler deploy-config
+pointer under `.wrangler/deploy/`. Frontend deployment uses that config, including the
+matched assets, Worker name, and API binding. PR previews override the
+development config before the build.
+
+For a local built-app check, run `nice -n 10 pnpm preview` after building the
+libraries. The preview uses the local API port for the active slot. For a
+frontend-only rollback, restore the preceding versions of both UI Workers.

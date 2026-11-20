@@ -44,7 +44,7 @@ them. Build those into your product's account UI as needed.
 
 ## Admin portal
 
-A separate SvelteKit app uses its own admin identity table. Its screens provide
+A separate React Router app uses its own admin identity table. Its screens provide
 sign-in, password recovery/settings, a read-only list of the latest 100 active
 or banned users, and a read-only items view. The user list has no search or page
 controls. Deleted users are excluded.
@@ -73,3 +73,15 @@ Authenticated users can add, edit, and delete private notes on web and native.
 Edits apply to local SQLite immediately and sync across devices when connected.
 Concurrent edits use accepted event order. Device storage and offline launch
 limits are described in [local-first notes](../architecture/local-first.md).
+
+## Native mobile
+
+The optional iOS and Android app opens Offline notes after restoring a session
+or signing in. Registration, verification-code entry and resend, and password
+recovery requests are available in the app. The recovery email opens the web
+password-reset form.
+
+Verified users can switch to Online items, page through and refresh the list,
+and create, edit, or delete JSON items. Expo SecureStore keeps the session
+across app launches. Signing out clears the local session. Reopen Offline notes
+with the same account to access its local data.

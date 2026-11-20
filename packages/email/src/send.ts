@@ -1,9 +1,9 @@
-import { Renderer } from '@better-svelte-email/server';
-import type { Component } from 'svelte';
-import VerifyEmail from './templates/verify-email.svelte';
-import ResetPassword from './templates/reset-password.svelte';
-import LoginWith from './templates/login-with.svelte';
-import InviteAccount from './templates/invite-account.svelte';
+import { createElement, type ComponentType } from 'react';
+import { render } from 'react-email';
+import VerifyEmail from './templates/verify-email.js';
+import ResetPassword from './templates/reset-password.js';
+import LoginWith from './templates/login-with.js';
+import InviteAccount from './templates/invite-account.js';
 import type {
 	VerifyEmailProps,
 	ResetPasswordProps,
@@ -50,7 +50,7 @@ export interface TemplateProps {
 
 const TEMPLATE_REGISTRY: {
 	[K in TemplateName]: {
-		component: Component<TemplateProps[K]>;
+		component: ComponentType<TemplateProps[K]>;
 		subject: string;
 	};
 } = {
@@ -62,9 +62,6 @@ const TEMPLATE_REGISTRY: {
 
 export type { VerifyEmailProps, ResetPasswordProps, LoginWithProps, InviteAccountProps };
 
-// Templates use inline styles, so rendering needs no runtime Tailwind compilation.
-const renderer = new Renderer({ disableTailwind: true });
-
 /**
  * Render a template to HTML. Platform-agnostic.
  */
@@ -73,9 +70,7 @@ export async function renderTemplate<T extends TemplateName>(
 	props: TemplateProps[T]
 ): Promise<{ html: string; subject: string }> {
 	const { component, subject } = TEMPLATE_REGISTRY[template];
-	const html = await renderer.render(component, { props });
-	// Remove Svelte hydration markers while preserving Outlook conditional comments.
-	return { html: html.replace(/<!--(?:\[\??|\]|)-->/g, ''), subject };
+	return { html: await render(createElement(component, props)), subject };
 }
 
 /** Resolve the local mock `/send` endpoint from a configured base URL. */

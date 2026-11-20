@@ -5,7 +5,7 @@ Owns auth, JWT issuance, OAuth login callbacks, the cron handler, and the
 typed HTTP surface. Cloudflare D1 via Drizzle.
 
 It exports **types only** to the frontends: `WebApiType` and `AdminApiType` from
-`src/app.ts`, consumed via `hc<…ApiType>()` (see `@ak5/webui`'s
+`src/app.ts`, consumed via `hc<…ApiType>()` (see `@ak5/webui/server`'s
 `createApiClient`). The package's runtime entry is a guard stub — importing
 `@ak5/api` at runtime throws; the worker runs via `wrangler`.
 

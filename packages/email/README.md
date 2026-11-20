@@ -1,9 +1,8 @@
 # @ak5/email
 
-Better Svelte Email templates + Cloudflare Email Sending through a native Worker binding.
-Templates use Svelte 5 components and inline styles. Vite compiles a server bundle
-for Workers; TypeScript generates declarations. The renderer disables Tailwind
-processing because these templates already provide their final inline CSS.
+React Email templates with Cloudflare Email Sending through a native Worker binding.
+React Email renders HTML with inline styles.
+Vite compiles the server bundle and TypeScript generates declarations.
 Dev/CI use a local mock. See [sender setup](../../docs/operations/email-sending.md)
 for manual account/domain onboarding and live inbox verification.
 
@@ -42,11 +41,11 @@ await sendEmail(config, recipient, subject, html, logger);
 ## Dev servers
 
 ```bash
-pnpm dev:email:preview   # Better Svelte Email preview (slot 1: port 8354)
+pnpm dev:email:preview   # email template preview (slot 1: port 8354)
 pnpm dev:email:mock      # mock send endpoint (slot 1: port 8355)
 ```
 
-The Vite preview discovers Svelte templates and renders their prop defaults in
+The Vite preview discovers React templates and renders their prop defaults in
 an iframe, with a template selector and live reload. `AK5_PREVIEW_PORT` selects the active slot's port; use the URLs in
 `.env.dev-slot`. The preview binds to loopback, matching the other local apps,
 and refuses occupied ports. `pnpm dev:email` watches the compiled server bundle
@@ -92,7 +91,7 @@ compiled-template, local inbox binding, REST diagnostic, and caller failure test
 
 ## Adding a template
 
-1. Create `src/templates/your-template.svelte` with preview defaults in `$props()`.
+1. Create `src/templates/your-template.tsx` with a default component export and preview prop defaults.
 2. Define its props in `src/types.ts`.
 3. Register it in `src/send.ts` `TEMPLATE_REGISTRY` with a subject and add its
    props to `TemplateProps`.

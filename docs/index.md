@@ -36,7 +36,7 @@ update this index in the **same PR**.
 | [setup.md](development/setup.md)                 | First run, dev slots, the stack                     |
 | [conventions.md](development/conventions.md)     | File layout, naming, imports, commits               |
 | [contributing.md](development/contributing.md)   | Branching, CI, review, migration policy             |
-| [add-a-persona.md](development/add-a-persona.md) | Recipe for a 3rd+ SvelteKit frontend                |
+| [add-a-persona.md](development/add-a-persona.md) | Recipe for a 3rd+ React Router frontend             |
 
 ## operations/ — how to run it in prod
 
@@ -53,4 +53,4 @@ update this index in the **same PR**.
 | [../CLAUDE.md](../CLAUDE.md) | Canonical conventions — read first |
 | [../README.md](../README.md) | Repo overview + quickstart         |
 
-- [Native mobile setup](../packages/mobile/README.md) — Svelte / Symbiote / React Native.
+- [Native mobile setup](../packages/mobile/README.md) — React Native and Expo for iOS and Android.

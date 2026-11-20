@@ -111,7 +111,7 @@ the auth context but are not automatically written to the audit log.
 
 OAuth login (Discord; others follow the same recipe) is a **removable overlay**.
 The email + password core never imports from it, so the `auth-oauth` module —
-API routes/lib **and** the web `OAuthLogin.svelte` button — can be deleted and
+API routes/lib **and** the web `OAuthLogin.tsx` button — can be deleted and
 the core still authenticates. `audit:split` enforces that no core auth file
 imports the overlay. See [platforms.md](platforms.md) for adding a provider.
 
@@ -187,8 +187,8 @@ Delivery failures emit redacted events; see [email setup](../operations/email-se
 
 ## Native mobile sessions
 
-The Svelte/Symbiote native app calls the same user endpoints through the Hono
-client. It reads the JWT from `Set-Cookie`, persists it with Symbiote secure-store
+The React Native app calls the same user endpoints through the Hono client.
+It reads the JWT from `Set-Cookie`, persists it with Expo SecureStore
 (iOS Keychain / Android Keystore), and explicitly sends the session cookie on
 authenticated calls. A 401 clears the saved session; temporary provider/network
 failures keep it available for retry. Logout clears local storage even if the
@@ -230,3 +230,12 @@ translated into readable messages by the shared UI helpers.
 
 The operator `create:admin` command also revokes older sessions and one-time tokens
 when it updates an existing admin's password.
+
+## Browser request handling
+
+The web and admin Workers authenticate documents, route data requests, and
+form submissions in React Router server middleware. The middleware checks the
+session with the API before refreshing it. An action can forward replacement
+or cleared cookies from the API, and those cookie writes take precedence over
+automatic refresh. Loader data exposes display fields and public IDs required
+by the UI. The signed session stays in its HttpOnly cookie.
