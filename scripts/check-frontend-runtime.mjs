@@ -23,9 +23,10 @@ for (const origin of process.argv.slice(2)) {
 			console.log(`Frontend HTML and module OK at ${origin}`);
 			break;
 		} catch (error) {
-			if (attempt === 4)
+			if (attempt === 6)
 				throw new Error(`Frontend smoke check failed at ${origin}`, { cause: error });
-			await setTimeout(2_000);
+			// A new Worker version and its secrets can take time to reach the edge.
+			await setTimeout(Math.min(2 ** attempt, 8) * 1_000);
 		}
 	}
 }
