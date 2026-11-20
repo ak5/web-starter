@@ -1,6 +1,9 @@
 import net from 'node:net';
 import { spawn } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
+import { loadMobileEnvironment } from './environment.mjs';
+
+loadMobileEnvironment();
 async function free(port) {
 	return new Promise((resolve, reject) => {
 		const server = net.createServer();
@@ -18,19 +21,11 @@ writeFileSync('.env.dev-slot', `RCT_METRO_PORT=${port}\nMETRO_URL=http://127.0.0
 console.log(
 	`Metro uses http://127.0.0.1:${port}; pass --port ${port} when launching a native app.`
 );
-const child = spawn(
-	'node',
-	[
-		'node_modules/react-native/cli.js',
-		'start',
-		'--config',
-		'metro.config.cjs',
-		'--host',
-		'127.0.0.1',
-		'--port',
-		String(port)
-	],
-	{ stdio: 'inherit', env: { ...process.env, RCT_METRO_PORT: String(port) } }
-);
+const child = spawn('expo', ['start', '--dev-client', '--localhost', '--port', String(port)], {
+	stdio: 'inherit'
+});
+child.on('error', (error) => {
+	throw error;
+});
 for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => child.kill(signal));
 child.on('exit', (code) => process.exit(code ?? 1));

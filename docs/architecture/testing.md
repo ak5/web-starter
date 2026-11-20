@@ -8,14 +8,14 @@
 | Deployment smoke | `pnpm test:smoke --workers=1` | Explicitly configured live deployment |
 
 Run CPU-intensive commands with `nice -n 10`. Keep suites sequential and use one
-Playwright worker. `pnpm check:all` formats, lints, checks boundaries/doc links and
-typechecks. `pnpm build:mobile` checks both native JavaScript bundles; native
-Xcode/Gradle builds and device tests are separate.
+Playwright worker. `pnpm check:all` verifies formatting, lint, boundaries, doc
+links, and types. `pnpm build:mobile` checks both native JavaScript bundles.
+Run Xcode and Gradle builds and device tests separately.
 
 Use `pnpm peers check` and `pnpm audit` after dependency updates. The workspace
-keeps the React Native, Expo, and Symbiote native dependencies aligned, including
-the Hermes compiler used by bundle verification. Pure TypeScript checks use the
-native TypeScript 7 compiler; Svelte and ESLint use the TypeScript 6 API package.
+keeps React Native, Expo, and the Hermes compiler used by bundle verification
+aligned. Type checks use the native TypeScript 7 compiler. ESLint uses the
+TypeScript 6 API package.
 `build:libs` first generates Cloudflare binding and runtime types from each
 Worker's configuration. Generated declarations stay local and are also created
 in CI before compilation.
@@ -28,7 +28,7 @@ bindings disabled and no local environment files loaded. It applies migrations
 to an empty D1 database and disposes of the runtime afterward. There are no
 provider credentials or test-skipping environment variables.
 
-Email unit tests build the Svelte server bundle and check all four templates for
+Email unit tests build the React server bundle and check all four templates for
 subjects, escaped recipient content, token links, Outlook markup, and mock PIN
 extraction. Transport tests verify the native sender, mock capture, and redacted
 failures. No external email is sent.
@@ -75,9 +75,9 @@ but the device runtime cannot execute.
 
 Native module tests resolve the installed Expo graph for Apple and Android and
 require SQLite, authentication, and their runtime modules to be linked. They check
-class registrations and the Expo Modules 2 annotations/build targets used by
-Application and SQLite. Merely
-installing a JavaScript package does not guarantee its native module is available.
+class registrations and the Expo Modules 2 annotations and build targets used
+by Application and SQLite. Follow the [native verification steps](../../packages/mobile/README.md)
+to test session storage and notes on a simulator or device.
 
 Environment banner browser checks cover dismissal, reappearance after client
 navigation and reload, and shared web/admin rendering. Promotion self-checks
@@ -109,3 +109,7 @@ and forwarding the replacement password cookie.
 and admin: recovery, invitation, password change, reauthentication and consumed-link
 errors. Its local-only bootstrap fixture verifies that resetting an existing admin
 invalidates the old cookie. It creates unique test accounts and does not send mail.
+
+React Router browser tests exercise both document and client-side requests
+against the local Worker stack. Run Playwright with one worker after the slot
+passes `pnpm test:preflight`.

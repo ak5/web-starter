@@ -84,6 +84,7 @@ for (const role of ['user', 'admin'] as const) {
 			}
 			await page.goto(`${baseUrl}/login`);
 			await page.getByRole('link', { name: 'Forgot password?' }).click();
+			await expect(page.getByRole('heading', { name: 'Reset password' })).toBeVisible();
 			await page.getByLabel('Email', { exact: true }).fill(user.email);
 			await page.getByRole('button', { name: 'Send reset link' }).click();
 			await expect(page.getByRole('status').filter({ hasText: 'reset link' })).toBeVisible();

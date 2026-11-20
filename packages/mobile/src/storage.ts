@@ -1,4 +1,4 @@
-import { getItemAsync, setItemAsync, deleteItemAsync } from '@symbiote-native/secure-store';
+import { getItemAsync, setItemAsync, deleteItemAsync } from 'expo-secure-store';
 import type { SessionStorage, SessionUser } from './client';
 
 const key = 'ak5.session';

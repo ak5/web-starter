@@ -31,7 +31,6 @@ jobs:
         with:
           install_args: node pnpm caddy lefthook ripgrep
       - run: nice -n 10 pnpm install --frozen-lockfile
-      - run: nice -n 10 pnpm -w run build:libs
 
       - name: Configure D1 binding
         env:
@@ -84,18 +83,22 @@ jobs:
           }
           JS
 
+      - name: Build browser Workers and shared libraries
+        env:
+          CLOUDFLARE_ENV: ${{ inputs.target != 'production' && inputs.target || '' }}
+        run: nice -n 10 pnpm build:frontends
+
       - name: Apply D1 migrations
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: nice -n 10 pnpm --filter @ak5/api exec wrangler d1 migrations apply DB --remote ${{ env.WENV }}
 
-      - name: Configure build API origin
+      - name: Configure frontend smoke URLs
         run: |
           node --input-type=module <<'JS' >> "$GITHUB_ENV"
           import { readFileSync } from 'node:fs';
           const config = JSON.parse(readFileSync('packages/web/wrangler.jsonc', 'utf8').replace(/^\s*\/\/.*$/gm, ''));
           const vars = process.env.WENV ? config.env[process.env.TARGET].vars : config.vars;
-          console.log(`PUBLIC_API_URL=${vars.PUBLIC_API_URL}`);
           console.log(`SMOKE_APP_URL=${vars.PUBLIC_APP_URL}`);
           console.log(`SMOKE_ADMIN_URL=${vars.PUBLIC_ADMIN_URL}`);
           JS
@@ -105,19 +108,15 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: nice -n 10 pnpm --filter @ak5/api exec wrangler deploy ${{ env.WENV }}
 
-      - name: Build web
-        run: nice -n 10 pnpm build:web
       - name: Deploy Web
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: nice -n 10 pnpm --filter @ak5/web exec wrangler deploy ${{ env.WENV }}
+        run: nice -n 10 pnpm --filter @ak5/web exec wrangler deploy
 
-      - name: Build admin
-        run: nice -n 10 pnpm build:admin
       - name: Deploy Admin
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: nice -n 10 pnpm --filter @ak5/admin exec wrangler deploy ${{ env.WENV }}
+        run: nice -n 10 pnpm --filter @ak5/admin exec wrangler deploy
 
       # Apply supplied GitHub secret overrides after Workers exist. Required keys
       # without an override must already be configured on the Worker.
@@ -130,9 +129,7 @@ jobs:
         run: bash scripts/sync-cloudflare-worker-secrets.sh ${{ env.WENV }}
 
       - name: Check deployed frontend runtime
-        run: |
-          curl --fail --silent --show-error --retry 3 --retry-all-errors --retry-delay 2 "$SMOKE_APP_URL/login" -o /dev/null
-          curl --fail --silent --show-error --retry 3 --retry-all-errors --retry-delay 2 "$SMOKE_ADMIN_URL/login" -o /dev/null
+        run: node scripts/check-frontend-runtime.mjs "$SMOKE_APP_URL" "$SMOKE_ADMIN_URL"
 
       - name: Record the deployed commit
         env:

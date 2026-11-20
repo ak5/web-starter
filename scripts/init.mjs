@@ -69,10 +69,10 @@ function removeOAuthOverlay() {
 			.join('\n');
 		writeFileSync(appPath, out);
 	}
-	rmSync(join(ROOT, 'packages/web/src/lib/OAuthLogin.svelte'), { force: true });
+	rmSync(join(ROOT, 'packages/web/src/lib/OAuthLogin.tsx'), { force: true });
 	for (const page of [
-		'packages/web/src/routes/(account)/login/+page.svelte',
-		'packages/web/src/routes/(account)/register/+page.svelte'
+		'packages/web/src/routes/login.tsx',
+		'packages/web/src/routes/register.tsx'
 	]) {
 		const p = join(ROOT, page);
 		if (!existsSync(p)) continue;

@@ -26,7 +26,6 @@ jobs:
         with:
           install_args: node pnpm caddy lefthook ripgrep
       - run: nice -n 10 pnpm install --frozen-lockfile
-      - run: nice -n 10 pnpm -w run build:libs
 
       - name: Configure D1 binding
         env:
@@ -87,29 +86,29 @@ jobs:
           node --input-type=module <<'JS' >> "$GITHUB_ENV"
           import { readFileSync } from 'node:fs';
           const vars = JSON.parse(readFileSync('packages/api/wrangler.jsonc', 'utf8')).env.development.vars;
-          console.log(`PUBLIC_API_URL=${vars.PUBLIC_API_URL}`);
           console.log(`SMOKE_APP_URL=${vars.PUBLIC_APP_URL}`);
           console.log(`SMOKE_ADMIN_URL=${vars.PUBLIC_ADMIN_URL}`);
           JS
+
+      - name: Build browser Workers and shared libraries
+        env:
+          CLOUDFLARE_ENV: development
+        run: nice -n 10 pnpm build:frontends
 
       - name: Deploy API
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: nice -n 10 pnpm --filter @ak5/api exec wrangler deploy --env development
 
-      - name: Build web
-        run: nice -n 10 pnpm build:web
       - name: Deploy Web
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: nice -n 10 pnpm --filter @ak5/web exec wrangler deploy --env development
+        run: nice -n 10 pnpm --filter @ak5/web exec wrangler deploy
 
-      - name: Build admin
-        run: nice -n 10 pnpm build:admin
       - name: Deploy Admin
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: nice -n 10 pnpm --filter @ak5/admin exec wrangler deploy --env development
+        run: nice -n 10 pnpm --filter @ak5/admin exec wrangler deploy
 
       # Push the GitHub Environment secrets onto the Workers (the source of truth
       # for runtime secrets). Runs after deploy so the first run can auto-create
@@ -122,9 +121,8 @@ jobs:
           DISCORD_CLIENT_SECRET: ${{ secrets.DISCORD_CLIENT_SECRET }}
         run: bash scripts/sync-cloudflare-worker-secrets.sh --env development
       - name: Check deployed frontend runtime
-        run: |
-          curl --fail --silent --show-error --retry 3 --retry-all-errors --retry-delay 2 "$SMOKE_APP_URL/login" -o /dev/null
-          curl --fail --silent --show-error --retry 3 --retry-all-errors --retry-delay 2 "$SMOKE_ADMIN_URL/login" -o /dev/null
+        run: node scripts/check-frontend-runtime.mjs "$SMOKE_APP_URL" "$SMOKE_ADMIN_URL"
+
       - name: Preview URLs
         id: urls
         env:

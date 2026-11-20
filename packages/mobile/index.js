@@ -1,8 +1,5 @@
 import './src/polyfills';
-// Registers host behaviors (Image, Pressable, Switch, ...) that /bootstrap alone doesn't reach; deleting this breaks them silently.
-import '@symbiote-native/svelte';
-import { createApp } from '@symbiote-native/svelte/bootstrap';
-import App from './App.svelte';
-import { name as appName } from './app.json';
+import { registerRootComponent } from 'expo';
+import App from './App';
 
-createApp(App).mount(appName);
+registerRootComponent(App);

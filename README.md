@@ -1,8 +1,8 @@
 # ak5 web starter
 
-An opinionated, MIT-licensed starter for web and native apps: **SvelteKit 3**,
-**Hono**, and **Svelte 5 on Symbiote Native / React Native**, deployed on
-**Cloudflare Workers**.
+An opinionated, MIT-licensed starter for web and native apps. Web and admin use
+**React Router 8** and a **Hono** API on **Cloudflare Workers**. iOS and Android
+use **React Native and Expo**.
 
 One typed API serves a public web app, an admin portal, and iOS/Android apps.
 The database is **Cloudflare D1 with Drizzle**. **LiveStore** gives web and native
@@ -22,13 +22,14 @@ for your application's read, write, storage, and CPU usage.
 
 ## What's included
 
-- SvelteKit 3 web and admin apps with Tailwind CSS and DaisyUI.
+- React Router 8 web and admin apps with Tailwind CSS and DaisyUI.
 - Hono RPC types shared with web, admin, mobile, and the development CLI.
 - Email/password auth, email verification and recovery, optional Discord OAuth,
   role separation, and encrypted native session storage.
-- Cloudflare Workers, KV, R2, and native Cloudflare Email Sending, with a local
-  email mock and template preview.
-- Svelte 5 native screens on Symbiote Native and React Native for iOS/Android.
+- Cloudflare Workers, KV, R2, and native Cloudflare Email Sending, with React
+  templates, a local email mock, and a template preview.
+- React Native screens for iOS and Android, with Expo modules for secure storage
+  and local SQLite.
 - LiveStore local SQLite on web and mobile, with a Cloudflare D1 event log and
   Durable Object sync coordination.
 - Drizzle migrations, unit tests, API integration tests, and Playwright tests.
@@ -79,13 +80,13 @@ creator package; website-only projects also omit mobile.
 | Package                   | Purpose                                                 |
 | ------------------------- | ------------------------------------------------------- |
 | `@ak5/api`                | Hono API, authentication, database, OAuth, and cron     |
-| `@ak5/web`                | SvelteKit public app                                    |
-| `@ak5/admin`              | SvelteKit admin portal                                  |
+| `@ak5/web`                | React Router public app                                 |
+| `@ak5/admin`              | React Router admin portal                               |
 | `@ak5/create-web-starter` | Dependency-free project creator                         |
-| `@ak5/mobile`             | Svelte / Symbiote Native / React Native app             |
+| `@ak5/mobile`             | React Native and Expo app for iOS and Android           |
 | `@ak5/sync`               | Shared LiveStore schema, events, and HTTP sync client   |
 | `@ak5/shared`             | Shared contracts and utilities                          |
-| `@ak5/webui`              | Shared web components and SvelteKit helpers             |
+| `@ak5/webui`              | Shared web components and React Router helpers          |
 | `@ak5/email`              | Email templates, Cloudflare transport, mock and preview |
 | `@ak5/cli`                | Development API client                                  |
 

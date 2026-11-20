@@ -4,8 +4,8 @@ The web `/notes` route and native **Offline notes** screen share `@ak5/sync`:
 a LiveStore schema, deterministic event materializers, and the HTTP sync client.
 Each device writes to local SQLite immediately. LiveStore sends pending events
 when connectivity returns and pulls events from other devices. The browser uses
-OPFS in a dedicated worker; native uses Expo SQLite on the Symbiote / React Native
-host. No React UI wrapper is required.
+OPFS in a dedicated worker. The React Native app uses Expo SQLite. Each
+platform owns its rendering and database setup.
 
 Identity, admin records, and the online **items** example use the Hono API and
 Drizzle D1 tables. Notes have a separate event log in the same D1 database. Do not
@@ -22,9 +22,10 @@ merge or collaborative editor. Materializers replay that order identically on
 every client. Keep published event names and materializers stable; follow
 [LiveStore's schema guidance](https://docs.livestore.dev/) for application changes.
 
-The pending indicator includes writes awaiting local persistence and events
-awaiting server acknowledgement. The shared status subscription reads the pinned
-LiveStore version's leader sync state; recheck it when upgrading LiveStore.
+The web notes screen shows when a write is still saving to the device.
+After local persistence, the pending count shows events awaiting server
+acknowledgement. The shared status subscription reads the pinned LiveStore
+version's leader sync state. Recheck it when upgrading LiveStore.
 
 The API exports `NotesSync`, using the official Cloudflare sync provider with
 `storage: { _tag: 'd1', binding: 'DB' }`. D1 stores the event log in LiveStore-managed
@@ -54,7 +55,7 @@ unknown events, and invalid note arguments are rejected. Unconfirmed user sessio
 can use notes, just as they can access the authenticated web shell. Add product
 quotas/rate limits before opening this demo to high-volume workloads.
 
-The browser sends same-origin `/sync` requests through a thin SvelteKit proxy to
+The browser sends same-origin `/sync` requests through a thin React Router proxy to
 the API service binding. HttpOnly cookies remain HttpOnly. Native supplies the
 securely stored session as a `Cookie` header. Credentials never belong in the
 sync URL or `syncPayload`; the API rejects client payload claims. There is no

@@ -14,7 +14,6 @@
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		9F219187EB87BEBEB8C8DF6F /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
-		DC27A583CBAA64590D65C112 /* SymbioteExpoModulesFactory.mm in Sources */ = {isa = PBXBuildFile; fileRef = B9BA9E0608C93A36040293A5 /* SymbioteExpoModulesFactory.mm */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -29,8 +28,6 @@
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = Ak5Mobile/AppDelegate.swift; sourceTree = "<group>"; };
 		7830B702E38E2C425C8641A7 /* SceneDelegate.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SceneDelegate.swift; path = Ak5Mobile/SceneDelegate.swift; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = Ak5Mobile/LaunchScreen.storyboard; sourceTree = "<group>"; };
-		90D3565803347A11A133FC7D /* SymbioteExpoModulesFactory.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; name = SymbioteExpoModulesFactory.h; path = Ak5Mobile/SymbioteExpoModulesFactory.h; sourceTree = "<group>"; };
-		B9BA9E0608C93A36040293A5 /* SymbioteExpoModulesFactory.mm */ = {isa = PBXFileReference; includeInIndex = 1; name = SymbioteExpoModulesFactory.mm; path = Ak5Mobile/SymbioteExpoModulesFactory.mm; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -54,8 +51,6 @@
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
 				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
-				90D3565803347A11A133FC7D /* SymbioteExpoModulesFactory.h */,
-				B9BA9E0608C93A36040293A5 /* SymbioteExpoModulesFactory.mm */,
 				7830B702E38E2C425C8641A7 /* SceneDelegate.swift */,
 			);
 			name = Ak5Mobile;
@@ -209,7 +204,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "set -e\n\nWITH_ENVIRONMENT=\"$REACT_NATIVE_PATH/scripts/xcode/with-environment.sh\"\nREACT_NATIVE_XCODE=\"$REACT_NATIVE_PATH/scripts/react-native-xcode.sh\"\n\n/bin/sh -c \"\\\"$WITH_ENVIRONMENT\\\" \\\"$REACT_NATIVE_XCODE\\\"\"\n";
+			shellScript = "set -e\n. \"$SRCROOT/.xcode.env\"\nif [ -f \"$SRCROOT/.xcode.env.local\" ]; then\n  . \"$SRCROOT/.xcode.env.local\"\nfi\n\nexport PROJECT_ROOT=\"$PROJECT_DIR/..\"\ncd \"$PROJECT_ROOT\"\nexport CLI_PATH=\"$(\"$NODE_BINARY\" --print \"require.resolve('@expo/cli', { paths: [require.resolve('expo/package.json')] })\")\"\nexport BUNDLE_COMMAND=export:embed\n\"$REACT_NATIVE_PATH/scripts/react-native-xcode.sh\"\n\n# React Native reads ip.txt to find Metro when the default port is occupied.\ncase \"$CONFIGURATION\" in\n  *Debug*)\n    if [ -n \"$RCT_METRO_PORT\" ]; then\n      host_file=\"$CONFIGURATION_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/ip.txt\"\n      host=localhost\n      if [ \"$PLATFORM_NAME\" != iphonesimulator ] && [ -s \"$host_file\" ]; then\n        host=\"$(cat \"$host_file\")\"\n        host=\"${host%%:*}\"\n      fi\n      printf '%s:%s\\n' \"$host\" \"$RCT_METRO_PORT\" > \"$host_file\"\n    fi\n    ;;\nesac\n";
 		};
 		00EEFC60759A1932668264C0 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -300,7 +295,6 @@
 			files = (
 				761780ED2CA45674006654EE /* AppDelegate.swift in Sources */,
 				2B1A70AE8CB4B60FE02AF431 /* ExpoModulesProvider.swift in Sources */,
-				DC27A583CBAA64590D65C112 /* SymbioteExpoModulesFactory.mm in Sources */,
 				4205A7637AD929CEF736F181 /* SceneDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -333,7 +327,6 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.ak5.mobile;
 				PRODUCT_NAME = Ak5Mobile;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				SWIFT_OBJC_BRIDGING_HEADER = "Ak5Mobile/Ak5Mobile-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -365,7 +358,6 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.ak5.mobile;
 				PRODUCT_NAME = Ak5Mobile;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				SWIFT_OBJC_BRIDGING_HEADER = "Ak5Mobile/Ak5Mobile-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VERSIONING_SYSTEM = "apple-generic";

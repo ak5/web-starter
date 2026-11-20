@@ -1,5 +1,5 @@
 # Build artifacts
-.svelte-kit
+.react-router
 .wrangler
 build
 dist
@@ -8,4 +8,4 @@ dist
 worker-configuration.d.ts
 
 # Static assets shouldn't be auto-formatted
-static
+public

@@ -1,10 +1,22 @@
 {
-	"extends": "$app/tsconfig",
+	"include": [
+		"src/**/*",
+		"workers/**/*",
+		".react-router/types/**/*",
+		"worker-configuration.d.ts",
+		"vite.config.ts",
+		"react-router.config.ts"
+	],
 	"compilerOptions": {
-		"sourceMap": true,
+		"target": "ES2022",
+		"module": "ESNext",
+		"moduleResolution": "Bundler",
 		"strict": true,
-		"jsx": "preserve",
-		"types": ["$app/types"]
-	},
-	"include": ["src", "vite.config.ts", "worker-configuration.d.ts"]
+		"skipLibCheck": true,
+		"noEmit": true,
+		"lib": ["ES2022", "DOM", "DOM.Iterable"],
+		"jsx": "react-jsx",
+		"types": ["node", "vite/client"],
+		"rootDirs": [".", "./.react-router/types"]
+	}
 }

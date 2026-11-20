@@ -6,7 +6,7 @@ test('environment banner dismissal resets on client navigation and reload', asyn
 	await expect(banner).toContainText('Development');
 	await page.getByRole('button', { name: 'Dismiss environment banner' }).click();
 	await expect(banner).toHaveCount(0);
-	// This link uses SvelteKit navigation, which retains the root layout.
+	// This link uses React Router navigation, which retains the root layout.
 	await page.getByRole('link', { name: 'ak5-web', exact: true }).click();
 	await expect(page).toHaveURL(/\/$/);
 	await expect(banner).toBeVisible();

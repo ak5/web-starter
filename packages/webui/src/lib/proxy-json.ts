@@ -1,4 +1,3 @@
-import type { Cookies } from '@sveltejs/kit';
 import { forwardSetCookie } from './forward-cookie.js';
 
 type JsonResponseLike = {
@@ -19,10 +18,10 @@ export async function responseJsonBody<T = unknown>(
 }
 
 /**
- * Convert a Hono API JSON response into a SvelteKit JSON response while
+ * Convert a Hono API JSON response into a React Router JSON response while
  * preserving the upstream status code.
  */
-export async function proxyJson(res: JsonResponseLike, cookies?: Cookies) {
+export async function proxyJson(res: JsonResponseLike, cookies?: Headers) {
 	const body = await responseJsonBody(res, {});
 	if (cookies) forwardSetCookie(res, cookies);
 	return Response.json(body, { status: res.status });

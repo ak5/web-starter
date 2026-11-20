@@ -4,7 +4,7 @@ pnpm-lock.yaml
 yarn.lock
 
 # Build artifacts
-**/.svelte-kit/
+**/.react-router/
 **/.wrangler/
 **/dist/
 **/build/
@@ -17,6 +17,7 @@ packages/
 **/worker-configuration.d.ts
 
 # Tooling
+tmp/
 .cursor
 .claude
 .playwright-mcp/

@@ -19,7 +19,7 @@ function content(html: string) {
 	return { text: text.join(' ').replace(/\s+/g, ' '), links, tags };
 }
 
-test('all four compiled Svelte templates preserve subjects, copy, links and safe HTML', async () => {
+test('all four templates preserve subjects, copy, links and safe HTML', async () => {
 	const hostile = '<script>alert("private")</script> & example';
 	const appUrl = 'https://example.test';
 	const inviteUrl = `${appUrl}/invite?t=invite-token&from=admin`;

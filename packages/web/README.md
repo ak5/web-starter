@@ -1,9 +1,9 @@
 # @ak5/web
 
-SvelteKit on Cloudflare Workers — the public app surface. A pure UI worker: it
+React Router on Cloudflare Workers — the public app surface. A pure UI worker: it
 owns no DB, verifies the JWT cookie and checks its session with the API, then talks to `@ak5/api` through the
-typed Hono client in `#lib/api` (`hc<WebApiType>`). Auth flows are wired through
-`@ak5/webui`'s action helpers.
+typed Hono client in `src/lib/api.server.ts` (`hc<WebApiType>`). Auth flows are wired through
+the action helpers in `@ak5/webui/server`.
 
 This ships a **minimal example surface** — replace it with your product, keep the
 auth wiring.
@@ -29,8 +29,8 @@ auth wiring.
 Recovery and invitation pages accept emailed tokens while signed out.
 `/account/password` requires either a session or a reset token; the route loader
 checks that boundary. `/auth/magic/[token]` requires a session and an explicit
-confirmation POST. The hooks reject revoked sessions before redirecting.
-Add a route under `src/routes/` and update this table in the same PR.
+confirmation POST. The server middleware rejects revoked sessions before redirecting.
+Add the route in `src/routes.ts` and update this table in the same PR.
 
 See [local-first notes](../../docs/architecture/local-first.md) for browser requirements and device data retention.
 

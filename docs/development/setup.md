@@ -18,9 +18,11 @@ Caddy and Lefthook, plus Ruby 4 and JDK 25 when mobile is enabled. Website-only
 mode excludes the native tools. Mise also auto-loads `.env.dev-slot` (your active
 dev slot's ports + URLs) and sets a per-worktree `XDG_CONFIG_HOME` so each
 checkout keeps its own CLI persona store.
+The slot file also gives Wrangler and Vite a shared registry path so local API
+service bindings resolve within that slot.
 
-The `tsc` command uses TypeScript 7's native compiler. Svelte, ESLint and native
-editor plugins use Microsoft's `@typescript/typescript6` API package, installed
+The `tsc` command uses TypeScript 7's native compiler. ESLint uses Microsoft's
+`@typescript/typescript6` API package, installed
 under the `typescript` alias. This is the
 [supported side-by-side setup](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0/#running-side-by-side-with-typescript-6-0)
 for tools that require the JavaScript compiler API.

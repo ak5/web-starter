@@ -22,7 +22,7 @@ It then runs, in order:
 2. `pnpm format:check` — Prettier, zero diffs
 3. `pnpm -r lint:nofmt` — ESLint across packages
 4. `pnpm audit:split` — package boundary + instruction-file drift checks
-5. `pnpm -r check` — `svelte-check` / `tsc --noEmit`
+5. `pnpm -r check` — TypeScript and React Router route types
 6. `pnpm test:unit` — unit suites
 7. `pnpm -w run build` — full build
 
@@ -32,11 +32,14 @@ the full local stack with Playwright. Both run without provider credentials.
 ## Reproduce locally before pushing
 
 ```sh
+nice -n 10 pnpm format
 nice -n 10 pnpm check:all
 ```
 
-`check:all` runs the same gates locally (build:libs → format → lint → audit:split
-→ check). **Zero errors AND zero warnings** is the bar — fix warnings, don't defer
+Run these before pushing to conserve GitHub Actions minutes. `check:all` builds
+libraries, checks formatting, lints, audits package boundaries and docs, and
+checks types. Run relevant unit tests, builds, and integration tests locally.
+Use `nice -n 10 pnpm test --workers=1` for browser changes once the slot is up. **Zero errors AND zero warnings** is the bar — fix warnings, don't defer
 them. The lefthook pre-commit hook runs a piped subset
 (format → lint → audit-split → check) so most breakage is caught before it leaves
 your machine.

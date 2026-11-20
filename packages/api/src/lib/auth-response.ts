@@ -2,6 +2,7 @@ import type { Context } from 'hono';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 
 import type { AppContext } from '../types';
+import type { ApiJsonResponse } from './api-response';
 
 type AuthResponseResult<TBody> =
 	| {
@@ -27,7 +28,10 @@ type AuthMultiCookieResponseResult<TBody> =
 			body: { error: string };
 	  };
 
-export function authJson<TBody>(c: Context<AppContext>, result: AuthResponseResult<TBody>) {
+export function authJson<TBody>(
+	c: Context<AppContext>,
+	result: AuthResponseResult<TBody>
+): ApiJsonResponse<TBody> | ApiJsonResponse<{ error: string }> {
 	if (!result.ok) return c.json(result.body, result.status);
 	if (result.setCookie) c.header('set-cookie', result.setCookie);
 	return c.json(result.body);
@@ -36,7 +40,7 @@ export function authJson<TBody>(c: Context<AppContext>, result: AuthResponseResu
 export function authJsonWithCookies<TBody>(
 	c: Context<AppContext>,
 	result: AuthMultiCookieResponseResult<TBody>
-) {
+): ApiJsonResponse<TBody> | ApiJsonResponse<{ error: string }> {
 	if (!result.ok) return c.json(result.body, result.status);
 	const res = c.json(result.body);
 	for (const setCookie of result.setCookies ?? []) {

@@ -1,33 +1,23 @@
 # @ak5/mobile
 
-Svelte 5 on Symbiote Native and React Native, rendering native iOS/Android views.
-The host uses React Native 0.88, Expo SDK 58, and Symbiote Native 3.3.
-Development and builds use the React Native CLI. Metro's current plugin pipeline
-uses Babel 7; dependency peer checks enforce that supported combination.
-Gradle 9.8 and Kotlin 2.4 build Android. The version-only Gradle plugin patches
-in `patches/` keep React Native and Expo’s included compilers aligned with that
-toolchain until their upstream compiler pins catch up.
-Metro compiles native Svelte components and registers the installed native modules. The app
-includes login/register, email verification/resend, recovery via the web app,
-secure session restoration/logout, and paginated items with JSON create/edit/delete.
+React Native with Expo SDK 58. The checked-in iOS and Android projects own native
+configuration and signing. Expo CLI, Metro, and Expo autolinking build them. The
+app includes account registration and login, verification and resend, password
+recovery by email, secure session restore and sign-out, paginated JSON items,
+and local-first notes.
 
 ## Setup
 
-Install workspace tools with `mise install`, then `pnpm install` and
-`pnpm build:libs`. Native builds also need Xcode and its simulator, Ruby 4/Bundler
-and CocoaPods on macOS, or JDK 25 and Android SDK 37 for Android.
-`mise install` selects the pinned Ruby 4 and Java 25 toolchains. From this directory
-run `bundle install`, then from the root `pnpm app:pods`.
-iOS Keychain access requires signing entitlements, including on the simulator;
-keep code signing enabled for runtime checks. The entitlement file uses the
-build’s application identifier and contains no team-specific values.
+Install workspace tools with `mise install`, then run `pnpm install` and
+`pnpm build:libs` at the root. Install Xcode and an iOS simulator for iOS, or
+Android SDK 37, an emulator and JDK 25 for Android. The mise configuration
+selects Ruby 4 and Java 25. For iOS, run `bundle install` from this package and
+`pnpm app:pods` from the workspace root. Keep code signing enabled for iOS
+simulator runtime checks so the app can access its Keychain group. The entitlement
+uses the build's application identifier.
 
-The committed iOS and Android projects use the example bundle ID `com.ak5.mobile`;
-choose your own identifier and signing configuration before distributing an app.
-The iOS host creates its React Native window from `SceneDelegate`, as required by
-iOS 27. Expo autolinking supplies both class-based and annotation-based native
-modules; rebuild hosts after changing their dependency graph.
-Android debug builds need a local `android/app/debug.keystore`:
+Android debug builds need a local `android/app/debug.keystore`. From this
+package, create it if it is missing:
 
 ```sh
 keytool -genkeypair -storetype PKCS12 -keystore android/app/debug.keystore \
@@ -35,70 +25,64 @@ keytool -genkeypair -storetype PKCS12 -keystore android/app/debug.keystore \
   -dname 'CN=Android Debug,O=Android,C=US' -keyalg RSA -keysize 2048 -validity 10000
 ```
 
+To distribute the app, configure your bundle identifier, signing, store metadata,
+and application policies. Both projects use the example ID `com.ak5.mobile`.
+The native projects preserve the iOS scene and the Android backup settings.
+Rebuild the app after changes to native dependencies or their configuration.
+
 ## Develop
 
-Start the backend with `pnpm dev:auto`. In another terminal run `pnpm dev:app`,
-then `pnpm app:ios` or `pnpm app:android`. Metro binds loopback and picks a free port in 8081–8099
-and writes it to `packages/mobile/.env.dev-slot`; native launch commands use it
-without starting another server. Stop Metro when done.
+From the workspace root, run `pnpm dev:auto` for the local API and email mock.
+In a second terminal run `pnpm dev:app`. It picks a free Metro port in
+8081–8099 and records it in `packages/mobile/.env.dev-slot`. With your simulator
+or emulator available, run `pnpm app:ios` or `pnpm app:android` to build and open
+the app against that server. Stop Metro after verification.
 
-`MOBILE_API_URL` is a public build-time URL. Copy `.env.example` to `.env` in
-this package to set overrides, or export them in the shell. If absent, the active root dev
-slot's direct API port is used; the iOS simulator connects to `127.0.0.1`, and
-the Android emulator connects to `10.0.2.2`. Physical devices need a reachable
-HTTPS API URL. Set `MOBILE_API_URL` before starting Metro to override either.
-Never put API secrets or signing credentials in JavaScript configuration.
+`EXPO_PUBLIC_MOBILE_API_URL` is the public build-time API origin. The workspace
+commands also accept `MOBILE_API_URL` in this package's `.env` or the shell. By
+default they use the API port in the root `.env.dev-slot` and connect through
+`127.0.0.1` on the iOS simulator or `10.0.2.2` on the Android emulator. Use
+a reachable HTTPS API origin for physical devices and release builds. Keep
+credentials out of JavaScript configuration.
 
-## Verify and distribute
+After configuring release signing and the HTTPS origin, use
+`pnpm --filter @ak5/mobile ios:release` or the corresponding `android:release`
+command. Backend promotion and mobile distribution are separate.
+
+## Verify
 
 ```sh
 nice -n 10 pnpm check:mobile
 nice -n 10 pnpm build:mobile
 ```
 
-CI typechecks/lints/tests the workspace and bundles both platforms with one Metro
-worker. Bundling does not compile native code or prove simulator/device behavior.
-Use the native app against a disposable database to check registration, email
-verification, session restoration, pagination, JSON editing and deletion. Use
-only intended mail recipients. The auth code persists JWTs in iOS Keychain /
-Android Keystore via Symbiote secure-store; it never logs session values.
+The bundle check runs Metro with one worker and compiles both outputs with
+Hermes. On each platform, use the local API and a disposable test account to
+check the native app itself:
 
-Release builds require an explicit HTTPS `MOBILE_API_URL`, app-specific signing,
-identifiers and store metadata. Add your application's policies and any required
-signup acknowledgement before distribution; the starter does not provide policy
-text or record agreement. See [signup policies](../../docs/architecture/auth.md#signup-policies).
-Use `pnpm --filter @ak5/mobile ios:release` or `android:release` after configuring
-them. Production backend promotion remains the repository's manual workflow;
-mobile distribution is separate.
+1. Launch the app, register an account and use the PIN from the local email
+   mock. Test resend, password recovery, and sign-in.
+2. Open **Online items / verify email**. Create a JSON object, edit it, refresh
+   and page through items, then confirm deletion. Check that invalid JSON shows
+   an error and that fields and controls are reachable with the keyboard open.
+3. Open **Offline notes** and add a note. Go offline and create or edit another
+   note. Force-quit and reopen the app. Confirm the session and note survive.
+   Reconnect and confirm that the note appears on the web under the same account.
+   Sign out, sign in as another account, and confirm its notes are isolated.
+4. For an in-place update, build and sign both versions with the same app ID and
+   credentials. Install the update over the previous app without uninstalling.
+   Reopen while offline and confirm the saved session and an unsynced note both
+   survive. Reconnect and check that the note syncs.
 
-## Structure
+Use a build with an embedded bundle for a cold launch with networking disabled.
+With a Metro development build, disconnect the API while keeping Metro reachable.
 
-`App.svelte` owns the example UI and state; `src/client.ts` uses `hc<WebApiType>`
-with type-only imports from `@ak5/api`. Pure cookie constants come from
-`@ak5/shared/cookie`, keeping Worker JWT signing code out of native startup. `src/storage.ts` owns encrypted persistence.
-`src/config.ts` contains only public configuration. `scripts/` owns free-port
-Metro startup, native launch and bundle checks. Native Expo module registration
-is generated by Expo autolinking from the installed dependency graph. Add native
-wrapper packages, then rerun CocoaPods and rebuild the native app.
+## Boundaries
 
-Android builds Expo modules from source and registers the generated module list
-through `ExpoModulesPackage`. Its automatic React Native registration is disabled
-so the native host registers the package once.
-
-Unused SDK defaults are excluded in `package.json` so they do not add unrelated
-native modules or storage permissions. When enabling a wrapper for one of those
-packages, remove its underlying Expo package from that exclusion list, reinstall,
-and regenerate CocoaPods before rebuilding.
-
-For physical-device hot reload, start the React Native CLI with a reachable host
-and the selected Metro port. A signed release build embeds JavaScript and needs
-only a reachable HTTPS API.
-
-## Local-first notes
-
-Offline notes use LiveStore with Expo SQLite and the same schema as web.
-The host includes Expo Application and Crypto as well as SQLite; rerun pods and
-rebuild native hosts after dependency updates. Notes open from cached authenticated
-identity when the device is offline. Server authorization still applies to every
-sync request. See [local-first notes](../../docs/architecture/local-first.md) for
-sync setup, account isolation, and retained device data after sign out.
+`App.tsx` and `src/LocalNotes.tsx` render native controls. The typed Hono client
+in `src/client.ts` imports only API types and the shared cookie constant.
+`src/storage.ts` persists credentials through Expo SecureStore using the operating
+system's Keychain or Keystore. Notes share schema and sync logic with the web
+app through `@ak5/sync`, with Expo SQLite as the native storage adapter.
+See [local-first notes](../../docs/architecture/local-first.md) for account
+isolation and retained data after sign-out.

@@ -24,56 +24,36 @@ test('local SQLite notes persist offline and sync across devices with account is
 		const first = await authenticated(api);
 		const second = await authenticated(api);
 		const stranger = await authenticated(other);
-		const a = await first.newPage();
-		a.on('console', (message) => {
-			if (message.type() === 'error') console.error(message.text());
-		});
-		a.on('pageerror', (error) => console.error(error.message));
+		let a = await first.newPage();
 		const b = await second.newPage();
 		const c = await stranger.newPage();
-		const connected = a.waitForResponse(
-			(response) => response.url().includes('/sync?') && response.status() === 200
-		);
 		await a.goto(`${webUrl}/notes`);
+		await b.goto(`${webUrl}/notes`);
 		await expect(a.getByRole('button', { name: 'Add note' })).toBeEnabled({ timeout: 45_000 });
-		await connected;
-		const syncEndpoint = (url: URL) => /^\/sync\/?$/.test(url.pathname);
-		await first.route(syncEndpoint, (route) => route.abort('internetdisconnected'));
-		await first.setOffline(true);
-		await a.getByRole('textbox', { name: 'Note text' }).fill('Written offline');
-		await a.getByRole('button', { name: 'Add note' }).click();
-		await expect(a.getByText('Written offline', { exact: true })).toBeVisible();
-		await expect(a.getByRole('status').first()).toContainText('waiting to sync');
+		await expect(b.getByRole('button', { name: 'Add note' })).toBeEnabled({ timeout: 45_000 });
 
+		await first.setOffline(true);
+		await a.getByRole('textbox', { name: 'Note text' }).fill('Draft');
+		await a.getByRole('button', { name: 'Add note' }).click();
+		await a.getByRole('button', { name: 'Edit', exact: true }).click();
+		await a.getByRole('textbox', { name: 'Note text' }).fill('Written offline');
+		await a.getByRole('button', { name: 'Save note', exact: true }).click();
+		await expect(a.getByText('Written offline', { exact: true })).toBeVisible();
+		await expect(a.getByRole('status').first()).toHaveText('2 changes waiting to sync');
+		await expect(b.getByText('Written offline', { exact: true })).toHaveCount(0);
+
+		// Close the editor while offline so the next page has to reopen the OPFS queue.
+		await a.close();
 		await first.setOffline(false);
-		await first.unroute(syncEndpoint);
-		let releaseSync = () => {};
-		const stalledSync = new Promise<void>((resolve) => {
-			releaseSync = resolve;
-		});
-		await first.route(syncEndpoint, async (route) => {
-			await stalledSync;
-			await route.continue().catch(() => {});
-		});
-		const handshakeTimeout = a.waitForEvent('requestfailed', {
-			predicate: (request) =>
-				syncEndpoint(new URL(request.url())) &&
-				request.postData()?.includes('SyncHttpRpc.Ping') === true,
-			timeout: 45_000
-		});
-		await a.reload();
+		a = await first.newPage();
+		await a.goto(`${webUrl}/notes`);
 		await expect(a.getByText('Written offline', { exact: true })).toBeVisible({ timeout: 30_000 });
-		await expect(a.getByRole('status').first()).toContainText('waiting to sync');
-		await handshakeTimeout;
-		await first.unroute(syncEndpoint);
-		releaseSync();
 		await expect(a.getByText('No pending changes', { exact: true })).toBeVisible({
 			timeout: 30_000
 		});
+		await expect(b.getByText('Written offline', { exact: true })).toBeVisible({ timeout: 30_000 });
 		await a.reload();
 		await expect(a.getByText('Written offline', { exact: true })).toBeVisible({ timeout: 30_000 });
-		await b.goto(`${webUrl}/notes`);
-		await expect(b.getByText('Written offline', { exact: true })).toBeVisible({ timeout: 30_000 });
 		await b.getByRole('button', { name: 'Edit', exact: true }).click();
 		await b.getByRole('textbox', { name: 'Note text' }).fill('Edited on device two');
 		await b.getByRole('button', { name: 'Save note', exact: true }).click();

@@ -20,8 +20,9 @@ docs↔code matrix below.
 
 ### Hard rules — flag any violation
 
-1. `pnpm check:all` must pass clean — zero errors **and** zero warnings
-   (`prettier --check`, `eslint`, `audit:split`, `tsc`/`svelte-check`).
+1. Run the applicable checks locally before using GitHub Actions for feedback.
+   `pnpm check:all` must pass clean — zero errors **and** zero warnings
+   (`prettier --check`, `eslint`, `audit:split`, `tsc`).
 2. **Public IDs only** in API responses, URLs, JWTs, cookies, and client code —
    never internal sequential PKs.
 3. web/admin import from `@ak5/api` **type-only** (the `hc<…ApiType>` RPC types).
@@ -69,10 +70,8 @@ docs↔code matrix below.
 
 ### Soft rules — suggest improvements
 
-- UI/helper used in 2+ apps belongs in `@ak5/webui`; generic pure utility belongs
-  in `@ak5/shared`.
-- Svelte 5: `$derived` over `const` for reactive props; object syntax for
-  conditional classes.
+- Components and server helpers shared between browser apps belong in
+  `@ak5/webui`. Cross-platform contracts and pure utilities belong in `@ak5/shared`.
 - `page` is 0-indexed end to end; display `page + 1`.
 - Use `pnpm cli` for API operations in scripts, not curl/fetch.
 - No inline SVGs — use the icon library / `IconSocial`.
@@ -80,12 +79,13 @@ docs↔code matrix below.
 ### Architecture facts to know
 
 - **Monorepo:** pnpm workspace, `@ak5/{api,web,admin,shared,webui,email,cli}`.
-- **Runtime:** Cloudflare Workers (api + both SvelteKit apps).
+- **Runtime:** Cloudflare Workers (api + both React Router apps), React Native
+  and Expo (iOS and Android).
 - **DB:** Cloudflare D1 + Drizzle; one api worker owns all DB access.
 - **Auth:** two identity tables + one exclusive-arc tokens table; JWT
   (`ak5_token`) carries `type`; scoped sub-routers give per-persona `*ApiType`.
 - **RPC:** frontends consume `hc<WebApiType>()` / `hc<AdminApiType>()` via the
-  `createApiClient` factory in `@ak5/webui`.
+  `createApiClient` factory in `@ak5/webui/server`.
 - **Dev:** Caddy fronts each slot on one port (`base + (slot-1)*10`).
 - **Tests:** Playwright against the live dev stack on a local D1 database.
 

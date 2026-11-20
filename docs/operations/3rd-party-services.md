@@ -15,11 +15,9 @@ See [database](../architecture/database.md) and [deployment](deployment.md).
 ## Transactional email
 
 The `@ak5/email` package renders verification, password reset, magic-link reauth,
-and invite templates with Better Svelte Email components and its server renderer.
-Vite compiles the Svelte templates before the API imports them; rendering uses
-inline styles with Tailwind processing disabled.
-Deployed API Workers send through **Cloudflare Email
-Sending**, using the native `EMAIL` binding. No runtime email API token is needed.
+and invite templates with React Email on the server, with inline styles. Vite builds
+the package before the API imports it. Deployed API Workers send through
+**Cloudflare Email Sending** using the native `EMAIL` binding.
 
 In dev and CI, `EMAIL_MOCK_URL` points to the local mock, which captures outbound
 mail; the preview server renders templates. Staging sends real mail unless

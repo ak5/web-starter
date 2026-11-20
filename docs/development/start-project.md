@@ -55,17 +55,18 @@ Before removal, the command moves local mobile files into an ignored
 `tmp/mobile-backup-*/mobile` directory. This includes edits, `.env` files and
 native caches. The backup stays on your machine and is not part of a commit.
 
-Enable downloads `packages/mobile` from the exact starter commit recorded in
+Enable reads `packages/mobile` from the exact starter commit recorded in
 `.starter-mobile.json`, applies your application's branding, restores native
-configuration, and reinstalls dependencies. It needs Git and network access.
+configuration, and reinstalls dependencies. It uses a local Git object when
+available and fetches the source commit from the starter otherwise.
 It preserves intervening web configuration changes and refuses conflicting
 native configuration. It restores the pinned starter source; merge any custom
 mobile edits and local files from your ignored backup afterward.
 
-`.starter-template.json` records the source revision and application branding;
-the creator sets this to the exact commit it cloned. Keep the revision pinned
-when adopting a newer mobile template, and review its compatibility with your
-API and dependency versions. Both mobile commands accept `--no-install` when
+`.starter-template.json` records branding and the exact commit the creator
+cloned. A clone with the starter's own Git history pins its checked-out commit
+when mobile is disabled. Commit the app source first if it is new to your
+checkout. Both mobile commands accept `--no-install` when
 another setup step will install dependencies. Commit source deletions or
 restoration, profile metadata, configuration and lockfile together.
 

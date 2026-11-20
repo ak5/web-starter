@@ -1,4 +1,4 @@
-import { error, fail, redirect, type ActionFailure, type Cookies } from '@sveltejs/kit';
+import { data, redirect } from 'react-router';
 
 import { apiErrorBody, apiErrorMessage } from './api-error.js';
 import { forwardSetCookie } from './forward-cookie.js';
@@ -34,12 +34,8 @@ export function formStringAll(data: FormData, name: string): string[] {
 	return data.getAll(name).map((value) => String(value));
 }
 
-function actionFailure<Key extends FailureKey>(
-	status: number,
-	failureKey: Key,
-	message: string
-): ActionFailure<FailurePayload<Key>> {
-	return fail(status, { [failureKey]: message } as FailurePayload<Key>);
+function actionFailure<Key extends FailureKey>(status: number, failureKey: Key, message: string) {
+	return data({ [failureKey]: message } as FailurePayload<Key>, { status });
 }
 
 export async function apiJsonAction<Result = unknown, Key extends FailureKey = 'error'>(
@@ -57,9 +53,9 @@ export async function apiLoadJson<Response extends ResponseLike>(
 	res: Response,
 	fallback: string
 ): Promise<JsonOf<Response>> {
-	if (!res.ok) throw error(res.status, fallback);
+	if (!res.ok) throw data(fallback, { status: res.status });
 	return res.json().catch(() => {
-		throw error(502, fallback);
+		throw data(fallback, { status: 502 });
 	}) as Promise<JsonOf<Response>>;
 }
 
@@ -73,7 +69,7 @@ export async function apiRedirectAction<Key extends FailureKey = 'error'>(
 	}
 
 	const { redirectTo } = await responseJsonBody<{ redirectTo: string }>(res, { redirectTo: '/' });
-	throw redirect(303, redirectTo);
+	throw redirect(redirectTo, 303);
 }
 
 export async function apiStaticRedirectAction<Key extends FailureKey = 'error'>(
@@ -86,12 +82,12 @@ export async function apiStaticRedirectAction<Key extends FailureKey = 'error'>(
 		return actionFailure(res.status, failureKey, await apiErrorMessage(res, fallback));
 	}
 
-	throw redirect(303, redirectTo);
+	throw redirect(redirectTo, 303);
 }
 
 export async function apiCookieRedirectAction<Key extends FailureKey = 'error'>(
 	res: ResponseLike & { headers: Headers },
-	cookies: Cookies,
+	cookies: Headers,
 	fallback: string,
 	failureKey: Key = 'error' as Key
 ) {
@@ -101,12 +97,12 @@ export async function apiCookieRedirectAction<Key extends FailureKey = 'error'>(
 
 	const { redirectTo } = await responseJsonBody<{ redirectTo: string }>(res, { redirectTo: '/' });
 	forwardSetCookie(res, cookies);
-	throw redirect(303, redirectTo);
+	throw redirect(redirectTo, 303);
 }
 
 export async function apiCookieStaticRedirectAction<Key extends FailureKey = 'error'>(
 	res: ResponseLike & { headers: Headers },
-	cookies: Cookies,
+	cookies: Headers,
 	redirectTo: string,
 	fallback: string,
 	failureKey: Key = 'error' as Key
@@ -116,7 +112,7 @@ export async function apiCookieStaticRedirectAction<Key extends FailureKey = 'er
 	}
 
 	forwardSetCookie(res, cookies);
-	throw redirect(303, redirectTo);
+	throw redirect(redirectTo, 303);
 }
 
 export async function apiUrlRedirectAction<Key extends FailureKey = 'error'>(
@@ -131,7 +127,7 @@ export async function apiUrlRedirectAction<Key extends FailureKey = 'error'>(
 
 	const { url } = await responseJsonBody<{ url?: string | null }>(res, {});
 	if (!url) return actionFailure(500, failureKey, missingUrlFallback);
-	throw redirect(303, url);
+	throw redirect(url, 303);
 }
 
 export async function apiUrlRedirectResponse(
@@ -141,12 +137,12 @@ export async function apiUrlRedirectResponse(
 	status = 303
 ): Promise<never> {
 	if (!res.ok) {
-		throw error(res.status, await apiErrorMessage(res, fallback));
+		throw data(await apiErrorMessage(res, fallback), { status: res.status });
 	}
 
 	const { url } = await responseJsonBody<{ url?: string | null }>(res, {});
-	if (!url) throw error(502, missingUrlFallback);
-	throw redirect(status, url);
+	if (!url) throw data(missingUrlFallback, { status: 502 });
+	throw redirect(url, status);
 }
 
 export async function apiUploadUrlAction<Key extends FailureKey = 'error'>(

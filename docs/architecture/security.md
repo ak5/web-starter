@@ -101,8 +101,7 @@ for `deepmerge@4.3.1`. Its published version has no upstream fix. The starter
 patches source, CommonJS and UMD builds to omit `__proto__` keys from both inputs,
 preventing attacker-controlled prototypes on the returned objects.
 
-The installed callers are Svelte Vite configuration merging and Expo/React Native
-configuration and CLI tools. Application handlers do not import this package.
+The installed callers are Expo and React Native configuration and CLI tools.
 `scripts/dependency-patches.test.mjs` exercises the installed dependency, including
 null-prototype targets, nested null/primitive defaults, poisoned targets and arrays.
 It also checks ordinary configuration merging. CI runs that regression before

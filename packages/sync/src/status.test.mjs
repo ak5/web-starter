@@ -21,17 +21,18 @@ test('notes remain pending after local persistence until the server acknowledges
 		}
 	};
 	const values = [];
-	const unsubscribe = subscribeNotesSync(store, (pending) => values.push(pending));
-	const expectPending = async (pending) => {
-		for (let i = 0; i < 100 && values.at(-1) !== pending; i++) await setTimeout(5);
-		assert.equal(values.at(-1), pending);
+	const unsubscribe = subscribeNotesSync(store, (pending, local) => values.push([pending, local]));
+	const expectPending = async (pending, local = 0) => {
+		const matches = () => values.at(-1)?.[0] === pending && values.at(-1)?.[1] === local;
+		for (let i = 0; i < 100 && !matches(); i++) await setTimeout(5);
+		assert.deepEqual(values.at(-1), [pending, local]);
 	};
 	try {
 		await expectPending(0);
 		await Effect.runPromise(SubscriptionRef.set(session, { pendingCount: 1 }));
-		await expectPending(1);
+		await expectPending(1, 1);
 		await Effect.runPromise(SubscriptionRef.set(leader, { pending: [{}] }));
-		await expectPending(2);
+		await expectPending(2, 1);
 		await Effect.runPromise(SubscriptionRef.set(session, { pendingCount: 0 }));
 		await expectPending(1);
 		await Effect.runPromise(SubscriptionRef.set(leader, { pending: [] }));
