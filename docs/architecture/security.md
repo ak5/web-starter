@@ -93,24 +93,9 @@ Passwords are hashed with **argon2id**. A **minimum length** and a **strength
 check** are enforced server-side at register / set / change time, alongside the
 zod backstop — the client-side meter is convenience only, never the gate.
 
-## Dependency security patches
+## Dependency auditing
 
-CI runs `pnpm audit --audit-level=low` and the unit suite. The only advisory
-exception is [GHSA-gcqx-w48m-w2h4](https://github.com/advisories/GHSA-gcqx-w48m-w2h4)
-for `deepmerge@4.3.1`. Its published version has no upstream fix. The starter
-patches source, CommonJS and UMD builds to omit `__proto__` keys from both inputs,
-preventing attacker-controlled prototypes on the returned objects.
-
-The installed callers are Expo and React Native configuration and CLI tools.
-`scripts/dependency-patches.test.mjs` exercises the installed dependency, including
-null-prototype targets, nested null/primitive defaults, poisoned targets and arrays.
-It also checks ordinary configuration merging. CI runs that regression before
-the audit exception can qualify a build. This is a patched-package exception,
-not an assertion that the published package is safe.
-
-When an upstream fixed release is available, update the dependency and remove the
-patch and exact advisory exception together. Keep the regression while the
-dependency remains. No broader severity or registry-error exclusions are enabled.
+CI runs `pnpm audit --audit-level=low`, peer checks, and the unit suite.
 
 ## Avatar uploads and retention
 

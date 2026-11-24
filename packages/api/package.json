@@ -41,25 +41,25 @@
 		"@ak5/email": "workspace:*",
 		"@ak5/shared": "workspace:*",
 		"@hono/zod-validator": "^0.9.1",
+		"@livestore/peer-deps": "0.5.0",
+		"@livestore/sync-cf": "0.5.0",
 		"drizzle-orm": "^0.45.4",
-		"hono": "^4.13.19",
+		"hono": "^4.13.20",
 		"nanoid": "^6.0.2",
 		"worker-password-auth": "^1.0.0",
-		"zod": "^4.6.7",
-		"@livestore/sync-cf": "0.5.0",
-		"@livestore/peer-deps": "0.5.0"
+		"zod": "^4.6.7"
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
-		"@types/node": "^26.6.5",
+		"@types/node": "^26.6.6",
 		"drizzle-kit": "^0.31.11",
 		"eslint": "^10.15.0",
 		"eslint-config-prettier": "^10.1.8",
-		"globals": "^17.13.0",
-		"prettier": "^3.9.10",
+		"globals": "^17.14.0",
+		"prettier": "^3.10.1",
 		"tsx": "^4.23.15",
 		"typescript": "npm:@typescript/typescript6@^6.0.2",
-		"typescript-eslint": "~8.72.0",
-		"wrangler": "^4.152.0"
+		"typescript-eslint": "~8.72.2",
+		"wrangler": "^4.166.0"
 	}
 }

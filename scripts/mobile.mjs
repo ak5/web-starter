@@ -21,7 +21,7 @@ const ACTIVE = 'packages/mobile';
 const UPSTREAM = 'https://github.com/ak5/web-starter.git';
 const STATE = '.starter-mobile.json';
 const nativePatch =
-	/^  ['"]?(?:@livestore\/adapter-expo|@react-native\/gradle-plugin|deepmerge|expo-modules-autolinking|expo-modules-core)@/;
+	/^  ['"]?(?:@livestore\/adapter-expo|@react-native\/gradle-plugin|expo-modules-autolinking|expo-modules-core)@/;
 
 function containsMobileSource(root, revision) {
 	return (

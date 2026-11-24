@@ -24,16 +24,10 @@ overrides:
 patchedDependencies:
   '@livestore/adapter-expo@0.5.0': patches/@livestore__adapter-expo@0.5.0.patch
   '@react-native/gradle-plugin@0.88.0': patches/@react-native__gradle-plugin@0.88.0.patch
-  deepmerge@4.3.1: patches/deepmerge@4.3.1.patch
 
   expo-modules-autolinking@58.0.14: patches/expo-modules-autolinking@58.0.14.patch
   expo-modules-core@58.0.24: patches/expo-modules-core@58.0.24.patch
   # shortcut: RN/Expo pin Kotlin 2.2; keep compiler patches until upstream supports Gradle 9.8.
-
-# Version-based audit cannot recognize the tested patch above. See docs/architecture/security.md.
-audit:
-  ignore:
-    - GHSA-gcqx-w48m-w2h4
 
 # LiveStore uses the same synchronous SQLite/Application APIs provided by Expo 58.
 # Native build and persistence tests verify this host combination.

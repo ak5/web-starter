@@ -48,7 +48,7 @@
 		"test:report": "playwright show-report",
 		"test:install": "playwright install --with-deps chromium",
 		"test:preflight": "pnpm tsx scripts/preflight.ts",
-		"test:unit": "node --test scripts/dependency-patches.test.mjs scripts/preflight.test.mjs scripts/init.test.mjs scripts/mobile.test.mjs scripts/sync-cloudflare-worker-secrets.test.mjs && node --test --import tsx 'packages/webui/src/lib/*.test.ts' && node scripts/verify-promotion.mjs && node scripts/configure-preview.mjs --test && node scripts/configure-d1.mjs --test && pnpm --filter @ak5/cli test:unit && pnpm --filter @ak5/email test:unit && pnpm --filter @ak5/shared test:unit && pnpm --filter @ak5/api test:unit && node scripts/mobile.mjs run test:unit && pnpm --filter @ak5/sync test:unit && pnpm --filter @ak5/create-web-starter test:unit",
+		"test:unit": "node --test scripts/preflight.test.mjs scripts/init.test.mjs scripts/mobile.test.mjs scripts/sync-cloudflare-worker-secrets.test.mjs && node --test --import tsx 'packages/webui/src/lib/*.test.ts' && node scripts/verify-promotion.mjs && node scripts/configure-preview.mjs --test && node scripts/configure-d1.mjs --test && pnpm --filter @ak5/cli test:unit && pnpm --filter @ak5/email test:unit && pnpm --filter @ak5/shared test:unit && pnpm --filter @ak5/api test:unit && node scripts/mobile.mjs run test:unit && pnpm --filter @ak5/sync test:unit && pnpm --filter @ak5/create-web-starter test:unit",
 		"check:mobile": "node scripts/mobile.mjs run check && node scripts/mobile.mjs run test:unit",
 		"gen": "pnpm -r --if-present run gen",
 		"cf-typegen": "pnpm gen",
@@ -69,13 +69,13 @@
 		"mobile": "node scripts/mobile.mjs"
 	},
 	"devDependencies": {
-		"@playwright/test": "^1.64.1",
-		"concurrently": "^10.0.6",
-		"prettier": "^3.9.10",
+		"@playwright/test": "^1.65.1",
+		"@typescript/native": "npm:typescript@^7.0.2",
+		"concurrently": "^10.0.7",
+		"prettier": "^3.10.1",
 		"prettier-plugin-tailwindcss": "^0.8.1",
 		"tsx": "^4.23.15",
-		"typescript": "npm:@typescript/typescript6@^6.0.2",
-		"@typescript/native": "npm:typescript@^7.0.2"
+		"typescript": "npm:@typescript/typescript6@^6.0.2"
 	},
 	"engines": {
 		"node": ">=26.12.1",
