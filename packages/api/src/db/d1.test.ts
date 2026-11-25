@@ -9,8 +9,8 @@ import { adminHealthReport } from '../lib/admin-health';
 import { adminAuditLog } from '../lib/admin-audit-log';
 import { adminLogList } from '../lib/admin-logs';
 import { adminTokenDiagnostics } from '../lib/admin-token-diagnostics';
-import { consumeToken, issueToken } from '../lib/tokens';
-import { registerUserPreAuth, loginUserPreAuth } from '../lib/auth-prelogin';
+import { consumeToken, issueToken, sha256Hex } from '../lib/tokens';
+import { acceptInvitePreAuth, registerUserPreAuth, loginUserPreAuth } from '../lib/auth-prelogin';
 import { adminDeleteUser, adminInviteAccount } from '../lib/admin-users';
 import { softDeleteUserById } from '../lib/account-deletion';
 import type { Env } from '../types';
@@ -184,6 +184,98 @@ test('D1 preserves identity constraints, atomic writes and auth workflows', asyn
 			await db.query.auditLog.findFirst({ where: eq(auditLog.entityId, account.publicId) })
 		);
 	});
+
+	await t.test(
+		'email invites require a sender and transport before creating an account',
+		async () => {
+			const input = { email: 'nosender@example.test', username: 'nosender' };
+			for (const settings of [{ PUBLIC_EMAIL_FROM: undefined }, { EMAIL: undefined }]) {
+				assert.deepEqual(await adminInviteAccount(db, { ...env, ...settings }, 'a-admin', input), {
+					ok: false,
+					error: 'invite_email_unavailable',
+					status: 503
+				});
+			}
+			assert.equal(
+				await db.query.users.findFirst({ where: eq(users.email, input.email) }),
+				undefined
+			);
+			assert.equal(
+				await db.query.authEmail.findFirst({ where: eq(authEmail.email, input.email) }),
+				undefined
+			);
+			assert.deepEqual(
+				await adminInviteAccount(db, env, 'a-admin', { ...input, role: 'admin', delivery: 'link' }),
+				{
+					ok: false,
+					error: 'invalid_invite_delivery',
+					status: 400
+				}
+			);
+		}
+	);
+
+	for (const delivery of ['email', 'link'] as const) {
+		await t.test(
+			`${delivery} invitations expire after seven days, work once and apply the correct verification state`,
+			async () => {
+				let html = '';
+				const settings: Env =
+					delivery === 'email'
+						? {
+								...env,
+								EMAIL: {
+									send: async (message) => {
+										html = message.html;
+										return { messageId: 'test-message' };
+									}
+								}
+							}
+						: { ...env, EMAIL: undefined, PUBLIC_EMAIL_FROM: undefined };
+				const verified = delivery === 'email';
+				for (const expired of [true, false]) {
+					const username = `new_${delivery}_${expired ? 'expired' : 'active'}`;
+					const email = username + '@example.test';
+					const before = Date.now();
+					const created = await adminInviteAccount(db, settings, 'a-admin', {
+						email,
+						username,
+						delivery
+					});
+					assert.ok(created.ok);
+					const token = verified
+						? html.match(/\/invite\?t=([a-f0-9]+)/)?.[1]
+						: 'inviteUrl' in created.result &&
+							created.result.inviteUrl &&
+							new URL(created.result.inviteUrl).searchParams.get('t');
+					assert.ok(token);
+					assert.equal('inviteUrl' in created.result, !verified);
+					const hash = await sha256Hex(token);
+					const stored = await db.query.tokens.findFirst({ where: eq(tokens.tokenHash, hash) });
+					assert.ok(stored);
+					const expiresIn = stored.expiresAt.getTime() - before;
+					assert.ok(Math.abs(expiresIn - 7 * 86400_000) < 2000);
+					if (expired)
+						await db
+							.update(tokens)
+							.set({ expiresAt: new Date(Date.now() - 5000) })
+							.where(eq(tokens.tokenHash, hash));
+					const password = 'password1234';
+					assert.equal((await acceptInvitePreAuth(db, env, { token, password })).ok, !expired);
+					assert.equal((await acceptInvitePreAuth(db, env, { token, password })).ok, false);
+					assert.equal((await loginUserPreAuth(db, env, { email, password })).ok, !expired);
+					assert.equal(
+						(await db.query.users.findFirst({ where: eq(users.email, email) }))?.emailVerified,
+						verified && !expired
+					);
+					assert.equal(
+						(await db.query.authEmail.findFirst({ where: eq(authEmail.email, email) }))?.verified,
+						verified && !expired
+					);
+				}
+			}
+		);
+	}
 
 	await t.test(
 		'admin diagnostic responses omit internal record IDs and token secrets',

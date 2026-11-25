@@ -176,7 +176,14 @@ on rejection. A successful resend clears stale form errors. Signing in again
 also retains access to verification resend; signup need not be repeated.
 
 Public recovery for users and admins returns the same response for existing and
-unknown accounts, even when background delivery fails. Admin invites commit the
+unknown accounts, even when background delivery fails. Admins can email an invite
+or copy a link for a regular user from Users. Both expire after seven days and
+can be redeemed once to set a password. An emailed invite verifies the address
+on redemption. A copied link permits password sign-in and leaves the address
+unverified. Existing emailed links retain their verification behavior.
+
+Email invitations require a configured sender and delivery binding before the
+account is created. Admin invites commit the
 account, token, and creation audit atomically before attempting delivery. A failed
 invite returns `503 {error: "invitation_delivery_failed"}`; the account still exists
 and the recipient can use password recovery to set their password.

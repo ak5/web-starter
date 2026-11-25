@@ -10,10 +10,14 @@ export function createFrontendWorker(handle: RequestHandler, isolate = false) {
 				? new Response('Cross-site form submissions are forbidden.', { status: 403 })
 				: await handle(request, context);
 			const headers = new Headers(response.headers);
-			if (response.status >= 400) headers.set('Cache-Control', 'no-store');
+			const containsToken = new URL(request.url).searchParams.has('t');
+			if (response.status >= 400 || containsToken) headers.set('Cache-Control', 'no-store');
 			headers.set('X-Frame-Options', 'DENY');
 			headers.set('X-Content-Type-Options', 'nosniff');
-			headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+			headers.set(
+				'Referrer-Policy',
+				containsToken ? 'no-referrer' : 'strict-origin-when-cross-origin'
+			);
 			headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
 			if (isolate) {
 				headers.set('Cross-Origin-Opener-Policy', 'same-origin');
