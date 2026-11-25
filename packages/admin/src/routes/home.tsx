@@ -11,6 +11,7 @@ export async function action(event: Route.ActionArgs) {
 
 export default function Users({ loaderData: page, actionData: invite }: Route.ComponentProps) {
 	const navigation = useNavigation();
+	const [inviteRole, setInviteRole] = useState('user');
 	const [copiedUrl, setCopiedUrl] = useState('');
 	const inviteUrl = invite?.inviteUrl;
 
@@ -33,7 +34,7 @@ export default function Users({ loaderData: page, actionData: invite }: Route.Co
 		<section className="mx-auto max-w-4xl p-8">
 			<h1 className="mb-6 text-3xl font-bold">Users</h1>
 			<Form method="post" className="mb-8 grid max-w-lg gap-3">
-				<h2 className="text-lg font-semibold">Invite a user</h2>
+				<h2 className="text-lg font-semibold">Invite someone</h2>
 				<label htmlFor="invite-email">Email</label>
 				<input id="invite-email" name="email" type="email" required className="input w-full" />
 				<label htmlFor="invite-username">Username</label>
@@ -48,6 +49,21 @@ export default function Users({ loaderData: page, actionData: invite }: Route.Co
 				<p id="invite-username-help" className="text-sm">
 					Use 5–20 letters, numbers, or underscores.
 				</p>
+				<label htmlFor="invite-role">Role</label>
+				<select
+					id="invite-role"
+					name="role"
+					className="select w-full"
+					value={inviteRole}
+					onChange={(event) => setInviteRole(event.currentTarget.value)}
+					aria-describedby="invite-role-help"
+				>
+					<option value="user">User</option>
+					<option value="admin">Admin</option>
+				</select>
+				<p id="invite-role-help" className="text-sm">
+					Admin invitations must be sent by email.
+				</p>
 				<div className="flex flex-wrap gap-2">
 					<button
 						name="delivery"
@@ -61,7 +77,7 @@ export default function Users({ loaderData: page, actionData: invite }: Route.Co
 						name="delivery"
 						value="link"
 						className="btn"
-						disabled={navigation.state !== 'idle'}
+						disabled={inviteRole === 'admin' || navigation.state !== 'idle'}
 					>
 						Create and copy invite link
 					</button>

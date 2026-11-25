@@ -31,9 +31,10 @@ has no label and shows no banner. See [deployment](../../docs/operations/deploym
 List pages report API failures instead of presenting an empty list. Malformed
 JSON from the API is treated as an upstream failure.
 
-On **Users**, enter the regular user's email and username. **Send email invite**
+On **Users**, enter the recipient's email and username and select
+**User** or **Admin**. Admin invitations are email-only. **Send email invite**
 delivers the invitation and verifies the recipient's address when they redeem it.
-**Create and copy invite link** gives you a private URL to share and leaves the
+For regular users, **Create and copy invite link** gives you a private URL to share and leaves the
 address unverified. If the browser blocks clipboard access, use **Copy invite
 link** or select the displayed URL manually. Both links expire after seven days
 and can be used once to set a password.

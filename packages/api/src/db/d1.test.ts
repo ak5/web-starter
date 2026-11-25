@@ -10,7 +10,12 @@ import { adminAuditLog } from '../lib/admin-audit-log';
 import { adminLogList } from '../lib/admin-logs';
 import { adminTokenDiagnostics } from '../lib/admin-token-diagnostics';
 import { consumeToken, issueToken, sha256Hex } from '../lib/tokens';
-import { acceptInvitePreAuth, registerUserPreAuth, loginUserPreAuth } from '../lib/auth-prelogin';
+import {
+	acceptInvitePreAuth,
+	registerUserPreAuth,
+	loginUserPreAuth,
+	loginAdminPreAuth
+} from '../lib/auth-prelogin';
 import { adminDeleteUser, adminInviteAccount } from '../lib/admin-users';
 import { softDeleteUserById } from '../lib/account-deletion';
 import type { Env } from '../types';
@@ -276,6 +281,42 @@ test('D1 preserves identity constraints, atomic writes and auth workflows', asyn
 			}
 		);
 	}
+
+	await t.test(
+		'an emailed admin invitation verifies the address and enables admin sign-in',
+		async () => {
+			const email = 'invitedadmin@example.test';
+			const password = 'password1234';
+			let html = '';
+			const result = await adminInviteAccount(
+				db,
+				{
+					...env,
+					EMAIL: {
+						send: async (message) => {
+							html = message.html;
+							return { messageId: 'admin-invite' };
+						}
+					}
+				},
+				'a-admin',
+				{ email, username: 'invitedadmin', role: 'admin', delivery: 'email' }
+			);
+			assert.ok(result.ok);
+			const token = html.match(/https:\/\/admin\.example\.test\/invite\?t=([a-f0-9]{48})/)?.[1];
+			assert.ok(token);
+			const accepted = await acceptInvitePreAuth(db, env, { token, password });
+			assert.ok(accepted.ok && accepted.body.type === 'admin');
+			assert.equal(
+				(await db.query.adminUsers.findFirst({ where: eq(adminUsers.email, email) }))
+					?.emailVerified,
+				true
+			);
+			assert.equal((await loginAdminPreAuth(db, env, { email, password })).ok, true);
+			assert.equal((await loginUserPreAuth(db, env, { email, password })).ok, false);
+			assert.equal((await acceptInvitePreAuth(db, env, { token, password })).ok, false);
+		}
+	);
 
 	await t.test(
 		'admin diagnostic responses omit internal record IDs and token secrets',

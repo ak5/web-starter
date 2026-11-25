@@ -9,13 +9,17 @@ export async function loadUsers(event: ApiRequestEvent) {
 export async function createInvite(event: ApiRequestEvent) {
 	const form = await event.request.formData();
 	const delivery = form.get('delivery');
+	const role = form.get('role') ?? 'user';
+	if (role !== 'user' && role !== 'admin') return { error: 'Choose a valid account role.' };
+	if (role === 'admin' && delivery === 'link')
+		return { error: 'Admin invitations must be sent by email.' };
 	if (delivery !== 'link' && delivery !== 'email')
 		return { error: 'Choose how to deliver the invitation.' };
 	const response = await api(event).admin.invite.$post({
 		json: {
 			username: String(form.get('username') ?? ''),
 			email: String(form.get('email') ?? ''),
-			role: 'user',
+			role,
 			delivery
 		}
 	});
@@ -27,7 +31,12 @@ export async function createInvite(event: ApiRequestEvent) {
 			'error' in body &&
 			body.error === 'invite_email_unavailable'
 		)
-			return { error: 'Email delivery is unavailable. Use Create and copy invite link instead.' };
+			return {
+				error:
+					role === 'admin'
+						? 'Email delivery is unavailable. Configure email delivery to invite an admin.'
+						: 'Email delivery is unavailable. Use Create and copy invite link instead.'
+			};
 		const message =
 			response.status === 409
 				? 'That email address or username is already in use.'

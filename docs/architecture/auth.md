@@ -176,8 +176,8 @@ on rejection. A successful resend clears stale form errors. Signing in again
 also retains access to verification resend; signup need not be repeated.
 
 Public recovery for users and admins returns the same response for existing and
-unknown accounts, even when background delivery fails. Admins can email an invite
-or copy a link for a regular user from Users. Both expire after seven days and
+unknown accounts, even when background delivery fails. From Users, admins can email invitations to
+regular users or other admins. Copyable links are available for regular users. Both expire after seven days and
 can be redeemed once to set a password. An emailed invite verifies the address
 on redemption. A copied link permits password sign-in and leaves the address
 unverified. Existing emailed links retain their verification behavior.

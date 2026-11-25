@@ -64,10 +64,17 @@ for (const denied of [false, true]) {
 	});
 }
 
-test('admin can send an email invite without displaying a URL', async ({ page }) => {
-	await page.getByLabel('Email', { exact: true }).fill(uniqueEmail());
-	await page.getByLabel('Username', { exact: true }).fill(uniqueUsername());
-	await page.getByRole('button', { name: 'Send email invite' }).click();
-	await expect(page.getByRole('status')).toHaveText('Invitation sent.');
-	await expect(page.getByLabel('One-time invite link')).toHaveCount(0);
-});
+for (const role of ['user', 'admin']) {
+	test(`admin can email an invitation for the ${role} role`, async ({ page }) => {
+		await page.getByLabel('Role', { exact: true }).selectOption(role);
+		if (role === 'admin')
+			await expect(
+				page.getByRole('button', { name: 'Create and copy invite link' })
+			).toBeDisabled();
+		await page.getByLabel('Email', { exact: true }).fill(uniqueEmail());
+		await page.getByLabel('Username', { exact: true }).fill(uniqueUsername());
+		await page.getByRole('button', { name: 'Send email invite' }).click();
+		await expect(page.getByRole('status')).toHaveText('Invitation sent.');
+		await expect(page.getByLabel('One-time invite link')).toHaveCount(0);
+	});
+}
