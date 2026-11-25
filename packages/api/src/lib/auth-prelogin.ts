@@ -305,20 +305,25 @@ export async function acceptInvitePreAuth(
 			return { ok: false, status: 404, body: { error: 'user_not_found' } };
 		if (user.bannedAt) return { ok: false, status: 403, body: { error: 'user_disabled' } };
 
+		const copiedInvite =
+			(row.payload as { purpose?: string } | null)?.purpose === 'invite_user_link';
 		const [, [updated]] = await db.batch([
 			db
 				.update(authEmail)
-				.set({ passwordHashed: await hashPassword(password), verified: true })
+				.set({
+					passwordHashed: await hashPassword(password),
+					...(!copiedInvite && { verified: true })
+				})
 				.where(eq(authEmail.id, identity.id)),
 			db
 				.update(users)
 				.set({
-					emailVerified: true,
+					...(!copiedInvite && { emailVerified: true }),
 					lastLoginAt: new Date(),
 					sessionVersion: sql`${users.sessionVersion} + 1`
 				})
 				.where(eq(users.id, subjectId))
-				.returning({ sessionVersion: users.sessionVersion }),
+				.returning({ sessionVersion: users.sessionVersion, emailVerified: users.emailVerified }),
 			db.delete(tokens).where(eq(tokens.userId, subjectId))
 		]);
 
@@ -327,7 +332,7 @@ export async function acceptInvitePreAuth(
 			email: user.email ?? identity.email,
 			name: user.username,
 			type: 'user',
-			emailConfirmed: true,
+			emailConfirmed: updated.emailVerified,
 			hasPassword: true,
 			sessionVersion: updated.sessionVersion,
 			recentAuthAt: now

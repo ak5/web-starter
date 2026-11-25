@@ -45,6 +45,7 @@ export const adminRoutes = new Hono<AppContext>()
 		return apiBodyJson(c, result);
 	})
 	.post('/invite', zValidator('json', adminInviteSchema), async (c) => {
+		c.header('Cache-Control', 'no-store');
 		const result = await adminInviteAccount(c.var.db, c.env, activeAuthSub(c), c.req.valid('json'));
 		return apiResultJson(c, result, 201);
 	})

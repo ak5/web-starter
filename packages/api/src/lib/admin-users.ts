@@ -18,6 +18,7 @@ type AdminInviteInput = {
 	username: string;
 	role?: 'user' | 'admin';
 	roleRaw?: string;
+	delivery?: 'email' | 'link';
 };
 
 type AdminCreateUserInput = {
@@ -73,9 +74,15 @@ export async function adminInviteAccount(
 ) {
 	const { email, username, role: requestedRole, roleRaw } = data;
 	const role = requestedRole ?? (roleRaw?.trim() === 'admin' ? 'admin' : 'user');
+	const copyLink = data.delivery === 'link';
+	if (copyLink && role !== 'user')
+		return { ok: false as const, error: 'invalid_invite_delivery' as const, status: 400 as const };
 	const admin = await adminActor(db, adminPublicId);
 	if (!admin)
 		return { ok: false as const, error: 'admin_not_found' as const, status: 404 as const };
+
+	if (!copyLink && (!env.PUBLIC_EMAIL_FROM?.trim() || (!env.EMAIL && !env.EMAIL_MOCK_URL)))
+		return { ok: false as const, error: 'invite_email_unavailable' as const, status: 503 as const };
 
 	const existingEmail = await db.query.authEmail.findFirst({
 		where: eq(authEmail.email, email)
@@ -119,7 +126,7 @@ export async function adminInviteAccount(
 				purpose: 'reset_password',
 				tokenHash: await sha256Hex(token),
 				expiresAt,
-				payload: { purpose: 'invite_user' }
+				payload: { purpose: copyLink ? 'invite_user_link' : 'invite_user' }
 			}),
 			db.insert(auditLog).values({
 				adminId: admin.id,
@@ -129,6 +136,17 @@ export async function adminInviteAccount(
 				payload: { email, username, adminPublicId: admin.publicId }
 			})
 		]);
+		if (copyLink) {
+			return {
+				ok: true as const,
+				result: {
+					ok: true,
+					publicId: userPub,
+					role,
+					inviteUrl: inviteUrl(env.PUBLIC_APP_URL, token)
+				}
+			};
+		}
 		if (!(await sendAdminInviteEmail(env, { email, role, token }))) {
 			return {
 				ok: false as const,
@@ -189,6 +207,10 @@ export async function adminInviteAccount(
 	return { ok: true as const, result: { ok: true, publicId: adminPub, role } };
 }
 
+function inviteUrl(appUrl: string, token: string) {
+	return `${appUrl.replace(/\/$/, '')}/invite?t=${token}`;
+}
+
 async function sendAdminInviteEmail(
 	env: Env,
 	invite: { email: string; role: 'user' | 'admin'; token: string }
@@ -196,7 +218,7 @@ async function sendAdminInviteEmail(
 	const appUrl = invite.role === 'admin' ? env.PUBLIC_ADMIN_URL : env.PUBLIC_APP_URL;
 	try {
 		await sendTemplate(emailConfig(env), 'InviteAccount', invite.email, {
-			inviteUrl: `${appUrl.replace(/\/$/, '')}/invite?t=${invite.token}`,
+			inviteUrl: inviteUrl(appUrl, invite.token),
 			role: invite.role,
 			appUrl
 		});

@@ -181,7 +181,7 @@ The workflow writes it to the API's `PUBLIC_R2_URL`; production uses its configu
 | `CLOUDFLARE_ACCOUNT_ID` | environment variable                | Consuming app's Cloudflare account               |
 | `KV_NAMESPACE_ID`       | environment variable                | API KV namespace                                 |
 | `R2_PUBLIC_URL`         | non-production environment variable | HTTPS public URL of this environment's R2 bucket |
-| `EMAIL_FROM`            | environment variable                | Verified sender address                          |
+| `EMAIL_FROM`            | environment variable                | Optional verified sender address                 |
 | `PROD_DOMAIN`           | production environment variable     | App domain, without protocol                     |
 | `CLOUDFLARE_API_TOKEN`  | environment secret                  | Deployment token                                 |
 | `JWT_SECRET`            | environment secret                  | Shared by API, web and admin in this environment |
@@ -283,3 +283,7 @@ development config before the build.
 For a local built-app check, run `nice -n 10 pnpm preview` after building the
 libraries. The preview uses the local API port for the active slot. For a
 frontend-only rollback, restore the preceding versions of both UI Workers.
+
+Worker observability redacts query strings. Preserve that setting and omit
+query strings from any external request logging to protect invitation and
+password-reset tokens.

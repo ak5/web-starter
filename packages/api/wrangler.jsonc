@@ -19,7 +19,8 @@
 		}
 	],
 	"observability": {
-		"enabled": true
+		"enabled": true,
+		"redact_query_string": true
 	},
 	"preview_urls": true,
 	"routes": [

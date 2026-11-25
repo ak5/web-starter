@@ -37,15 +37,10 @@ jobs:
           D1_DATABASE_ID: ${{ vars.D1_DATABASE_ID }}
         run: node scripts/configure-d1.mjs
 
-      - name: Wire verified email sender
+      - name: Configure optional email sender
         env:
           EMAIL_FROM: ${{ vars.EMAIL_FROM }}
-        run: |
-          if ! [[ "$EMAIL_FROM" =~ ^[a-zA-Z0-9._+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
-            echo "::error::Set EMAIL_FROM to this app's verified sender address before deployment."
-            exit 1
-          fi
-          sed -i "s|__EMAIL_FROM__|$EMAIL_FROM|g" packages/api/wrangler.jsonc
+        run: node scripts/configure-email-sender.mjs
 
       # Per-project binding ids come from a GitHub variable so the committed
       # wrangler.jsonc stays template-clean (and survives the example's auto-sync).

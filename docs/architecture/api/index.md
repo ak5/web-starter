@@ -65,6 +65,11 @@ session cookie after account creation, even when delivery fails. Retry using
 `503 {error: "email_delivery_failed"}` when sending fails. Public user/admin
 forgot-password responses do not disclose account existence or delivery failure.
 
+`POST /admin/invite` accepts `delivery: "email"` (the default) or `delivery: "link"`
+for regular users. Link mode returns an `inviteUrl` in a `Cache-Control: no-store`
+response. Email mode with missing sender or transport returns
+`503 {error: "invite_email_unavailable"}` before creating an account.
+
 `POST /admin/invite` returns `503 {error: "invitation_delivery_failed"}` if mail
 fails after the account, token, and creation audit commit. Do not repeat creation;
 the recipient can request a password reset. See [auth](../auth.md).
