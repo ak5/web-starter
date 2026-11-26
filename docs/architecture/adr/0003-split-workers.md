@@ -4,7 +4,7 @@
 
 ## Context
 
-The app has distinct surfaces: a JSON API and one SvelteKit frontend per persona
+The app has distinct surfaces: a JSON API and one React Router frontend per persona
 (at minimum a public `web` app and an `admin` portal). All of them deploy to
 Cloudflare Workers. The simplest packaging would be a single worker that serves
 both the API and the rendered frontends from one bundle. But the surfaces have
@@ -13,7 +13,7 @@ would force them to share both.
 
 ## Decision
 
-Deploy **one worker per surface**: a single `@ak5/api` worker plus one SvelteKit
+Deploy **one worker per surface**: a single `@ak5/api` worker plus one React Router
 worker per persona (`@ak5/web`, `@ak5/admin`, …), each with its own
 `wrangler.jsonc`, custom domain, and deploy. The API is the only worker that
 holds data-touching secrets (provider secrets, encryption keys);

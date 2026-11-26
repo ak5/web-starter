@@ -55,10 +55,11 @@ attributes on auth cookies. Three dev shapes plus prod:
   HTTP). This is what `pnpm dev` writes.
 - `.ak5web.com` — Domain set, Secure on (prod)
 
-The api uses `COOKIE_ORIGIN`; the SvelteKit apps use `PUBLIC_COOKIE_ORIGIN`. See
+The api uses `COOKIE_ORIGIN`; the React Router apps use `PUBLIC_COOKIE_ORIGIN`. See
 `packages/shared/src/cookie.ts`. **The api owns every data-touching secret**
 (provider secrets, encryption keys); web/admin hold only
-`JWT_SECRET`, and only to verify cookies — never to write data.
+`JWT_SECRET` to verify and refresh cookies. HS256 makes all three Workers trusted
+token issuers; a frontend compromise can mint API credentials.
 
 ## Dev ports
 
@@ -111,8 +112,8 @@ Never deploy production directly.
 
 - **`@ak5/api`** — Hono on CF Workers. Auth, DB, cron, OAuth callbacks, JWT
   issuance. Cloudflare D1 + Drizzle. Exports `WebApiType` / `AdminApiType`.
-- **`@ak5/web`** — SvelteKit on CF Workers. Public app surface. Port 8351.
-- **`@ak5/admin`** — SvelteKit on CF Workers. Admin portal. Port 8352.
+- **`@ak5/web`** — React Router on CF Workers. Public app surface. Port 8351.
+- **`@ak5/admin`** — React Router on CF Workers. Admin portal. Port 8352.
 - **`@ak5/sync`** — LiveStore notes schema, materializers, and HTTP sync client.
   Web uses OPFS, native uses Expo SQLite; the API coordinates sync through
   `NotesSync` with a D1 event log. See `docs/architecture/local-first.md`.
@@ -120,25 +121,24 @@ Never deploy production directly.
   jwt, pagination, public-id, generic types). Built to `dist/` via `tsc`.
   Web/admin runtime code reaches shared behavior through `@ak5/webui`, not direct
   `@ak5/shared` imports.
-- **`@ak5/webui`** — Shared Svelte 5 components, the `createSvelteKitHandle`
-  factory, and the `createApiClient` Hono-client factory. **Any UI element or
-  frontend SvelteKit helper used in 2+ apps MUST go here.** Built via
-  `svelte-package`.
-- **`@ak5/email`** — Better Svelte Email templates + native Cloudflare sender. Vite
-  compiles the server bundle; TypeScript emits declarations. Mock email server +
-  Svelte template preview in dev.
+- **`@ak5/webui`** — Shared React components and the React Router auth and
+  Hono client helpers. Shared web/admin UI and server helpers live here.
+  Import components from `@ak5/webui/components/*` and Worker helpers from
+  `@ak5/webui/server`. Built to `dist/` with TypeScript.
+- **`@ak5/email`** — React Email templates and native Cloudflare
+  sender. Vite builds the server bundle and serves the local template preview.
+  TypeScript emits declarations. The local email mock captures deliveries.
 - **`@ak5/create-web-starter`** — Dependency-free project creator, runnable from the GitHub package subdirectory.
 - **`@ak5/cli`** — Dev CLI wrapping the api endpoints. Run via `pnpm cli`.
 
 To add a third frontend persona, follow `docs/development/add-a-persona.md` — the
-split generalizes to N SvelteKit apps over one API worker.
+split generalizes to N React Router apps over one API worker.
 
 ## Native mobile
 
-- **`@ak5/mobile`** — Svelte 5 on Symbiote Native / React Native for iOS and Android.
-  When enabled, lives in `packages/mobile`, inside the pnpm workspace. Use native primitives,
-  Svelte runes, the typed Hono client, and `@symbiote-native/secure-store`.
-  Web components and DOM APIs do not run in the native renderer.
+- **`@ak5/mobile`** — React Native and Expo for iOS and Android. When enabled,
+  it lives in `packages/mobile` and includes the native projects. Use native
+  primitives, the typed Hono client, and Expo SecureStore for session data.
 - `pnpm dev:app` picks a free Metro port; `pnpm app:ios` / `pnpm app:android`
   use that port. Read the package's `.env.dev-slot`.
 - See [mobile setup](packages/mobile/README.md) for native toolchains and API URLs.
@@ -179,7 +179,7 @@ split, the cookie domain rules. Each is load-bearing.
 
 **OAuth login** (Discord; add others per `docs/architecture/platforms.md`) is a
 removable overlay: the email + password core never imports from it, so
-`auth-oauth` — its API routes/lib **and** the web `OAuthLogin.svelte` button —
+`auth-oauth` — its API routes/lib **and** the web `OAuthLogin.tsx` button —
 can be deleted without breaking auth (see `docs/architecture/auth.md`).
 Channel-attach OAuth is business-domain and is not part of this starter.
 
@@ -193,10 +193,18 @@ its docs.
 
 ## Code quality
 
+Use local checks before opening or updating a PR to conserve GitHub Actions
+minutes. Run `nice -n 10 pnpm format` to apply Prettier, then
+`nice -n 10 pnpm check:all` to verify formatting, ESLint, package boundaries,
+docs, generated types, and TypeScript. Run applicable unit tests, builds, and
+integration or browser tests locally. Keep heavy jobs sequential and run
+Playwright with `--workers=1`. Record any check that requires CI or hosted
+credentials in the handoff.
+
 **Rule: `pnpm check:all` passes cleanly — zero errors AND zero warnings.**
 Includes `prettier --check`, `eslint`, `audit:split`, `check:docs` (relative
-doc-link validation, `scripts/check-doc-links.sh`), and `svelte-check` /
-`tsc --noEmit` across all packages. Fix warnings before considering work complete.
+doc-link validation, `scripts/check-doc-links.sh`), and `tsc --noEmit` across
+all packages. Fix warnings before considering work complete.
 
 ## Tests
 
@@ -222,26 +230,13 @@ runs in `check:all`, in the lefthook pre-commit hook, and in CI. Key invariants:
   runtime
 - web/admin reach shared behavior via `@ak5/webui`, not direct `@ak5/shared`
 - the email + password auth core never imports the OAuth overlay
-- SvelteKit route files stay thin — `+page`/`+layout`/`+server` modules delegate
-  to package libs
-
-## Svelte 5 patterns
-
-Use `$derived` not `const` for reactive props. `$derived` is writable — use for
-form inputs that sync with server data. Prefer the object syntax for conditional
-classes:
-
-```svelte
-<div class={{
-  'base-classes': true,
-  'conditional-class': someCondition
-}}>
-```
+- React Router route modules delegate server logic to package libs. Shared
+  browser components import browser-safe code.
 
 ## Pagination
 
 **Convention: `page` is 0-indexed everywhere.** The API computes
-`offset = page * limit`. Frontend pattern: `let page = $state(0)`. Display
+`offset = page * limit`. Display
 1-indexed for humans (`page + 1`), but send `String(page)` directly to the API.
 
 ## CLI (`pnpm cli`)

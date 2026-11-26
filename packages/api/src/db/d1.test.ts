@@ -2,13 +2,21 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { eq } from 'drizzle-orm';
 import { db as makeDb } from './index';
-import { adminUsers, auditLog, authEmail, items, tokens, users } from './schema';
+import { adminUsers, auditLog, authEmail, items, logs, tokens, users } from './schema';
 import { createTestDatabase } from './testing';
 import { listAllItems } from '../lib/items';
 import { adminHealthReport } from '../lib/admin-health';
-import { consumeToken, issueToken } from '../lib/tokens';
-import { registerUserPreAuth, loginUserPreAuth } from '../lib/auth-prelogin';
-import { adminInviteAccount } from '../lib/admin-users';
+import { adminAuditLog } from '../lib/admin-audit-log';
+import { adminLogList } from '../lib/admin-logs';
+import { adminTokenDiagnostics } from '../lib/admin-token-diagnostics';
+import { consumeToken, issueToken, sha256Hex } from '../lib/tokens';
+import {
+	acceptInvitePreAuth,
+	registerUserPreAuth,
+	loginUserPreAuth,
+	loginAdminPreAuth
+} from '../lib/auth-prelogin';
+import { adminDeleteUser, adminInviteAccount } from '../lib/admin-users';
 import { softDeleteUserById } from '../lib/account-deletion';
 import type { Env } from '../types';
 
@@ -119,18 +127,37 @@ test('D1 preserves identity constraints, atomic writes and auth workflows', asyn
 	} as unknown as Env;
 	t.mock.method(console, 'error', () => {});
 	await t.test(
+		'password signup reports an email owned by an account without password auth',
+		async () => {
+			const result = await registerUserPreAuth(db, env, {
+				email: 'owner@example.test',
+				username: 'new_owner',
+				password: 'password1234'
+			});
+			assert.deepEqual(result, { ok: false, status: 409, body: { error: 'email_taken' } });
+		}
+	);
+
+	await t.test(
 		'failed verification delivery leaves an unconfirmed account able to log in',
 		async () => {
 			const result = await registerUserPreAuth(db, env, {
 				email: 'signup@example.test',
 				username: 'signup',
-				password: 'password1234',
-				legalAcceptance: true
+				password: 'password1234'
 			});
 			assert.equal(result.ok, true);
 			if (!result.ok) return;
 			assert.equal(result.body.verificationEmailSent, false);
 			assert.ok(result.setCookie);
+			const registered = await db.query.users.findFirst({
+				where: eq(users.publicId, result.body.publicId)
+			});
+			assert.ok(registered);
+			assert.equal(registered.termsAcceptedAt, null);
+			assert.equal(registered.termsVersion, null);
+			assert.equal(registered.privacyVersion, null);
+			assert.equal(registered.acceptableUseVersion, null);
 			assert.equal(
 				(
 					await loginUserPreAuth(db, env, {
@@ -161,6 +188,188 @@ test('D1 preserves identity constraints, atomic writes and auth workflows', asyn
 		assert.ok(
 			await db.query.auditLog.findFirst({ where: eq(auditLog.entityId, account.publicId) })
 		);
+	});
+
+	await t.test(
+		'email invites require a sender and transport before creating an account',
+		async () => {
+			const input = { email: 'nosender@example.test', username: 'nosender' };
+			for (const settings of [{ PUBLIC_EMAIL_FROM: undefined }, { EMAIL: undefined }]) {
+				assert.deepEqual(await adminInviteAccount(db, { ...env, ...settings }, 'a-admin', input), {
+					ok: false,
+					error: 'invite_email_unavailable',
+					status: 503
+				});
+			}
+			assert.equal(
+				await db.query.users.findFirst({ where: eq(users.email, input.email) }),
+				undefined
+			);
+			assert.equal(
+				await db.query.authEmail.findFirst({ where: eq(authEmail.email, input.email) }),
+				undefined
+			);
+			assert.deepEqual(
+				await adminInviteAccount(db, env, 'a-admin', { ...input, role: 'admin', delivery: 'link' }),
+				{
+					ok: false,
+					error: 'invalid_invite_delivery',
+					status: 400
+				}
+			);
+		}
+	);
+
+	for (const delivery of ['email', 'link'] as const) {
+		await t.test(
+			`${delivery} invitations expire after seven days, work once and apply the correct verification state`,
+			async () => {
+				let html = '';
+				const settings: Env =
+					delivery === 'email'
+						? {
+								...env,
+								EMAIL: {
+									send: async (message) => {
+										html = message.html;
+										return { messageId: 'test-message' };
+									}
+								}
+							}
+						: { ...env, EMAIL: undefined, PUBLIC_EMAIL_FROM: undefined };
+				const verified = delivery === 'email';
+				for (const expired of [true, false]) {
+					const username = `new_${delivery}_${expired ? 'expired' : 'active'}`;
+					const email = username + '@example.test';
+					const before = Date.now();
+					const created = await adminInviteAccount(db, settings, 'a-admin', {
+						email,
+						username,
+						delivery
+					});
+					assert.ok(created.ok);
+					const token = verified
+						? html.match(/\/invite\?t=([a-f0-9]+)/)?.[1]
+						: 'inviteUrl' in created.result &&
+							created.result.inviteUrl &&
+							new URL(created.result.inviteUrl).searchParams.get('t');
+					assert.ok(token);
+					assert.equal('inviteUrl' in created.result, !verified);
+					const hash = await sha256Hex(token);
+					const stored = await db.query.tokens.findFirst({ where: eq(tokens.tokenHash, hash) });
+					assert.ok(stored);
+					const expiresIn = stored.expiresAt.getTime() - before;
+					assert.ok(Math.abs(expiresIn - 7 * 86400_000) < 2000);
+					if (expired)
+						await db
+							.update(tokens)
+							.set({ expiresAt: new Date(Date.now() - 5000) })
+							.where(eq(tokens.tokenHash, hash));
+					const password = 'password1234';
+					assert.equal((await acceptInvitePreAuth(db, env, { token, password })).ok, !expired);
+					assert.equal((await acceptInvitePreAuth(db, env, { token, password })).ok, false);
+					assert.equal((await loginUserPreAuth(db, env, { email, password })).ok, !expired);
+					assert.equal(
+						(await db.query.users.findFirst({ where: eq(users.email, email) }))?.emailVerified,
+						verified && !expired
+					);
+					assert.equal(
+						(await db.query.authEmail.findFirst({ where: eq(authEmail.email, email) }))?.verified,
+						verified && !expired
+					);
+				}
+			}
+		);
+	}
+
+	await t.test(
+		'an emailed admin invitation verifies the address and enables admin sign-in',
+		async () => {
+			const email = 'invitedadmin@example.test';
+			const password = 'password1234';
+			let html = '';
+			const result = await adminInviteAccount(
+				db,
+				{
+					...env,
+					EMAIL: {
+						send: async (message) => {
+							html = message.html;
+							return { messageId: 'admin-invite' };
+						}
+					}
+				},
+				'a-admin',
+				{ email, username: 'invitedadmin', role: 'admin', delivery: 'email' }
+			);
+			assert.ok(result.ok);
+			const token = html.match(/https:\/\/admin\.example\.test\/invite\?t=([a-f0-9]{48})/)?.[1];
+			assert.ok(token);
+			const accepted = await acceptInvitePreAuth(db, env, { token, password });
+			assert.ok(accepted.ok && accepted.body.type === 'admin');
+			assert.equal(
+				(await db.query.adminUsers.findFirst({ where: eq(adminUsers.email, email) }))
+					?.emailVerified,
+				true
+			);
+			assert.equal((await loginAdminPreAuth(db, env, { email, password })).ok, true);
+			assert.equal((await loginUserPreAuth(db, env, { email, password })).ok, false);
+			assert.equal((await acceptInvitePreAuth(db, env, { token, password })).ok, false);
+		}
+	);
+
+	await t.test(
+		'admin diagnostic responses omit internal record IDs and token secrets',
+		async () => {
+			await db.insert(logs).values({
+				id: 'internal-log-id',
+				timestamp: new Date(),
+				level: 'info',
+				context: {},
+				data: { message: 'test' }
+			});
+			const logList = await adminLogList(db, {});
+			const audit = await adminAuditLog(db, {});
+			const tokenInfo = await adminTokenDiagnostics(db, 'invite@example.test');
+			assert.equal(logList.logs.length, 1);
+			assert.ok(audit.entries.length > 0);
+			assert.equal(tokenInfo.ok, true);
+			if (!tokenInfo.ok) return;
+			assert.ok(tokenInfo.diagnostics.tokens.length > 0);
+			for (const row of [...logList.logs, ...audit.entries, ...tokenInfo.diagnostics.tokens]) {
+				assert.ok(!('id' in row));
+				assert.ok(!('tokenHash' in row));
+				assert.ok(!('userId' in row));
+				assert.ok(!('adminId' in row));
+			}
+			assert.equal(audit.entries[0].admin?.publicId, 'a-admin');
+			assert.match(tokenInfo.diagnostics.identities[0].publicId ?? '', /^u-/);
+		}
+	);
+
+	await t.test('failed deletion audit rolls back account and credential removal', async () => {
+		await issueToken(
+			db,
+			{ userId: 'owner' },
+			'verify_email',
+			'delete-sentinel',
+			new Date(Date.now() + 60000)
+		);
+		await local.binding
+			.prepare(
+				"CREATE TRIGGER reject_delete_audit BEFORE INSERT ON audit_log WHEN NEW.action = 'user.delete' BEGIN SELECT RAISE(ABORT, 'audit rejected'); END"
+			)
+			.run();
+		try {
+			await assert.rejects(adminDeleteUser(db, 'a-admin', 'u-owner'));
+			assert.equal(
+				(await db.query.users.findFirst({ where: eq(users.id, 'owner') }))?.deletedAt,
+				null
+			);
+			assert.ok(await db.query.tokens.findFirst({ where: eq(tokens.userId, 'owner') }));
+		} finally {
+			await local.binding.prepare('DROP TRIGGER reject_delete_audit').run();
+		}
 	});
 
 	await t.test('soft deletion removes credentials and tokens atomically', async () => {

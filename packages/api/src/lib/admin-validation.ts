@@ -27,7 +27,8 @@ export const adminInviteSchema = z.object({
 		.email()
 		.transform((value) => value.toLowerCase()),
 	role: z.enum(['user', 'admin']).optional(),
-	roleRaw: z.string().optional()
+	roleRaw: z.string().optional(),
+	delivery: z.enum(['email', 'link']).optional()
 });
 
 export const adminLogQuerySchema = z.object({

@@ -21,7 +21,7 @@ function fixture(t) {
 	t.after(() => rmSync(root, { recursive: true, force: true }));
 	for (const dir of ['packages/mobile', '.github', 'docs/development'])
 		mkdirSync(join(root, dir), { recursive: true });
-	writeFileSync(join(root, 'packages/mobile/App.svelte'), 'starter source @ak5/api AK5_API_PORT');
+	writeFileSync(join(root, 'packages/mobile/App.tsx'), 'starter source @ak5/api AK5_API_PORT');
 	writeFileSync(join(root, 'packages/mobile/package.json'), '{"name":"@ak5/mobile"}');
 	writeFileSync(join(root, 'mise.toml'), '[tools]\nnode = "26"\nruby = "4"\njava = "25"\n');
 	writeFileSync(
@@ -62,7 +62,7 @@ function fixture(t) {
 		JSON.stringify({ revision, scope: '@example', slug: 'example' })
 	);
 	const repository = pathToFileURL(root).href;
-	writeFileSync(join(root, 'packages/mobile/App.svelte'), 'unsaved mobile work');
+	writeFileSync(join(root, 'packages/mobile/App.tsx'), 'unsaved mobile work');
 	writeFileSync(join(root, 'packages/mobile/.env'), 'local-only');
 	return { root, repository };
 }
@@ -73,7 +73,7 @@ test('disable excludes source and native configuration, backing up edits and sec
 	assert.ok(!existsSync(join(root, 'packages/mobile')));
 	assert.ok(!existsSync(join(root, 'optional/mobile')));
 	const backup = join(root, 'tmp', readdirSync(join(root, 'tmp'))[0], 'mobile');
-	assert.equal(readFileSync(join(backup, 'App.svelte'), 'utf8'), 'unsaved mobile work');
+	assert.equal(readFileSync(join(backup, 'App.tsx'), 'utf8'), 'unsaved mobile work');
 	assert.equal(readFileSync(join(backup, '.env'), 'utf8'), 'local-only');
 	const workspace = readFileSync(join(root, 'pnpm-workspace.yaml'), 'utf8');
 	assert.ok(!workspace.includes('adapter-expo'));
@@ -96,7 +96,7 @@ test('restore downloads the exact pin, rebrands source, and preserves intervenin
 	writeFileSync(file, readFileSync(file, 'utf8') + 'someWebSetting: true\n');
 	assert.equal(setMobileEnabled(root, true, { repository }), true);
 	assert.equal(
-		readFileSync(join(root, 'packages/mobile/App.svelte'), 'utf8'),
+		readFileSync(join(root, 'packages/mobile/App.tsx'), 'utf8'),
 		'starter source @example/api EXAMPLE_API_PORT'
 	);
 	assert.ok(!existsSync(join(root, 'packages/mobile/.env')));
@@ -112,6 +112,20 @@ test('restore downloads the exact pin, rebrands source, and preserves intervenin
 		)
 	);
 	assert.equal(setMobileEnabled(root, true), false);
+});
+
+test('the starter checkout pins its committed React Native source locally before disabling', (t) => {
+	const { root } = fixture(t);
+	const manifest = join(root, '.starter-template.json');
+	const { revision, ...branding } = JSON.parse(readFileSync(manifest, 'utf8'));
+	writeFileSync(manifest, JSON.stringify(branding));
+	assert.equal(setMobileEnabled(root, false), true);
+	assert.equal(
+		JSON.parse(readFileSync(join(root, '.starter-mobile.json'), 'utf8')).revision,
+		revision
+	);
+	assert.equal(setMobileEnabled(root, true), true);
+	assert.match(readFileSync(join(root, 'packages/mobile/App.tsx'), 'utf8'), /@example\/api/);
 });
 
 test('empty native patch mapping remains valid', (t) => {

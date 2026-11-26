@@ -1,4 +1,0 @@
-{
-	"extends": "./tsconfig.json",
-	"exclude": ["**/node_modules", "**/Pods", "e2e"]
-}

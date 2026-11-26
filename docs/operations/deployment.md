@@ -10,8 +10,8 @@ on Cloudflare (wrangler + `account_id` + `name`), so there's no manual create st
 | Worker | Package      | Holds                                            |
 | ------ | ------------ | ------------------------------------------------ |
 | api    | `@ak5/api`   | DB, JWT issuance, OAuth callbacks, cron, secrets |
-| web    | `@ak5/web`   | public SvelteKit surface                         |
-| admin  | `@ak5/admin` | admin SvelteKit surface                          |
+| web    | `@ak5/web`   | public React Router surface                      |
+| admin  | `@ak5/admin` | admin React Router surface                       |
 
 There is exactly **one api worker** regardless of how many frontend personas you
 have. Each worker has its own `wrangler.jsonc`.
@@ -24,10 +24,11 @@ before deployment.
 another Worker on the same account over a public URL (error 1042), so web/admin
 each bind the api worker as a service (`services: [{ binding: "API", … }]` in
 their `wrangler.jsonc`, pointing at `ak5-api` for production, `ak5-api-stg` for
-development, or `ak5-api-staging` for stable staging). `src/lib/api.ts` routes server-side calls through that binding (via
-`getRequestEvent().locals.apiFetch`, populated by the server hook from `cloudflare:workers`) and falls back to the public `PUBLIC_API_URL`
-fetch in dev/browser. Without the binding, every SSR api call (login, data loads)
-fails on Cloudflare.
+development, or `ak5-api-staging` for stable staging). The frontend request context
+uses the binding for loaders and actions. Local Caddy slots register their
+Workers in separate development registries, so web and admin reach their own
+API Worker and preserve client IP forwarding. The built local preview uses
+the slot's loopback API port. Browser links use `PUBLIC_API_URL`.
 
 ## Branch & environment model
 
@@ -149,7 +150,7 @@ Web and admin use the same dismissible banner. Development is labelled
 Production has an empty label and shows none. Set `PUBLIC_ENV_BANNER=false` in
 the selected frontend Wrangler environment to turn it off; local `.env` accepts
 the same setting. `PUBLIC_DEPLOY_ENVIRONMENT` controls the displayed label.
-Dismissal is in component memory only: every completed SvelteKit navigation and
+Dismissal is in component memory only: every completed React Router navigation and
 full page reload restores the banner. Nothing is stored in cookies or storage.
 
 ## D1 and account setup
@@ -180,7 +181,7 @@ The workflow writes it to the API's `PUBLIC_R2_URL`; production uses its configu
 | `CLOUDFLARE_ACCOUNT_ID` | environment variable                | Consuming app's Cloudflare account               |
 | `KV_NAMESPACE_ID`       | environment variable                | API KV namespace                                 |
 | `R2_PUBLIC_URL`         | non-production environment variable | HTTPS public URL of this environment's R2 bucket |
-| `EMAIL_FROM`            | environment variable                | Verified sender address                          |
+| `EMAIL_FROM`            | environment variable                | Optional verified sender address                 |
 | `PROD_DOMAIN`           | production environment variable     | App domain, without protocol                     |
 | `CLOUDFLARE_API_TOKEN`  | environment secret                  | Deployment token                                 |
 | `JWT_SECRET`            | environment secret                  | Shared by API, web and admin in this environment |
@@ -238,7 +239,8 @@ For a configured remote D1 database, authenticate Wrangler, set `D1_DATABASE_ID`
 to the intended target, and add `--remote` to the same command. The flag is
 explicit and uses the target D1 remote binding. Protect shell history and never
 commit a bootstrap password. The script creates or updates the email credential
-with an atomic batch and prints only the public ID. It is operator tooling, not
+with an atomic batch and prints only the public ID. Updating an existing admin
+also advances its session generation and deletes outstanding one-time tokens. It is operator tooling, not
 a public bootstrap endpoint.
 
 ## Observability and recovery
@@ -259,3 +261,29 @@ manage the Worker's Durable Object bindings in addition to D1/Worker deployment.
 Provision development before PR previews: previews bind to development's `NotesSync`
 script as well as its database, keeping one ordering authority per store. Never
 point a second independent sync namespace at the same stores in D1. Production and optional stable staging each keep their own namespace and D1 database. See [local-first notes](../architecture/local-first.md).
+
+## Dependency notices
+
+Web and admin builds generate `third-party-licenses.txt` in each client output.
+Publish it with the assets at `/third-party-licenses.txt`. The starter code is MIT;
+third-party libraries and icons retain their own licenses. See the
+[repository license notes](../../README.md#license) before distributing native
+binaries or copying bundled assets into another distribution.
+
+## Browser Worker builds
+
+The web and admin builds use React Router SSR and the Cloudflare Vite plugin.
+GitHub Actions selects the frontend environment with `CLOUDFLARE_ENV`.
+`pnpm build:frontends` builds both Workers against the same environment and
+compiles their shared libraries once. Each build writes a Wrangler deploy-config
+pointer under `.wrangler/deploy/`. Frontend deployment uses that config, including the
+matched assets, Worker name, and API binding. PR previews override the
+development config before the build.
+
+For a local built-app check, run `nice -n 10 pnpm preview` after building the
+libraries. The preview uses the local API port for the active slot. For a
+frontend-only rollback, restore the preceding versions of both UI Workers.
+
+Worker observability redacts query strings. Preserve that setting and omit
+query strings from any external request logging to protect invitation and
+password-reset tokens.

@@ -1,53 +1,22 @@
 # @ak5/webui
 
-Shared Svelte 5 components used by both `@ak5/web` and `@ak5/admin`. Built
-via `@sveltejs/package` to `dist/`.
+Shared React components and server helpers for `@ak5/web` and `@ak5/admin`.
+Keep a component here when both apps use it. Keep single-app components in
+the app that renders them.
 
-**Rule:** any UI element used in 2+ frontend apps lives here. Single-app
-components stay in that app's `src/components/`.
+- Import React components from `@ak5/webui/components/<Component>`.
+- Import browser-safe utilities from `@ak5/webui`.
+- Import auth middleware, auth actions, and the typed Hono client factory
+  from `@ak5/webui/server` in Worker and route server code.
 
-## Components
+`createAuthMiddleware` accepts the app's JWT role, public and protected route
+rules, and home path. The request context supplies Worker environment variables
+and the upstream fetch function. The middleware checks the active session with
+the API before accepting or refreshing its cookie.
 
-Imported as `import Foo from '@ak5/webui/components/Foo.svelte'`.
+Each app's Tailwind stylesheet includes `@source '../../webui/src';` to
+generate the components' utilities. Components use DaisyUI and React Router
+forms and links.
 
-| Component             | Notes                                                                |
-| --------------------- | -------------------------------------------------------------------- |
-| `ActionButton`        | Primary action with optional confirmation modal                      |
-| `ChannelCard`         | Connected OAuth channel display                                      |
-| `ConnectChannelModal` | OAuth connect prompt                                                 |
-| `CurrencyInput`       | Currency input with normalization                                    |
-| `EnvironmentBanner`   | Optional environment label; dismissal resets on navigation or reload |
-| `Footer`              | Shared footer with legal links                                       |
-| `GDPRCookies`         | Cookie consent banner                                                |
-| `GoogleTag`           | GA / GTM embed                                                       |
-| `IconSocial`          | Social-platform icon renderer                                        |
-| `ImageUpload`         | Webp-only upload with size validation                                |
-| `Modal`               | Generic modal wrapper                                                |
-| `Pagination`          | 0-indexed paginator                                                  |
-| `SelectSingle`        | Single-select dropdown                                               |
-| `ThemeToggle`         | Dark / light toggle                                                  |
-| `UserCard`            | User profile card                                                    |
-
-## Library exports
-
-Imported as `import { X } from '@ak5/webui'`:
-
-- `createSvelteKitHandle(config)` — auth gate factory used by both web
-  and admin's `hooks.server.ts`. Config:
-  - `allowedJwtType` — 'user' | 'admin'
-  - `verifyJwt(raw)` — function returning a `JwtPayload` or null
-  - `cookieName` — defaults to `ak5_token`
-  - `isProtectedPath(path)` — required
-  - `isAuthPage(path)` — for redirect-when-already-logged-in
-  - `requiresEmailConfirmed(path)` — gate
-  - `loggedInHome(payload)` — where to redirect logged-in users on auth pages
-  - `attachLocals(event, payload)` — populate `event.locals`
-
-## Build
-
-```bash
-pnpm --filter @ak5/webui build    # one-shot
-pnpm --filter @ak5/webui dev      # svelte-package --watch
-```
-
-Auto-rebuilds in `pnpm dev` so consumers hot-reload from the new dist/.
+`pnpm --filter @ak5/webui build` emits JavaScript and declarations into
+`dist/`. The local stack watches this build for edits.

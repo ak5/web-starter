@@ -3,6 +3,7 @@ import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
+import { URL } from 'node:url';
 
 test('native iOS React and Hermes locks match the installed JavaScript host', () => {
 	const root = new URL('../', import.meta.url);

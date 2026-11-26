@@ -43,7 +43,7 @@ function template(t) {
 		join(repo, 'packages/mobile/package.json'),
 		JSON.stringify({ name: '@ak5/mobile' })
 	);
-	writeFileSync(join(repo, 'packages/mobile/App.svelte'), 'mobile source @ak5/api');
+	writeFileSync(join(repo, 'packages/mobile/App.tsx'), 'mobile source @ak5/api');
 	writeFileSync(
 		join(repo, 'packages/create/package.json'),
 		JSON.stringify({ name: '@ak5/create-web-starter' })
@@ -94,8 +94,8 @@ test('one command creates an independently branded website-only repo with restor
 	assert.ok(!manifest.scripts['test:unit'].includes('init.test'));
 	assert.ok(!manifest.scripts['test:unit'].includes('create-web-starter'));
 	setMobileEnabled(output, true, { repository });
-	assert.match(readFileSync(join(output, 'packages/mobile/App.svelte'), 'utf8'), /@example\/api/);
-	assert.ok(existsSync(join(output, 'packages/mobile/App.svelte')));
+	assert.match(readFileSync(join(output, 'packages/mobile/App.tsx'), 'utf8'), /@example\/api/);
+	assert.ok(existsSync(join(output, 'packages/mobile/App.tsx')));
 	const readme = readFileSync(join(output, 'README.md'), 'utf8');
 	assert.ok(readme.includes('https://github.com/ak5/web-starter'));
 	assert.ok(readme.includes('by [ak5]'));
@@ -105,7 +105,7 @@ test('mobile option keeps the mobile workspace active', (t) => {
 	const { root, repository } = template(t);
 	const output = join(root, 'fullapp');
 	createProject(output, { repository, mobile: true });
-	assert.ok(existsSync(join(output, 'packages/mobile/App.svelte')));
+	assert.ok(existsSync(join(output, 'packages/mobile/App.tsx')));
 	assert.ok(!existsSync(join(output, 'optional/mobile')));
 });
 

@@ -16,8 +16,7 @@ export const usernameSchema = z
 export const registerSchema = z.object({
 	email: emailSchema,
 	password: passwordSchema,
-	username: usernameSchema,
-	legalAcceptance: z.literal(true).optional()
+	username: usernameSchema
 });
 
 export const loginSchema = z.object({

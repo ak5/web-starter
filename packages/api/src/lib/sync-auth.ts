@@ -3,6 +3,7 @@ import { COOKIE_TOKEN, parseCookie } from '@ak5/shared';
 import { db } from '../db';
 import { users } from '../db/schema';
 import { verifyJwt } from './jwt';
+import { isActiveImpersonator } from './auth-subject';
 import type { Env } from '../types';
 import { z } from 'zod';
 
@@ -27,11 +28,13 @@ export async function authorizeSync(
 		storeId !== `notes-v1-${auth.sub}`
 	)
 		return false;
-	const user = await db(env.DB).query.users.findFirst({
+	const database = db(env.DB);
+	if (!(await isActiveImpersonator(database, auth))) return false;
+	const user = await database.query.users.findFirst({
 		where: and(eq(users.publicId, auth.sub), isNull(users.deletedAt), isNull(users.bannedAt)),
-		columns: { id: true }
+		columns: { sessionVersion: true }
 	});
-	return Boolean(user);
+	return !!user && user.sessionVersion === (auth.sessionVersion ?? 0);
 }
 const id = z.string().regex(/^n-[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i);
 const event = z.discriminatedUnion('name', [

@@ -1,0 +1,21 @@
+import { useRouteLoaderData } from 'react-router';
+import type { loader as rootLoader } from '../root';
+import IconSocial from '@ak5/webui/components/IconSocial';
+
+export default function OAuthLogin() {
+	const apiUrl = useRouteLoaderData<typeof rootLoader>('root')?.apiUrl;
+	if (!apiUrl) return null;
+	return (
+		<>
+			<div className="divider my-4 text-xs text-base-content/50">or</div>
+			<a
+				href={new URL('/oauth/discord', apiUrl).href}
+				className="btn w-full gap-2 btn-outline"
+				rel="external"
+			>
+				<IconSocial platform="discord" size="lg" />
+				Continue with Discord
+			</a>
+		</>
+	);
+}

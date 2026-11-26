@@ -88,7 +88,6 @@ export async function adminTokenDiagnostics(db: Database, email: string) {
 				};
 			}),
 			tokens: tokenRows.map((token) => ({
-				id: token.id,
 				subjectType: token.userId ? 'user' : 'admin',
 				subjectPublicId: token.userId
 					? (usersById.get(token.userId)?.publicId ?? null)

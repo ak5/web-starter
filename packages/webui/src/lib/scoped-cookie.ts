@@ -1,34 +1,36 @@
-import type { Cookies } from '@sveltejs/kit';
 import { parseOrigin } from '@ak5/shared';
-
-type SameSite = 'strict' | 'lax' | 'none';
 
 interface ScopedCookieOptions {
 	path?: string;
 	httpOnly?: boolean;
-	sameSite?: SameSite;
+	sameSite?: 'strict' | 'lax' | 'none';
 	maxAge?: number;
 }
 
 export function setScopedCookie(
-	cookies: Cookies,
+	cookies: Headers,
 	name: string,
 	value: string,
 	cookieOrigin: string,
-	options: ScopedCookieOptions = {}
+	{ path = '/', httpOnly = true, sameSite = 'lax', maxAge }: ScopedCookieOptions = {}
 ): void {
 	const { domain, secure } = parseOrigin(cookieOrigin);
-	cookies.set(name, value, {
-		path: options.path ?? '/',
-		httpOnly: options.httpOnly ?? true,
-		sameSite: options.sameSite ?? 'lax',
-		maxAge: options.maxAge,
-		domain,
-		secure
-	});
+	cookies.append(
+		'Set-Cookie',
+		[
+			name + '=' + encodeURIComponent(value),
+			'Path=' + path,
+			'SameSite=' + sameSite,
+			domain && 'Domain=' + domain,
+			secure && 'Secure',
+			httpOnly && 'HttpOnly',
+			maxAge != null && 'Max-Age=' + maxAge
+		]
+			.filter(Boolean)
+			.join('; ')
+	);
 }
 
-export function clearScopedCookie(cookies: Cookies, name: string, cookieOrigin: string): void {
-	const { domain, secure } = parseOrigin(cookieOrigin);
-	cookies.delete(name, { path: '/', domain, secure });
+export function clearScopedCookie(cookies: Headers, name: string, cookieOrigin: string): void {
+	setScopedCookie(cookies, name, '', cookieOrigin, { maxAge: 0 });
 }

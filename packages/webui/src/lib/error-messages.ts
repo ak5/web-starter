@@ -23,6 +23,11 @@ const MESSAGES: Record<string, string> = {
 	user_disabled: 'This account is disabled. Contact support.',
 	user_not_found: 'User not found.',
 	username_required: 'Username is required.',
+	invalid_oauth_state: 'This sign-in attempt expired. Please try again.',
+	access_denied: 'Discord sign-in was cancelled.',
+	discord_already_connected: 'That Discord login belongs to another account.',
+	verified_discord_email_required: 'Verify your email in Discord before signing up.',
+	email_already_registered: 'An account with that email exists. Sign in to it first.',
 	missing_code: 'Missing OAuth code.',
 	no_profile: 'Could not load your profile from the provider.'
 };

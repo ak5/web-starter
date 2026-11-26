@@ -2,7 +2,7 @@ import { nanoid } from 'nanoid';
 import { MAX_FILE_SIZE } from '@ak5/shared';
 
 /**
- * Upload an image to R2. Validates webp + size up-front, then writes to the
+ * Upload an image to R2. Checks WebP signature, MIME, extension and size, then writes to the
  * bucket with a nanoid-prefixed key. Returns the CDN URL on success.
  */
 export async function uploadImage(
@@ -16,47 +16,19 @@ export async function uploadImage(
 	const ext = file.name.split('.').pop()?.toLowerCase();
 	if (ext !== 'webp') return { error: 'File must have a .webp extension' };
 
+	const header = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+	if (
+		header.length !== 12 ||
+		String.fromCharCode(...header.slice(0, 4)) !== 'RIFF' ||
+		String.fromCharCode(...header.slice(8, 12)) !== 'WEBP'
+	)
+		return { error: 'File must contain a WebP image' };
+
 	const key = options?.prefix ? `${options.prefix}/${nanoid()}.webp` : `${nanoid()}.webp`;
 	try {
-		await R2.put(key, file);
+		await R2.put(key, file, { httpMetadata: { contentType: 'image/webp' } });
 	} catch {
 		return { error: 'Failed to upload file' };
 	}
 	return { url: `${publicR2Url}/${key}` };
-}
-
-export async function deleteUploadedImage(
-	R2: R2Bucket,
-	publicR2Url: string,
-	imageUrl: string | null | undefined
-) {
-	const key = getPublicR2ObjectKey(publicR2Url, imageUrl);
-	if (!key) return false;
-	await R2.delete(key);
-	return true;
-}
-
-function getPublicR2ObjectKey(publicR2Url: string, imageUrl: string | null | undefined) {
-	if (!imageUrl) return null;
-
-	try {
-		const publicBase = new URL(publicR2Url);
-		const uploaded = new URL(imageUrl);
-		if (publicBase.origin !== uploaded.origin) return null;
-
-		const basePath = publicBase.pathname.replace(/\/+$/, '');
-		if (
-			basePath &&
-			uploaded.pathname !== basePath &&
-			!uploaded.pathname.startsWith(`${basePath}/`)
-		) {
-			return null;
-		}
-
-		const pathname = basePath ? uploaded.pathname.slice(basePath.length) : uploaded.pathname;
-		const key = pathname.replace(/^\/+/, '');
-		return key ? decodeURIComponent(key) : null;
-	} catch {
-		return null;
-	}
 }

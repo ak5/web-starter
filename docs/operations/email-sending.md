@@ -41,18 +41,13 @@ and under `env.development` / `env.staging` for enabled non-production environme
 }
 ```
 
-Set the GitHub repository or Environment variable `EMAIL_FROM` to the app's
-verified sender (for example `sender@example.com`). Deploy and preview workflows
-replace `__EMAIL_FROM__` in both the allowlist and `PUBLIC_EMAIL_FROM`; they must
-agree. `EMAIL_FROM` is independent of `PROD_DOMAIN`, so the sender can use a
-verified parent domain while the app runs on a subdomain. Unconfigured deploys
-fail with a setup message rather than choosing an unverified sender. If staging uses a different sender, onboard that domain
-and update its binding and variable too. Regenerate bindings with `pnpm cf-typegen`.
-Leave `EMAIL_MOCK_URL` unset in deployed environments. **Staging and branch
-previews send real mail** unless deliberately mocked or restricted. For controlled
-validation, add `allowed_destination_addresses` with only intended test recipients
-in staging; remove the restriction only when the app is ready for normal mail.
-Never test with invented inboxes on real domains.
+Set the GitHub repository or Environment variable `EMAIL_FROM` to a verified
+sender (for example `sender@example.com`) to enable delivery. Hosted deploys and
+PR previews use it for both the sender variable and binding allowlist. When
+unset, both workflows omit the sender variable and email binding. Admins can
+still issue copyable regular-user invitations. Email invites return an error
+before creating an account. Other email-dependent flows remain unavailable
+until a sender is configured. `EMAIL_FROM` is independent of `PROD_DOMAIN`.
 
 ## Verify delivery before activation
 

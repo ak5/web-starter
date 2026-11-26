@@ -18,9 +18,11 @@ Caddy and Lefthook, plus Ruby 4 and JDK 25 when mobile is enabled. Website-only
 mode excludes the native tools. Mise also auto-loads `.env.dev-slot` (your active
 dev slot's ports + URLs) and sets a per-worktree `XDG_CONFIG_HOME` so each
 checkout keeps its own CLI persona store.
+The slot file also gives Wrangler and Vite a shared registry path so local API
+service bindings resolve within that slot.
 
-The `tsc` command uses TypeScript 7's native compiler. Svelte, ESLint and native
-editor plugins use Microsoft's `@typescript/typescript6` API package, installed
+The `tsc` command uses TypeScript 7's native compiler. ESLint uses Microsoft's
+`@typescript/typescript6` API package, installed
 under the `typescript` alias. This is the
 [supported side-by-side setup](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0/#running-side-by-side-with-typescript-6-0)
 for tools that require the JavaScript compiler API.
@@ -36,7 +38,8 @@ a connection string, or an external database server for local development.
 
 Clone a normal repository, keep the starter as `upstream`, and add your own
 empty repository as `origin`. This preserves shared history for future updates
-without creating a GitHub fork. Follow the [README install and update instructions](../../README.md#create-your-project).
+without creating a GitHub fork. Follow the [shared-history setup and update instructions](start-project.md#clone-with-shared-starter-history),
+or use the creator for an independent project.
 
 ## First run
 
@@ -76,6 +79,11 @@ surface on a single port per slot. Slot 1 lands on `:8359`; slot N on
 the hosts to `/etc/hosts`. Caddy binds `127.0.0.1` only — it is the only
 public-facing process.
 
+The mock inbox contains development verification codes and recovery links. It
+binds to `127.0.0.1` by default, including when started on its own. `DEV_HOST` can
+explicitly change that binding for a trusted shared development network; anyone
+who can reach the mock server can read its inbox.
+
 ## Multiple worktrees / slots
 
 Each git worktree gets its **own slot** and its **own `XDG_CONFIG_HOME`** (the
@@ -101,8 +109,11 @@ when debugging the proxy).
 The admin tables start empty. Seed one:
 
 ```sh
-pnpm create:admin
+pnpm create:admin admin@example.com adminname '<strong-password>'
 ```
+
+Rerunning this command updates that admin’s password and signs out existing
+sessions. Recovery links issued before the change are invalidated too.
 
 ## Environment notes
 
@@ -111,7 +122,8 @@ pnpm create:admin
   for you; if you ever desync them, run `pnpm -w run rotate-jwt-secret` to
   regenerate and rewrite all three.
 - The api owns every data-touching secret (provider keys); web and
-  admin hold only `JWT_SECRET`, used to verify cookies.
+  admin hold `JWT_SECRET` to verify and refresh cookies; they are trusted token
+  issuers and check session validity with the API.
 - `COOKIE_ORIGIN` (api) / `PUBLIC_COOKIE_ORIGIN` (apps) control the cookie
   `Domain`/`Secure` attributes. `pnpm dev` writes `.ak5.localhost` (Domain set,
   Secure off — dev is plain HTTP).

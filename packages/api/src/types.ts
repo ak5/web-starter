@@ -14,7 +14,7 @@ export interface Env {
 	PUBLIC_API_URL: string;
 	PUBLIC_APP_URL: string;
 	PUBLIC_ADMIN_URL: string;
-	PUBLIC_EMAIL_FROM: string;
+	PUBLIC_EMAIL_FROM?: string;
 	PUBLIC_R2_URL: string;
 	COOKIE_ORIGIN: string;
 

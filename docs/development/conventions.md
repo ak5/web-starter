@@ -6,35 +6,34 @@ intent.
 
 ## File layout
 
-SvelteKit route files stay **thin**. A `+page.server.ts`, `+layout.server.ts`, or
-`+server.ts` module exists to wire the framework to the package library — it
-parses the request, calls a lib function, and returns. The actual logic
-(API calls, auth actions, form handling) lives in `@ak5/webui` lib helpers so
-two apps can share it. `audit:split` flags route files that grow runtime logic.
-
+Keep route modules thin. Declare routes in `src/routes.ts`. A route's loader
+or action reads the request and delegates to package helpers. Put Worker-only
+code in `*.server.ts` modules and share it through `@ak5/webui/server`.
 Package responsibilities (full roster in [`../../CLAUDE.md`](../../CLAUDE.md)):
 
 - **`@ak5/api`** — all runtime: Hono routes, DB, JWT issuance, OAuth callbacks.
-- **`@ak5/web` / `@ak5/admin`** — SvelteKit surfaces; no library export.
+- **`@ak5/web` / `@ak5/admin`** — React Router surfaces; no library export.
+- **`@ak5/mobile`** — React Native screens and Expo platform integration.
 - **`@ak5/shared`** — pure, cross-package utilities and contracts.
-- **`@ak5/webui`** — shared Svelte 5 components and SvelteKit lib helpers.
-- **`@ak5/email`** — transactional templates + sender.
+- **`@ak5/sync`** — shared notes schema, events, and HTTP sync client.
+- **`@ak5/webui`** — React browser components and Worker helpers.
+- **`@ak5/email`** — React transactional templates and sender.
 
 ## Where shared code goes
 
-- **A UI element or frontend SvelteKit helper used in 2+ apps → `@ak5/webui`.**
-  Never copy a component between web and admin; lift it to webui.
-- **A pure, framework-free utility (cookie/jwt/pagination/public-id/types) →
-  `@ak5/shared`.** Frontends don't import `shared` directly — webui re-exports
-  the select shared types they need.
+- Put components and server helpers shared by web and admin in `@ak5/webui`.
+- Put framework-free contracts and utilities such as cookie names, JWT claims,
+  pagination, and public IDs in `@ak5/shared`. Web and admin reach them through
+  `@ak5/webui`. Native imports only the platform-safe entry points it needs.
+- Use React Native primitives for mobile screens. Keep browser rendering,
+  native rendering, and platform storage in their respective packages.
 
 ## Import boundaries
 
 `audit:split` enforces these; a violation fails `check:all` and the pre-commit
 hook:
 
-- web/admin import `@ak5/api` **type-only** (the RPC contract types) — never its
-  runtime.
+- Web, admin, and mobile import `@ak5/api` **type-only** (the RPC contract types).
 - web/admin reach shared behavior via `@ak5/webui`, not direct `@ak5/shared`.
 - the email + password auth core never imports the removable OAuth overlay.
 
@@ -44,23 +43,10 @@ Never expose internal sequential/nanoid PKs. Every API response, URL, JWT, and
 client-side value uses a prefixed `publicId` (`u-`, `a-`, `t-`, …). Internal PKs
 exist only for joins. Generator: `packages/shared/src/public-id.ts`.
 
-## Svelte 5 patterns
-
-Use `$derived`, not `const`, for reactive props. `$derived` is writable — use it
-for form inputs that sync with server data. Prefer the object syntax for
-conditional classes:
-
-```svelte
-<div class={{
-  'base-classes': true,
-  'conditional-class': someCondition
-}}>
-```
-
 ## Pagination
 
 `page` is **0-indexed everywhere**. The API computes `offset = page * limit`.
-Frontend: `let page = $state(0)`. Display 1-indexed for humans (`page + 1`), but
+Display 1-indexed for humans (`page + 1`), but
 send `String(page)` straight to the API — no arithmetic at the boundary.
 
 ## Error handling

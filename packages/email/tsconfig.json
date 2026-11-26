@@ -3,6 +3,7 @@
 		"target": "ES2022",
 		"module": "ESNext",
 		"moduleResolution": "bundler",
+		"jsx": "react-jsx",
 		"strict": true,
 		"esModuleInterop": true,
 		"forceConsistentCasingInFileNames": true,
@@ -13,7 +14,6 @@
 		"outDir": "./dist",
 		"rootDir": "./src",
 		"resolveJsonModule": true,
-		"allowArbitraryExtensions": true,
 		"types": ["node"]
 	},
 	"include": ["src/**/*"],

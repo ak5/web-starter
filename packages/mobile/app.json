@@ -1,4 +1,10 @@
 {
-	"name": "Ak5Mobile",
-	"displayName": "Ak5Mobile"
+	"expo": {
+		"name": "Ak5Mobile",
+		"slug": "ak5-mobile",
+		"version": "1.0",
+		"platforms": ["ios", "android"],
+		"ios": { "bundleIdentifier": "com.ak5.mobile" },
+		"android": { "package": "com.ak5.mobile" }
+	}
 }

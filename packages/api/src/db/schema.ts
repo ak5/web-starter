@@ -33,6 +33,7 @@ export const users = sqliteTable(
 		id: id(),
 		publicId: text('public_id').notNull().unique(),
 		username: text('username').notNull(),
+		sessionVersion: integer('session_version').default(0).notNull(),
 		displayName: text('display_name'),
 		avatar: text('avatar'),
 		avatarSource: text('avatar_source', { enum: ['discord', 'upload'] }),
@@ -73,6 +74,7 @@ export const adminUsers = sqliteTable(
 		publicId: text('public_id').notNull().unique(),
 		email: text('email').notNull(),
 		username: text('username').notNull(),
+		sessionVersion: integer('session_version').default(0).notNull(),
 		displayName: text('display_name'),
 		emailVerified: integer('email_verified', { mode: 'boolean' }).default(true).notNull(),
 		lastLoginAt: ts('last_login_at'),
@@ -210,6 +212,16 @@ export const tokens = sqliteTable(
 // ============================================================================
 // Operational tables
 // ============================================================================
+
+export const rateLimits = sqliteTable(
+	'rate_limits',
+	{
+		key: text('key').primaryKey(),
+		attempts: integer('attempts').notNull(),
+		expiresAt: ts('expires_at').notNull()
+	},
+	(t) => [index('rate_limits_expiry_idx').on(t.expiresAt)]
+);
 
 export const logs = sqliteTable(
 	'logs',

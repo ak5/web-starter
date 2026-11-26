@@ -1,4 +1,4 @@
-import { fail, redirect, type Cookies } from '@sveltejs/kit';
+import { data as actionData, redirect } from 'react-router';
 
 import { apiErrorBody, apiErrorMessage } from './api-error.js';
 import { errorMessage } from './error-messages.js';
@@ -63,7 +63,7 @@ type PasswordErrorBody = {
 
 export type AcceptInviteEvent = {
 	acceptInvite: (input: AcceptInviteInput) => Promise<ResponseLike>;
-	cookies: Cookies;
+	cookies: Headers;
 	request: Request;
 };
 
@@ -73,7 +73,7 @@ export type ForgotPasswordEvent = {
 };
 
 export type LoginEvent = {
-	cookies: Cookies;
+	cookies: Headers;
 	failureIncludesEmail?: boolean;
 	login: (input: LoginInput) => Promise<ResponseLike>;
 	request: Request;
@@ -82,13 +82,13 @@ export type LoginEvent = {
 };
 
 export type LogoutEvent = {
-	cookies: Cookies;
+	cookies: Headers;
 	logout: (input?: LogoutInput) => Promise<ResponseLike>;
 	redirectTo: string;
 };
 
 export type MagicLoginEvent = {
-	cookies: Cookies;
+	cookies: Headers;
 	magicLogin: (input: MagicLoginInput) => Promise<ResponseLike>;
 	next?: string | null;
 	params?: { token?: string };
@@ -99,8 +99,8 @@ export type MagicLoginEvent = {
 export type AccountPasswordEvent = {
 	acceptInvite: (input: AcceptInvitePasswordInput) => Promise<ResponseLike>;
 	changePassword: (input: ChangePasswordInput) => Promise<ResponseLike>;
-	cookies: Cookies;
-	locals: { auth?: AuthState | null };
+	cookies: Headers;
+	session: { auth?: AuthState | null };
 	request: Request;
 	setPassword: (input: SetPasswordInput) => Promise<ResponseLike>;
 	unauthenticatedRedirect?: string;
@@ -114,7 +114,7 @@ export type AccountPasswordEvent = {
 };
 
 export type AccountPasswordLoadEvent = UrlSource & {
-	locals: { auth?: AuthState | null };
+	session: { auth?: AuthState | null };
 };
 
 function urlFrom(source: UrlSource): URL {
@@ -136,7 +136,7 @@ export function loadAccountPassword(
 	unauthenticatedRedirect = '/login'
 ) {
 	const data = loadAccountPasswordToken(source);
-	if (!source.locals.auth && !data.resetToken) throw redirect(303, unauthenticatedRedirect);
+	if (!source.session.auth && !data.resetToken) throw redirect(unauthenticatedRedirect, 303);
 	return data;
 }
 
@@ -147,11 +147,14 @@ function passwordFailure(
 	event: AccountPasswordEvent,
 	token?: string
 ) {
-	return fail(res.status, {
-		error,
-		...(event.includeFailureCode ? { code: body.code } : {}),
-		...(event.includeResetTokenOnFailure && token !== undefined ? { token } : {})
-	});
+	return actionData(
+		{
+			error,
+			...(event.includeFailureCode ? { code: body.code } : {}),
+			...(event.includeResetTokenOnFailure && token !== undefined ? { token } : {})
+		},
+		{ status: res.status }
+	);
 }
 
 export async function acceptInviteAction(event: AcceptInviteEvent) {
@@ -162,22 +165,34 @@ export async function acceptInviteAction(event: AcceptInviteEvent) {
 
 	const res = await event.acceptInvite({ token, password, passwordConfirm: password2 });
 	if (!res.ok) {
-		return fail(res.status, {
-			error: await apiErrorMessage(res, 'Could not accept invite'),
-			token
-		});
+		return actionData(
+			{
+				error: await apiErrorMessage(res, 'Could not accept invite'),
+				token
+			},
+			{ status: res.status }
+		);
 	}
 
 	const body = await responseJsonBody<{ redirectTo: string }>(res, { redirectTo: '/' });
 	forwardSetCookie(res, event.cookies);
-	throw redirect(303, body.redirectTo);
+	throw redirect(body.redirectTo, 303);
 }
 
-export async function forgotPasswordAction(event: ForgotPasswordEvent): Promise<unknown> {
+export async function forgotPasswordAction(event: ForgotPasswordEvent) {
 	const data = await event.request.formData();
 	const email = String(data.get('email') ?? '');
 	const res = await event.forgotPassword({ email });
-	return responseJsonBody(res, {});
+	if (!res.ok)
+		return actionData(
+			{
+				error: await apiErrorMessage(res, 'Could not request a reset link.')
+			},
+			{ status: res.status }
+		);
+	return responseJsonBody<{ successMessage: string }>(res, {
+		successMessage: 'If that account exists, a reset link has been sent.'
+	});
 }
 
 export async function loginAction(event: LoginEvent) {
@@ -188,25 +203,30 @@ export async function loginAction(event: LoginEvent) {
 	const res = await event.login({ email, password });
 	if (!res.ok) {
 		const body = (await apiErrorBody(res)) as { error?: string };
-		return fail(401, {
-			error: errorMessage(body.error, 'Invalid credentials'),
-			...(event.failureIncludesEmail ? { email } : {})
-		});
+		return actionData(
+			{
+				error: errorMessage(body.error, 'Invalid credentials'),
+				...(event.failureIncludesEmail ? { email } : {})
+			},
+			{ status: res.status }
+		);
 	}
 
 	forwardSetCookie(res, event.cookies);
 	throw redirect(
-		303,
 		getSafeLocalRedirectPath(event.url?.searchParams.get('next') ?? null, event.successRedirect) ??
-			event.successRedirect
+			event.successRedirect,
+		303
 	);
 }
 
-export async function accountPasswordAction(event: AccountPasswordEvent): Promise<unknown> {
+export async function accountPasswordAction(event: AccountPasswordEvent) {
 	const data = await event.request.formData();
 	const token = String(data.get('token') ?? '');
 	const newPassword = String(data.get('newPassword') ?? '');
 	const password2 = String(data.get('password2') ?? '');
+	if (newPassword !== password2)
+		return actionData({ error: 'Passwords do not match.' }, { status: 400 });
 
 	if (token) {
 		const res = await event.acceptInvite({
@@ -226,14 +246,14 @@ export async function accountPasswordAction(event: AccountPasswordEvent): Promis
 		}
 		const body = await responseJsonBody<{ redirectTo: string }>(res, { redirectTo: '/' });
 		forwardSetCookie(res, event.cookies);
-		throw redirect(303, body.redirectTo);
+		throw redirect(body.redirectTo, 303);
 	}
 
-	if (!event.locals.auth) {
-		throw redirect(303, event.unauthenticatedRedirect ?? '/login');
+	if (!event.session.auth) {
+		throw redirect(event.unauthenticatedRedirect ?? '/login', 303);
 	}
 
-	if (!event.locals.auth.hasPassword) {
+	if (!event.session.auth.hasPassword) {
 		const res = await event.setPassword({ newPassword });
 		if (!res.ok) {
 			const body = (await apiErrorBody(res)) as PasswordErrorBody;
@@ -245,7 +265,10 @@ export async function accountPasswordAction(event: AccountPasswordEvent): Promis
 			);
 		}
 		forwardSetCookie(res, event.cookies);
-		return responseJsonBody(res, {});
+		return responseJsonBody<{ ok: boolean; successMessage: string }>(res, {
+			ok: true,
+			successMessage: 'Password updated.'
+		});
 	}
 
 	const currentPassword = String(data.get('currentPassword') ?? '');
@@ -259,24 +282,28 @@ export async function accountPasswordAction(event: AccountPasswordEvent): Promis
 			event
 		);
 	}
-	return responseJsonBody(res, {});
+	forwardSetCookie(res, event.cookies);
+	return responseJsonBody<{ ok: boolean; successMessage: string }>(res, {
+		ok: true,
+		successMessage: 'Password updated.'
+	});
 }
 
 export async function logoutAction(event: LogoutEvent): Promise<never> {
 	const res = await event.logout();
 	forwardSetCookie(res, event.cookies);
-	throw redirect(303, event.redirectTo);
+	throw redirect(event.redirectTo, 303);
 }
 
 export async function magicLoginCallback(event: MagicLoginEvent): Promise<never> {
 	const token = event.token ?? event.params?.token;
 	const next = event.next ?? event.url?.searchParams.get('next') ?? null;
 
-	if (!token) throw redirect(303, getReauthMagicRedirectPath(next, 'failed'));
+	if (!token) throw redirect(getReauthMagicRedirectPath(next, 'failed'), 303);
 
 	const res = await event.magicLogin({ token });
-	if (!res.ok) throw redirect(303, getReauthMagicRedirectPath(next, 'failed'));
+	if (!res.ok) throw redirect(getReauthMagicRedirectPath(next, 'failed'), 303);
 
 	forwardSetCookie(res, event.cookies);
-	throw redirect(303, getReauthMagicRedirectPath(next, 'ok'));
+	throw redirect(getReauthMagicRedirectPath(next, 'ok'), 303);
 }

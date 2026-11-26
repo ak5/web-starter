@@ -69,10 +69,10 @@ function removeOAuthOverlay() {
 			.join('\n');
 		writeFileSync(appPath, out);
 	}
-	rmSync(join(ROOT, 'packages/web/src/lib/OAuthLogin.svelte'), { force: true });
+	rmSync(join(ROOT, 'packages/web/src/lib/OAuthLogin.tsx'), { force: true });
 	for (const page of [
-		'packages/web/src/routes/(account)/login/+page.svelte',
-		'packages/web/src/routes/(account)/register/+page.svelte'
+		'packages/web/src/routes/login.tsx',
+		'packages/web/src/routes/register.tsx'
 	]) {
 		const p = join(ROOT, page);
 		if (!existsSync(p)) continue;
@@ -134,10 +134,18 @@ function main() {
 	selfDestruct();
 
 	if (opts.install) {
-		console.log('\nReinstalling dependencies (package names changed)…\n');
-		spawnSync('pnpm', ['install'], { cwd: ROOT, stdio: 'inherit' });
-		console.log('\nFormatting…\n');
-		spawnSync('pnpm', ['format'], { cwd: ROOT, stdio: 'inherit' });
+		for (const step of ['install', 'format']) {
+			console.log(`\nRunning pnpm ${step}…\n`);
+			const result = spawnSync('pnpm', [step], { cwd: ROOT, stdio: 'inherit' });
+			if (result.error || result.status !== 0) {
+				console.error(
+					`Branding is applied, but pnpm ${step} failed. Fix the reported error, then run pnpm install and pnpm format.`
+				);
+				if (result.error) console.error(result.error.message);
+				process.exitCode = result.status || 1;
+				return;
+			}
+		}
 	}
 
 	console.log(`\nDone. This repo is now branded ${scope} / ${slug}.`);

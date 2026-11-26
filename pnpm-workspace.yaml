@@ -10,24 +10,21 @@ workspaceConcurrency: 1
 overrides:
   # The API uses Drizzle D1; Expo SQLite is only needed by the mobile app.
   'drizzle-orm>expo-sqlite': '-'
-  # Native hosts use React Native CLI; Expo's CLI and its signing dependencies are unnecessary.
-  'expo>@expo/cli': '-'
   # Drizzle Kit ships its own config loader and also supports the installed tsx.
   'drizzle-kit>@esbuild-kit/esm-loader': '-'
   '@livestore/utils>nanoid': '^5.1.16'
   '@opentelemetry/core@>=2.0.0 <2.8.0': '^2.8.0'
   '@tailwindcss/typography>postcss-selector-parser': '^7.1.6'
-  # Keep Symbiote's native dependencies on the host's React Native and Expo SDK versions.
-  '@symbiote-native/components>@react-native/virtualized-lists': '0.88.0'
-  '@symbiote-native/engine>@react-native/normalize-colors': '0.88.0'
-  '@symbiote-native/css-parser>@react-native/metro-babel-transformer': '0.88.0'
-  '@symbiote-native/secure-store>expo-modules-core': '58.0.24'
-  '@symbiote-native/secure-store>expo-secure-store': '58.0.2'
+  'prettier-plugin-tailwindcss>prettier-plugin-svelte': '-'
   'undici@>=7.0.0 <7.30.1': '^7.30.1'
   'fast-uri@>=3.0.0 <3.1.9': '^3.1.9'
+  # Keep the pinned Expo and ESLint toolchains on patched glob implementations.
+  'glob@13.0.6': '^14.0.2'
+  'minimatch@10.2.6': '^11.0.1'
 patchedDependencies:
   '@livestore/adapter-expo@0.5.0': patches/@livestore__adapter-expo@0.5.0.patch
   '@react-native/gradle-plugin@0.88.0': patches/@react-native__gradle-plugin@0.88.0.patch
+
   expo-modules-autolinking@58.0.14: patches/expo-modules-autolinking@58.0.14.patch
   expo-modules-core@58.0.24: patches/expo-modules-core@58.0.24.patch
   # shortcut: RN/Expo pin Kotlin 2.2; keep compiler patches until upstream supports Gradle 9.8.
@@ -52,6 +49,7 @@ minimumReleaseAgeExclude:
   - '@babel/runtime@8.0.8'
   - '@babel/types@8.0.8'
   - '@cloudflare/workers-types@5.20261023.1'
-  - runed@0.38.0
   - undici@7.30.1
   - fast-uri@3.1.9
+  - lucide-react@1.77.0
+  - '@hono/node-server@2.1.10'

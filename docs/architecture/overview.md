@@ -1,6 +1,6 @@
 # Architecture overview
 
-The split monorepo is **one API worker over N SvelteKit frontends**, glued by a
+The split monorepo is **one API worker over N React Router frontends**, glued by a
 typed Hono RPC contract. The API owns all data and secrets; the frontends are
 thin presentation shells that call the API over a fully-typed client.
 
@@ -17,12 +17,12 @@ thin presentation shells that call the API over a fully-typed client.
             ▼                      ▼                       ▼
      ┌────────────┐         ┌────────────┐          (more personas…)
      │ @ak5/web   │         │ @ak5/admin │           copy web/, claim
-     │ SvelteKit  │         │ SvelteKit  │           a slot + a type
+     │ React Router │         │ React Router │           a slot + a type
      └─────┬──────┘         └─────┬──────┘
            └──────────┬───────────┘
                       ▼
                 ┌────────────┐
-                │ @ak5/webui │  Svelte 5 components + createSvelteKitHandle
+                │ @ak5/webui │  React components + auth middleware
                 │            │  + createApiClient  (re-exports select @ak5/shared)
                 └─────┬──────┘
                       ▼
@@ -36,32 +36,32 @@ thin presentation shells that call the API over a fully-typed client.
 | Package       | Role                                                                                                                                                   |
 | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `@ak5/api`    | Hono on CF Workers. Auth, DB access, JWT issuance, OAuth callbacks, cron. The only worker holding data secrets. Exports `WebApiType` / `AdminApiType`. |
-| `@ak5/web`    | SvelteKit on CF Workers. Public app surface.                                                                                                           |
-| `@ak5/admin`  | SvelteKit on CF Workers. Admin portal.                                                                                                                 |
+| `@ak5/web`    | React Router on CF Workers. Public app surface.                                                                                                        |
+| `@ak5/admin`  | React Router on CF Workers. Admin portal.                                                                                                              |
+| `@ak5/mobile` | Optional React Native and Expo app for iOS and Android.                                                                                                |
 | `@ak5/shared` | Leaf package: cross-package contracts + pure utils (cookie, jwt, pagination, public-id). No internal deps.                                             |
-| `@ak5/webui`  | Shared Svelte 5 components, `createSvelteKitHandle`, `createApiClient`. The web/admin path to shared behavior.                                         |
-| `@ak5/email`  | Transactional email templates + native Cloudflare sender; dev mock + preview.                                                                          |
+| `@ak5/sync`   | LiveStore notes schema, events, materializers, and HTTP sync client for web and native.                                                                |
+| `@ak5/webui`  | Shared React components, `createAuthMiddleware`, `createApiClient`. The web/admin path to shared behavior.                                             |
+| `@ak5/email`  | React Email templates and native Cloudflare sender with a local mock and preview.                                                                      |
 | `@ak5/cli`    | Dev CLI wrapping the API endpoints (`pnpm cli`).                                                                                                       |
 
 ## Dependency direction
 
-`shared` is the leaf — nothing internal depends on, and it depends on nothing
-internal. `webui` depends on `shared` and re-exports the slice frontends need.
-`api` depends on `shared` + `email`. `web`/`admin` depend on `webui`, and on
-`api` **type-only** — they consume `hc<WebApiType>()` / `hc<AdminApiType>()` RPC
-types, never the API's runtime (its "runtime" entry is a no-op type carrier).
+`shared` has no workspace dependencies. `webui` depends on `shared` and
+re-exports what the browser apps need. `api` depends on `shared` and `email`.
+`web` and `admin` use `webui` and consume the API through the Hono RPC types
+`WebApiType` and `AdminApiType`.
 
 Two rules fall out, both enforced mechanically by `pnpm audit:split`:
 
-- Frontends **never** import `@ak5/shared` directly — they go through `@ak5/webui`.
-- Frontends import `@ak5/api` **type-only** — no runtime edge from a frontend to
-  the API worker.
+- Web and admin reach `@ak5/shared` through `@ak5/webui`.
+- Web, admin, and mobile import `@ak5/api` **type-only**.
 
 ## Runtime & data
 
 Every worker runs on **Cloudflare Workers**. The database is **Cloudflare D1**
 accessed through **Drizzle ORM**, and only `@ak5/api` ever touches it. KV backs
-rate limiting and cron locks; R2 backs uploads. The frontends have no DB binding
+optional cache data; D1 enforces auth rate limits and R2 backs uploads. The frontends have no DB binding
 and no data secrets — only `JWT_SECRET`, and only to verify cookies.
 
 ## Where to go next
@@ -74,13 +74,12 @@ and no data secrets — only `JWT_SECRET`, and only to verify cookies.
 
 ## Native mobile
 
-`@ak5/mobile` lives in `packages/mobile` when enabled; website-only projects
-remove its source and restore it later from a pinned starter commit. See [project profiles](../development/start-project.md). Svelte 5 components render native views
-through Symbiote Native over React Native's Fabric/Hermes runtime. The app uses
-the same type-only `WebApiType` and pure shared contracts; browser components
-from `@ak5/webui` remain specific to SvelteKit. Metro resolves the compiled
-`@ak5/shared/cookie` entry after `pnpm build:libs`. Encrypted session persistence uses
-Symbiote secure-store. See [mobile setup](../../packages/mobile/README.md).
+`@ak5/mobile` lives in `packages/mobile` when enabled. Its React Native
+components run on the checked-in iOS and Android hosts. The app uses
+`WebApiType`, pure `@ak5/shared` contracts, and Expo SecureStore for session
+data. `@ak5/webui` serves the browser apps. Metro resolves
+`@ak5/shared/cookie` after `pnpm build:libs`. See [mobile setup](../../packages/mobile/README.md)
+and [project profiles](../development/start-project.md).
 
 Web and native offline notes share `@ak5/sync`. LiveStore materializes local
 SQLite and synchronizes events through the API's Durable Object to D1; see

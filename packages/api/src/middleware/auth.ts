@@ -4,9 +4,8 @@ import type { AppContext } from '../types';
 import { verifyJwt } from '../lib/jwt';
 import { db } from '../db';
 import { adminUsers, users } from '../db/schema';
-import { COOKIE_TOKEN } from '@ak5/shared';
-
-const FIFTEEN_MIN_S = 15 * 60;
+import { COOKIE_TOKEN, isRecentAuth, parseCookie } from '@ak5/shared';
+import { isActiveImpersonator } from '../lib/auth-subject';
 
 /** Populate `c.var.db` for every request. */
 export const withDb = (): MiddlewareHandler<AppContext> => async (c, next) => {
@@ -20,15 +19,9 @@ export const withDb = (): MiddlewareHandler<AppContext> => async (c, next) => {
  * auth use `requireAuth` below.
  */
 export const withAuth = (): MiddlewareHandler<AppContext> => async (c, next) => {
-	const cookie = c.req.header('cookie') ?? '';
-	const m = new RegExp(`(?:^|;\\s*)${COOKIE_TOKEN}=([^;]+)`).exec(cookie);
-	if (!m) {
-		c.set('auth', null);
-		await next();
-		return;
-	}
-	const payload = await verifyJwt(c.env.JWT_SECRET, decodeURIComponent(m[1]));
-	c.set('auth', payload);
+	const token = parseCookie(c.req.header('cookie'), COOKIE_TOKEN);
+	const payload = token ? await verifyJwt(c.env.JWT_SECRET, token) : null;
+	c.set('auth', payload && (await isActiveImpersonator(c.var.db, payload)) ? payload : null);
 	await next();
 };
 
@@ -39,20 +32,22 @@ export const requireAuth =
 		const auth = c.var.auth;
 		if (!auth) return c.json({ error: 'unauthorized' }, 401);
 		if (type && auth.type !== type) return c.json({ error: 'forbidden' }, 403);
-		if (type === 'user') {
+		if (auth.type === 'user') {
 			const row = await c.var.db.query.users.findFirst({
 				where: eq(users.publicId, auth.sub),
-				columns: { deletedAt: true, bannedAt: true }
+				columns: { deletedAt: true, bannedAt: true, sessionVersion: true }
 			});
-			if (!row || row.deletedAt) return c.json({ error: 'unauthorized' }, 401);
+			if (!row || row.deletedAt || row.sessionVersion !== (auth.sessionVersion ?? 0))
+				return c.json({ error: 'unauthorized' }, 401);
 			if (row.bannedAt && !auth.impersonatedBy) return c.json({ error: 'user_disabled' }, 403);
 		}
-		if (type === 'admin') {
+		if (auth.type === 'admin') {
 			const row = await c.var.db.query.adminUsers.findFirst({
 				where: eq(adminUsers.publicId, auth.sub),
-				columns: { deletedAt: true }
+				columns: { deletedAt: true, sessionVersion: true }
 			});
-			if (!row || row.deletedAt) return c.json({ error: 'unauthorized' }, 401);
+			if (!row || row.deletedAt || row.sessionVersion !== (auth.sessionVersion ?? 0))
+				return c.json({ error: 'unauthorized' }, 401);
 		}
 		await next();
 	};
@@ -65,8 +60,7 @@ export const requireAuth =
 export const requireRecentAuth = (): MiddlewareHandler<AppContext> => async (c, next) => {
 	const auth = c.var.auth;
 	if (!auth) return c.json({ error: 'unauthorized' }, 401);
-	const now = Math.floor(Date.now() / 1000);
-	if (now - auth.recentAuthAt > FIFTEEN_MIN_S) {
+	if (!isRecentAuth(auth)) {
 		return c.json({ error: 'recent_auth_required', code: 'recent_auth_required' }, 403);
 	}
 	await next();

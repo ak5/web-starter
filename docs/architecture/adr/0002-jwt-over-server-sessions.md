@@ -4,7 +4,7 @@
 
 ## Context
 
-Every surface — the API and the SvelteKit frontends — runs on Cloudflare
+Every surface — the API and the React Router frontends — runs on Cloudflare
 Workers, which are stateless and edge-distributed. There is no sticky process to
 hold an in-memory session and no local session store. A classic server-side
 session would mean a database (or KV) lookup on every authenticated request,
@@ -18,7 +18,7 @@ the user's public ID (`sub`), `type`, and auth timestamps, set as an httpOnly
 cookie `ak5_token` (admin stash `ak5_admin_token`) with a 7-day max-age,
 `SameSite=Lax`, and `Secure` in prod. Because the signing key (`JWT_SECRET`) is
 shared across all three workers, each frontend worker **verifies the cookie
-locally** in its SvelteKit `handle` and knows the caller's identity without an
+locally** in its React Router server middleware and knows the caller's identity without an
 API round-trip.
 
 ## Consequences

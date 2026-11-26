@@ -18,17 +18,17 @@
 	},
 	"dependencies": {
 		"@livestore/livestore": "0.5.0",
-		"@livestore/sync-cf": "0.5.0",
 		"@livestore/peer-deps": "0.5.0",
+		"@livestore/sync-cf": "0.5.0",
 		"effect": "4.0.6"
 	},
 	"devDependencies": {
-		"typescript": "npm:@typescript/typescript6@^6.0.2",
 		"@eslint/js": "^10.0.1",
-		"typescript-eslint": "^8.72.0",
-		"eslint": "^10.13.0",
+		"eslint": "^10.15.0",
 		"eslint-config-prettier": "^10.1.8",
-		"prettier": "^3.9.10",
-		"globals": "^17.13.0"
+		"globals": "^17.14.0",
+		"prettier": "^3.10.1",
+		"typescript": "npm:@typescript/typescript6@^6.0.2",
+		"typescript-eslint": "~8.72.2"
 	}
 }

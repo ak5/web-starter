@@ -1,8 +1,8 @@
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { COOKIE_ADMIN_TOKEN, COOKIE_TOKEN, parseCookie, type JwtPayload } from '@ak5/shared';
 import { EmailDeliveryError, sendTemplate } from '@ak5/email';
 import type { Database } from '../db';
-import { adminUsers, auditLog, authEmail, users } from '../db/schema';
+import { adminUsers, auditLog, authEmail, tokens, users } from '../db/schema';
 import type { Env } from '../types';
 import { hashPassword, verifyPassword } from './password';
 import { clearJwtCookie, jwtCookie, signJwt, verifyJwt } from './jwt';
@@ -27,9 +27,10 @@ async function getActiveAuthSubjectByAuth(
 	if (auth.type === 'user') {
 		const user = await db.query.users.findFirst({
 			where: eq(users.publicId, auth.sub),
-			columns: { id: true, deletedAt: true, bannedAt: true }
+			columns: { id: true, deletedAt: true, bannedAt: true, sessionVersion: true }
 		});
-		if (!user || user.deletedAt) return { error: 'unauthorized', status: 401 };
+		if (!user || user.deletedAt || user.sessionVersion !== (auth.sessionVersion ?? 0))
+			return { error: 'unauthorized', status: 401 };
 		if (user.bannedAt && !auth.impersonatedBy) {
 			return { error: 'user_disabled', status: 403 };
 		}
@@ -38,9 +39,10 @@ async function getActiveAuthSubjectByAuth(
 
 	const admin = await db.query.adminUsers.findFirst({
 		where: eq(adminUsers.publicId, auth.sub),
-		columns: { id: true, deletedAt: true }
+		columns: { id: true, deletedAt: true, sessionVersion: true }
 	});
-	if (!admin || admin.deletedAt) return { error: 'unauthorized', status: 401 };
+	if (!admin || admin.deletedAt || admin.sessionVersion !== (auth.sessionVersion ?? 0))
+		return { error: 'unauthorized', status: 401 };
 	return { subjectType: 'admin', subjectId: admin.id };
 }
 
@@ -98,9 +100,10 @@ export async function stopImpersonationPostAuth(
 
 	const admin = await db.query.adminUsers.findFirst({
 		where: eq(adminUsers.publicId, adminPayload.sub),
-		columns: { id: true, publicId: true }
+		columns: { id: true, publicId: true, deletedAt: true, sessionVersion: true }
 	});
-	if (!admin) return { ok: false, status: 404, body: { error: 'admin_not_found' } };
+	if (!admin || admin.deletedAt || admin.sessionVersion !== (adminPayload.sessionVersion ?? 0))
+		return { ok: false, status: 403, body: { error: 'invalid_admin_token' } };
 
 	await db.insert(auditLog).values({
 		adminId: admin.id,
@@ -130,14 +133,8 @@ export async function verifyEmailPostAuth(
 	if ('error' in subject)
 		return { ok: false, status: subject.status, body: { error: subject.error } };
 
-	const row = await consumeToken(db, 'verify_email', pin);
+	const row = await consumeToken(db, 'verify_email', pin, subjectTokenRef(subject));
 	if (!row) return { ok: false, status: 400, body: { error: 'invalid_pin' } };
-	if (
-		(subject.subjectType === 'user' && row.userId !== subject.subjectId) ||
-		(subject.subjectType === 'admin' && row.adminId !== subject.subjectId)
-	) {
-		return { ok: false, status: 400, body: { error: 'invalid_pin' } };
-	}
 	if (subject.subjectType === 'user') {
 		await db.update(users).set({ emailVerified: true }).where(eq(users.id, subject.subjectId));
 		await db
@@ -222,23 +219,30 @@ export async function setPasswordPostAuth(
 	});
 	if (existingEmail) return { ok: false, status: 409, body: { error: 'email_taken' } };
 
-	await db.insert(authEmail).values({
-		subjectType: subject.subjectType,
-		subjectId: subject.subjectId,
-		email: auth.email,
-		passwordHashed: await hashPassword(newPassword),
-		verified: auth.emailConfirmed
-	});
+	const table = subject.subjectType === 'user' ? users : adminUsers;
+	const [, [updated]] = await db.batch([
+		db.insert(authEmail).values({
+			subjectType: subject.subjectType,
+			subjectId: subject.subjectId,
+			email: auth.email,
+			passwordHashed: await hashPassword(newPassword),
+			verified: auth.emailConfirmed
+		}),
+		db
+			.update(table)
+			.set({ sessionVersion: sql`${table.sessionVersion} + 1` })
+			.where(eq(table.id, subject.subjectId))
+			.returning({ sessionVersion: table.sessionVersion }),
+		db
+			.delete(tokens)
+			.where(eq(subject.subjectType === 'user' ? tokens.userId : tokens.adminId, subject.subjectId))
+	]);
 
 	const jwt = await signJwt(env.JWT_SECRET, {
-		sub: auth.sub,
-		email: auth.email,
-		name: auth.name,
-		type: auth.type,
-		emailConfirmed: auth.emailConfirmed,
+		...auth,
 		hasPassword: true,
-		recentAuthAt: Math.floor(Date.now() / 1000),
-		impersonatedBy: auth.impersonatedBy
+		sessionVersion: updated.sessionVersion,
+		recentAuthAt: Math.floor(Date.now() / 1000)
 	});
 	return {
 		ok: true,
@@ -258,6 +262,7 @@ export async function setPasswordPostAuthWithInput(
 
 export async function changePasswordPostAuth(
 	db: Database,
+	env: Env,
 	auth: JwtPayload,
 	input: { currentPassword: string; newPassword: string }
 ): Promise<PostAuthResult<{ ok: true; successMessage: string }>> {
@@ -275,11 +280,31 @@ export async function changePasswordPostAuth(
 	const ok = await verifyPassword(emailRow.passwordHashed, input.currentPassword);
 	if (!ok) return { ok: false, status: 400, body: { error: 'invalid_current_password' } };
 
-	await db
-		.update(authEmail)
-		.set({ passwordHashed: await hashPassword(input.newPassword) })
-		.where(eq(authEmail.id, emailRow.id));
-	return { ok: true, body: { ok: true, successMessage: 'Password updated.' } };
+	const table = subject.subjectType === 'user' ? users : adminUsers;
+	const [, [updated]] = await db.batch([
+		db
+			.update(authEmail)
+			.set({ passwordHashed: await hashPassword(input.newPassword) })
+			.where(eq(authEmail.id, emailRow.id)),
+		db
+			.update(table)
+			.set({ sessionVersion: sql`${table.sessionVersion} + 1` })
+			.where(eq(table.id, subject.subjectId))
+			.returning({ sessionVersion: table.sessionVersion }),
+		db
+			.delete(tokens)
+			.where(eq(subject.subjectType === 'user' ? tokens.userId : tokens.adminId, subject.subjectId))
+	]);
+	const jwt = await signJwt(env.JWT_SECRET, {
+		...auth,
+		sessionVersion: updated.sessionVersion,
+		recentAuthAt: Math.floor(Date.now() / 1000)
+	});
+	return {
+		ok: true,
+		body: { ok: true, successMessage: 'Password updated. Other sessions have been signed out.' },
+		setCookie: authCookie(env, jwt)
+	};
 }
 
 export async function requestReauthPostAuth(
@@ -320,17 +345,11 @@ export async function magicLoginPostAuth(
 	auth: JwtPayload,
 	token: string
 ): Promise<PostAuthResult<{ ok: true }>> {
-	const row = await consumeToken(db, 'magic_login', token);
-	if (!row) return { ok: false, status: 400, body: { error: 'invalid_token' } };
 	const subject = await getActiveAuthSubjectByAuth(db, auth);
 	if ('error' in subject)
 		return { ok: false, status: subject.status, body: { error: subject.error } };
-	if (
-		(subject.subjectType === 'user' && row.userId !== subject.subjectId) ||
-		(subject.subjectType === 'admin' && row.adminId !== subject.subjectId)
-	) {
-		return { ok: false, status: 400, body: { error: 'invalid_token' } };
-	}
+	const row = await consumeToken(db, 'magic_login', token, subjectTokenRef(subject));
+	if (!row) return { ok: false, status: 400, body: { error: 'invalid_token' } };
 	const jwt = await signJwt(env.JWT_SECRET, {
 		...auth,
 		recentAuthAt: Math.floor(Date.now() / 1000)

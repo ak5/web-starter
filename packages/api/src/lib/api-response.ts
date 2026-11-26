@@ -1,7 +1,11 @@
-import type { Context } from 'hono';
+import type { Context, TypedResponse } from 'hono';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
+import type { JSONParsed } from 'hono/utils/types';
 
 import type { AppContext } from '../types';
+
+export type ApiJsonResponse<TBody> = Response &
+	TypedResponse<JSONParsed<TBody>, ContentfulStatusCode, 'json'>;
 
 type ApiErrorResult = {
 	error?: string;
@@ -58,10 +62,10 @@ type ApiResultResult =
 			ok: false;
 	  });
 
+type ApiNamedSuccess<TKey extends string> = Record<TKey, object> & { ok: true };
+
 type ApiNamedResult<TKey extends string> =
-	| (Record<TKey, object> & {
-			ok: true;
-	  })
+	| ApiNamedSuccess<TKey>
 	| (ApiErrorResult & {
 			ok: false;
 	  });
@@ -95,7 +99,7 @@ export function apiResultJson<R extends ApiResultResult>(
 	c: Context<AppContext>,
 	result: R,
 	successStatus?: ContentfulStatusCode
-) {
+): ApiJsonResponse<Extract<R, { ok: true }>['result']> | ReturnType<typeof apiErrorJson> {
 	if (!result.ok) return apiErrorJson(c, result);
 	const body = result.result as Extract<R, { ok: true }>['result'];
 	if (successStatus) return c.json(body, successStatus);
@@ -107,7 +111,7 @@ export function apiNamedJson<TKey extends string>(
 	result: ApiNamedResult<TKey>,
 	key: TKey,
 	successStatus?: ContentfulStatusCode
-) {
+): ApiJsonResponse<ApiNamedSuccess<TKey>[TKey]> | ReturnType<typeof apiErrorJson> {
 	if (!result.ok) return apiErrorJson(c, result);
 	if (successStatus) return c.json(result[key], successStatus);
 	return c.json(result[key]);
@@ -118,7 +122,7 @@ export function apiJsonWithSetCookie<TBody>(
 	body: TBody,
 	setCookie: string,
 	status?: ContentfulStatusCode
-) {
+): ApiJsonResponse<TBody> {
 	if (!status) {
 		c.header('set-cookie', setCookie);
 		return c.json(body);
@@ -131,7 +135,7 @@ export function apiJsonWithSetCookies<TBody>(
 	body: TBody,
 	setCookies: string[],
 	status?: ContentfulStatusCode
-) {
+): ApiJsonResponse<TBody> {
 	const res = status ? c.json(body, status) : c.json(body);
 	for (const setCookie of setCookies) {
 		res.headers.append('set-cookie', setCookie);

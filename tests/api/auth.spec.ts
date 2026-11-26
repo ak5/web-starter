@@ -56,17 +56,16 @@ test.describe('auth', () => {
 		await api.dispose();
 	});
 
-	test('register requires legal acceptance', async ({ playwright }) => {
+	test('register works without claiming acceptance of policies', async ({ playwright }) => {
 		const api = await newApiContext(playwright);
 		const res = await api.post('/auth/register', {
 			data: {
 				email: uniqueEmail(),
 				username: uniqueUsername(),
 				password: 'password1234'
-				// legalAcceptance intentionally omitted
 			}
 		});
-		expect(res.status()).toBe(400);
+		expect(res.status()).toBe(200);
 		await api.dispose();
 	});
 
@@ -76,8 +75,7 @@ test.describe('auth', () => {
 			data: {
 				email: uniqueEmail(),
 				username: 'no', // < 5 chars
-				password: 'password1234',
-				legalAcceptance: true
+				password: 'password1234'
 			}
 		});
 		expect(res.status()).toBe(400);
@@ -91,8 +89,7 @@ test.describe('auth', () => {
 			data: {
 				email: user.email,
 				username: uniqueUsername(),
-				password: 'password1234',
-				legalAcceptance: true
+				password: 'password1234'
 			}
 		});
 		expect(dup.status()).toBeGreaterThanOrEqual(400);

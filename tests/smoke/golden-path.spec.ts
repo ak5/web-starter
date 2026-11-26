@@ -28,7 +28,7 @@ test('golden path against a live deployment', async ({ playwright }) => {
 	const api = await playwright.request.newContext({ baseURL: apiUrl });
 
 	// 1. Register → authenticated session (cookie on this context).
-	const reg = await api.post('/auth/register', { data: { ...user, legalAcceptance: true } });
+	const reg = await api.post('/auth/register', { data: { ...user } });
 	expect(reg.status(), `register: ${await reg.text()}`).toBe(200);
 
 	// 2. The session works.

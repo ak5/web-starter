@@ -2,17 +2,17 @@ import { spawnSync } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, resolve } from 'node:path';
+import { loadMobileEnvironment } from './environment.mjs';
+
+loadMobileEnvironment();
 const platform = process.argv[2];
 if (!['ios', 'android'].includes(platform)) throw new Error('Expected ios or android');
 const destination = resolve('../../tmp/mobile/bundles', platform);
 mkdirSync(destination, { recursive: true });
 const result = spawnSync(
-	'node',
+	'expo',
 	[
-		'node_modules/react-native/cli.js',
-		'bundle',
-		'--config',
-		'metro.config.cjs',
+		'export:embed',
 		'--platform',
 		platform,
 		'--entry-file',
@@ -28,6 +28,7 @@ const result = spawnSync(
 	],
 	{ stdio: 'inherit' }
 );
+if (result.error) throw result.error;
 if (result.status !== 0) process.exit(result.status ?? 1);
 // Metro output must also compile for the native runtime; JavaScript bundling alone misses unsupported syntax.
 const require = createRequire(import.meta.url);

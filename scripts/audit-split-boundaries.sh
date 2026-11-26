@@ -38,7 +38,7 @@ check_present() {
 
 WEB_SRC=(packages/web/src packages/admin/src)
 FRONTEND_SRC=("${WEB_SRC[@]}")
-if [ -d packages/mobile ]; then FRONTEND_SRC+=(packages/mobile/src packages/mobile/App.svelte); fi
+if [ -d packages/mobile ]; then FRONTEND_SRC+=(packages/mobile/src packages/mobile/App.tsx); fi
 
 # --- Package boundaries -------------------------------------------------------
 
@@ -51,7 +51,7 @@ if [ -d packages/mobile ]; then
 # Native runtime imports must avoid Worker-only JWT initialization.
 check_absent "mobile imports shared runtime through native-safe subpaths" \
     "^[[:space:]]*import +(?!type )[^;]*from +['\"]@ak5/shared['\"]" \
-    packages/mobile/src packages/mobile/App.svelte
+    packages/mobile/src packages/mobile/App.tsx
 
 fi
 
@@ -67,16 +67,10 @@ if [ -d packages/api/src/routes/auth ]; then
 		packages/api/src/routes/auth
 fi
 
-# SvelteKit route files stay thin: route modules delegate to package libs. Flag a
-# route +page.server.ts / +server.ts longer than 60 lines as a smell.
-while IFS= read -r f; do
-	lines=$(wc -l < "$f")
-	if [ "$lines" -gt 60 ]; then
-		red "FAIL: thin-route — $f is $lines lines (move logic into a lib)"
-		fail=1
-	fi
-done < <(rg -l --no-messages --glob '**/+*.server.ts' --glob '**/+server.ts' . packages/web/src packages/admin/src 2>/dev/null || true)
-green "OK:   SvelteKit route modules stay thin"
+# Guard browser-only shared components from the server entry point.
+check_absent "shared React components use browser-safe imports" \
+	"from +['\"][^'\"]*(/server|\.server|auth-middleware|request-context|render-document|auth-actions|api-client|api-headers|form-actions|forward-cookie|scoped-cookie|proxy-json)" \
+	packages/webui/src/lib/components
 
 # --- Agent-guidance freshness -------------------------------------------------
 

@@ -5,26 +5,6 @@
 // Pagination
 export const DEFAULT_PAGE_SIZE = 20;
 
-// Cache/Lock TTLs (seconds)
-export const KV_LOCK_TTL_SECONDS = 300; // 5 minutes
-
-// KV lock keys (for serializing background work across cron invocations).
-export const KV_LOCKS = {
-	TOKEN_REFRESH: 'token_refresh_lock'
-} as const;
-
-// Legal document versions — bump when the corresponding policy text changes.
-export const LEGAL_VERSIONS = {
-	terms: '2026-01-01',
-	privacy: '2026-01-01',
-	acceptableUse: '2026-01-01'
-} as const;
-
-export const LEGAL_SIGNUP_ACCEPTANCE_COOKIE = 'ak5_legal_signup_accepted';
-
-export const LEGAL_ACCEPTANCE_ERROR =
-	'Please accept the Terms of Service, acknowledge the Privacy Policy, and agree to the Acceptable Use Policy.';
-
 // Time intervals (milliseconds)
 export const TIME_MS = {
 	ONE_MINUTE: 60 * 1000,

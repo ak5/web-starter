@@ -8,8 +8,11 @@ connection string or runtime database API token is needed.
 
 `packages/api/src/db/schema.ts` defines the SQLite schema. Identity tables are
 `users`, `admin_users`, `auth_email`, and the removable `auth_discord` provider.
+`users.session_version` and `admin_users.session_version` invalidate older JWTs
+when credentials change; see [auth](auth.md#session-revocation).
 `tokens` stores expiring, hashed secrets with exactly one user/admin owner.
 `api_keys`, `sessions`, `logs`, `config`, and `audit_log` support platform operations.
+`rate_limits` stores atomic, expiring auth attempt counters, indexed for scheduled cleanup.
 `items` is a replaceable per-user CRUD example.
 
 Internal nanoid keys are for joins; APIs only expose prefixed public IDs. JSON
@@ -64,3 +67,12 @@ Local-first notes persist events to this D1 database through a per-store Durable
 Object. LiveStore owns its `eventlog_*` tables; Drizzle owns the identity and
 online item tables. See [local-first notes](local-first.md) for ordering, client
 materialization, and account data retention.
+
+User policy-version columns are nullable. Starter signup leaves them empty;
+applications can record the policy versions shown and acknowledged during their
+own [signup flow](auth.md#signup-policies).
+
+Admin account deletion batches its audit entry with the soft-delete and credential
+removal. A rejected audit write rolls the entire operation back. Soft deletion
+retains profile/domain rows and public uploaded objects; see
+[retention](security.md#avatar-uploads-and-retention).

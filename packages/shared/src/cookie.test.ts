@@ -54,3 +54,8 @@ describe('parseCookie', () => {
 		assert.equal(parseCookie('xak5_token=nope', 'ak5_token'), undefined);
 	});
 });
+
+it('ignores invalid percent encoding without losing other cookies', () => {
+	assert.equal(parseCookie('ak5_token=%ZZ; other=valid', 'ak5_token'), undefined);
+	assert.equal(parseCookie('ak5_token=%ZZ; other=valid', 'other'), 'valid');
+});

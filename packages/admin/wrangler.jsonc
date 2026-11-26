@@ -1,11 +1,12 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "ak5-admin",
-	"main": ".svelte-kit/cloudflare/_worker.js",
+	"main": "workers/app.ts",
 	"compatibility_date": "2026-10-23",
 	"compatibility_flags": ["nodejs_compat"],
 	"observability": {
-		"enabled": true
+		"enabled": true,
+		"redact_query_string": true
 	},
 	"preview_urls": true,
 	"routes": [
@@ -16,7 +17,7 @@
 	],
 	"assets": {
 		"binding": "ASSETS",
-		"directory": ".svelte-kit/cloudflare"
+		"directory": "build/client"
 	},
 	"vars": {
 		"PUBLIC_API_URL": "https://api.__PROD_DOMAIN__",

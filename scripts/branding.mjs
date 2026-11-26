@@ -5,7 +5,7 @@ const IGNORE = new Set([
 	'.git',
 	'tmp',
 	'node_modules',
-	'.svelte-kit',
+	'.react-router',
 	'.wrangler',
 	'dist',
 	'build',
@@ -15,6 +15,7 @@ const IGNORE = new Set([
 	'.ak5-config',
 	'.env',
 	'.env.dev-slot',
+	'mise.local.toml',
 	'test-results',
 	'playwright-report',
 	'worker-configuration.d.ts',
@@ -35,7 +36,6 @@ const TEXT_EXT = new Set([
 	'.cjs',
 	'.json',
 	'.jsonc',
-	'.svelte',
 	'.css',
 	'.html',
 	'.md',
@@ -70,9 +70,9 @@ function isText(name) {
 
 export function makeReplacer(scope, slug) {
 	const envPrefix = slug.toUpperCase().replace(/[^A-Z0-9]/g, '') + '_';
-	// Keep upstream links and author attribution intact when branding an application.
+	// Keep integrity hashes, upstream links and attribution intact when branding an application.
 	const preserved =
-		/((?:https:\/\/github\.com\/|github:)ak5\/web-starter|by \[ak5\]\(https:\/\/alexander\.verver\.is\)|<a class="link" href="https:\/\/alexander\.verver\.is">ak5<\/a>)/;
+		/(sha(?:1|256|384|512)-[A-Za-z0-9+/]+={0,2}|(?:https:\/\/github\.com\/|github:)ak5\/web-starter|by \[ak5\]\(https:\/\/alexander\.verver\.is\)|<a class(?:Name)?="link" href="https:\/\/alexander\.verver\.is">ak5<\/a>)/;
 	return (text) =>
 		text
 			.split(preserved)

@@ -1,6 +1,6 @@
 # Add a frontend persona
 
-The split generalizes to **N SvelteKit apps over one API worker**. `@ak5/web` and
+The split generalizes to **N React Router apps over one API worker**. `@ak5/web` and
 `@ak5/admin` are the two that ship; this is the recipe to add a third (or fourth).
 The **API worker is invariant** — you do _not_ add a second API. A persona is a new
 frontend surface plus a new scoped sub-router on the existing api.
@@ -15,7 +15,7 @@ cp -r packages/web packages/<persona>
 ```
 
 Retoken the new package's `package.json` name to `@ak5/<persona>` and update its
-`wrangler.jsonc` worker name. Clear the example routes you don't need.
+`wrangler.jsonc` worker name. Edit the explicit route map in `src/routes.ts` for the new surface.
 
 ## 2. Add the persona's pre-login routes + export its API type
 
@@ -31,8 +31,13 @@ In `packages/api/src/app.ts`:
 ## 3. Widen the JWT type union
 
 The JWT carries a `type` discriminator. Add the persona's value to the `JwtType`
-union (`packages/shared/src/jwt.ts`) and to `requireAuth(type?)` so the post-login
-guard recognizes it. Decide the persona's cookie name if it needs its own.
+union and claim validator (`packages/shared/src/jwt.ts`) and to `requireAuth(type?)`
+so the post-login guard recognizes it. The identity must carry a session version
+and participate in password-change revocation. Decide the persona's cookie name if it needs its own.
+
+Configure `createAuthMiddleware` in `src/root.tsx`. The middleware checks the persona and calls
+`validateApiSession` over the API service binding (or local fetch). Signature
+verification alone cannot detect a deleted account or a revoked session.
 
 ## 4. Claim a dev slot + Caddy upstream
 
@@ -57,14 +62,17 @@ it up with the rest.
 ## 7. Verify the wiring
 
 ```sh
-pnpm audit:split
-pnpm check:all
+nice -n 10 pnpm audit:split
+nice -n 10 pnpm check:all
 ```
 
 `audit:split` confirms the new persona obeys the package boundaries (type-only
-`@ak5/api`, shared via `@ak5/webui`, thin routes). A clean `check:all` confirms the
+`@ak5/api`, shared via `@ak5/webui`). A clean `check:all` confirms the
 `<Persona>ApiType` export and JWT union compile end to end.
 
 For the native mobile client, use [mobile setup](../../packages/mobile/README.md).
-It consumes the same typed user API and renders Svelte through Symbiote / React
-Native; it does not need a SvelteKit Worker or the browser UI package.
+Its React Native screens call the same typed user API. React Router Workers
+and the browser UI package serve the web personas.
+
+Include `@source '../../webui/src';` in the new app's `src/app.css` so Tailwind
+generates the shared components' utilities as well as the app's own classes.

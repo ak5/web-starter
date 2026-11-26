@@ -15,30 +15,32 @@ The package's runtime entry is a **no-op type carrier**: there is no runtime edg
 from a frontend into the API worker. Frontends import `@ak5/api` **type-only**,
 and `pnpm audit:split` fails the build if a value import sneaks in.
 
-## One client factory in `@ak5/webui`
+## One client factory in `@ak5/webui/server`
 
 Rather than each app calling `hc<…>()` directly, the Hono client is built in one
-place — `createApiClient` in `@ak5/webui`:
+place — `createApiClient` in `@ak5/webui/server`:
 
 ```ts
 // @ak5/web
 import { createApiClient } from '@ak5/webui';
 import type { WebApiType } from '@ak5/api';
+import { apiBaseUrl, createApiClient, requestState } from '@ak5/webui/server';
 
-const api = createApiClient<WebApiType>(API_BASE_URL, event.fetch, event.request);
+const { env, fetch } = requestState(context);
+const api = createApiClient<WebApiType>(apiBaseUrl(env), fetch, request);
 const res = await api.auth.me.$get(); // typed route, typed response
 ```
 
 `createApiClient` centralizes three concerns so no app re-derives them:
 
 - **`credentials: 'include'`** — the auth cookie rides along on every call.
-- **Cookie forwarding** — in SvelteKit server load/actions the incoming
+- **Cookie forwarding** — in React Router loaders and actions the incoming
   request's cookies are forwarded to the API, and `Set-Cookie` from the API is
   forwarded back to the browser (via `forwardSetCookie`), so login/refresh "just
   work" through the server hop.
 - **Client-IP forwarding** — the original client IP (`x-forwarded-for`) is
   passed through, so the API's per-IP rate limiting sees the real caller, not the
-  SvelteKit worker.
+  React Router worker.
 
 ## Adding a route is instantly typed
 
