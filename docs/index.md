@@ -43,6 +43,7 @@ update this index in the **same PR**.
 | File                                                      | One-liner                                |
 | --------------------------------------------------------- | ---------------------------------------- |
 | [deployment.md](operations/deployment.md)                 | Cloudflare workers, domains, secrets     |
+| [codex-mcp.md](operations/codex-mcp.md)                   | Optional remote MCP setup                |
 | [email-sending.md](operations/email-sending.md)           | Sender onboarding and inbox verification |
 | [3rd-party-services.md](operations/3rd-party-services.md) | D1, email sender, OAuth providers        |
 

@@ -9,6 +9,7 @@ export interface Env {
 	NOTES_SYNC: DurableObjectNamespace;
 	R2: R2Bucket;
 	KV: KVNamespace;
+	OAUTH_KV?: KVNamespace;
 
 	// Public/shared vars
 	PUBLIC_API_URL: string;

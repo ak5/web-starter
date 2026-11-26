@@ -1,4 +1,4 @@
-import { data as actionData, redirect } from 'react-router';
+import { data as actionData, redirect, redirectDocument } from 'react-router';
 
 import { apiErrorBody, apiErrorMessage } from './api-error.js';
 import { errorMessage } from './error-messages.js';
@@ -213,11 +213,11 @@ export async function loginAction(event: LoginEvent) {
 	}
 
 	forwardSetCookie(res, event.cookies);
-	throw redirect(
+	const next =
 		getSafeLocalRedirectPath(event.url?.searchParams.get('next') ?? null, event.successRedirect) ??
-			event.successRedirect,
-		303
-	);
+		event.successRedirect;
+	const navigate = next.startsWith('/oauth/authorize?') ? redirectDocument : redirect;
+	throw navigate(next, 303);
 }
 
 export async function accountPasswordAction(event: AccountPasswordEvent) {

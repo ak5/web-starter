@@ -6,6 +6,11 @@ import { loadPassword, passwordActions } from '../lib/account.server';
 export function loader(event: Route.LoaderArgs) {
 	return {
 		...loadPassword(event),
+		mcpConnected:
+			requestState(event.context).env.MCP_ENABLED === 'true' &&
+			!!requestState(event.context).session.auth &&
+			!requestState(event.context).session.auth?.impersonatedBy,
+		mcpDisconnected: event.url.searchParams.get('mcp') === 'disconnected',
 		hasPassword: requestState(event.context).session.auth?.hasPassword ?? false
 	};
 }
@@ -23,6 +28,14 @@ export default function Password({ loaderData: data, actionData: form }: Route.C
 				hasPassword={data.hasPassword}
 				reauth={data.reauth}
 			/>
+			{data.mcpConnected && (
+				<form action="/oauth/disconnect" method="post" className="mx-auto mt-4 max-w-md">
+					{data.mcpDisconnected && <p role="status">MCP connections disconnected.</p>}
+					<button className="btn" type="submit">
+						Disconnect MCP clients
+					</button>
+				</form>
+			)}
 		</>
 	);
 }

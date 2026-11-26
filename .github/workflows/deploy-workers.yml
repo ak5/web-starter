@@ -78,6 +78,11 @@ jobs:
           }
           JS
 
+      - name: Configure optional MCP
+        env:
+          MCP_OAUTH_KV_NAMESPACE_ID: ${{ vars.MCP_OAUTH_KV_NAMESPACE_ID }}
+        run: node scripts/configure-mcp.mjs
+
       - name: Build browser Workers and shared libraries
         env:
           CLOUDFLARE_ENV: ${{ inputs.target != 'production' && inputs.target || '' }}

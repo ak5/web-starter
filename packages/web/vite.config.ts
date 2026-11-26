@@ -16,6 +16,10 @@ export default defineConfig(({ command, mode }) => {
 							services: mode === 'local-preview' ? [] : config.services,
 							vars: {
 								...config.vars,
+								...(process.env.AK5_MCP_LOCAL === '1' && {
+									MCP_ENABLED: 'true',
+									MCP_LOCAL: 'true'
+								}),
 								LOCAL_API_URL: `http://127.0.0.1:${process.env.AK5_API_PORT ?? '8350'}`
 							}
 						})

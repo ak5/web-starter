@@ -287,3 +287,5 @@ frontend-only rollback, restore the preceding versions of both UI Workers.
 Worker observability redacts query strings. Preserve that setting and omit
 query strings from any external request logging to protect invitation and
 password-reset tokens.
+
+For optional remote MCP and its dedicated KV binding, see [Remote MCP](codex-mcp.md).

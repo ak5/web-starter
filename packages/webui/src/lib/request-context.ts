@@ -8,6 +8,8 @@ export interface FrontendEnv {
 	PUBLIC_ENV_BANNER?: string;
 	PUBLIC_DEPLOY_ENVIRONMENT?: string;
 	LOCAL_API_URL?: string;
+	MCP_ENABLED?: string;
+	MCP_LOCAL?: string;
 	API?: { fetch: typeof fetch };
 }
 
@@ -39,7 +41,7 @@ export function setRequestState(context: RouterContextProvider, env: FrontendEnv
 				}
 			: fetch);
 	context.set(stateContext, {
-		env,
+		env: env.MCP_LOCAL === 'true' ? { ...env, PUBLIC_COOKIE_ORIGIN: 'localhost' } : env,
 		fetch: apiFetch,
 		cookies: new Headers(),
 		session: { auth: null }

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { accountPasswordAction, forgotPasswordAction } from './auth-actions.js';
+import { accountPasswordAction, forgotPasswordAction, loginAction } from './auth-actions.js';
 import { apiErrorMessage } from './api-error.js';
 
 test('password action forwards the replacement session cookie', async () => {
@@ -46,5 +46,26 @@ test('recovery failures preserve HTTP status and show a useful message', async (
 	assert.equal(
 		await apiErrorMessage(Response.json({ error: 'unknown_code' }), 'Please try again.'),
 		'Please try again.'
+	);
+});
+
+test('sign-in returns to browser-owned MCP consent with a document navigation', async () => {
+	const url = new URL('https://app.example.test/login');
+	url.searchParams.set('next', '/oauth/authorize?state=fixture');
+	await assert.rejects(
+		loginAction({
+			cookies: new Headers(),
+			url,
+			request: new Request(url, {
+				method: 'POST',
+				body: new URLSearchParams({ email: 'owner@example.test' })
+			}),
+			login: async () => Response.json({ ok: true }),
+			successRedirect: '/dashboard'
+		}),
+		(error: unknown) =>
+			error instanceof Response &&
+			error.headers.get('Location') === '/oauth/authorize?state=fixture' &&
+			error.headers.get('X-Remix-Reload-Document') === 'true'
 	);
 });

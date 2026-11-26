@@ -1,3 +1,4 @@
+import { handleMcp, isMcpPath } from './mcp';
 import { app } from './app';
 import { syncRequest } from './sync';
 export { NotesSync } from './sync';
@@ -28,6 +29,7 @@ export function runScheduledCron(
 
 export default {
 	async fetch(req, env, ctx): Promise<Response> {
+		if (isMcpPath(new URL(req.url).pathname)) return handleMcp(req, env, ctx);
 		if (new URL(req.url).pathname.replace(/\/$/, '') === '/sync') return syncRequest(req, env, ctx);
 		return app.fetch(req, env, ctx);
 	},
