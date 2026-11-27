@@ -71,10 +71,20 @@ for (const role of ['user', 'admin']) {
 			await expect(
 				page.getByRole('button', { name: 'Create and copy invite link' })
 			).toBeDisabled();
-		await page.getByLabel('Email', { exact: true }).fill(uniqueEmail());
+		const email = uniqueEmail();
+		await page.getByLabel('Email', { exact: true }).fill(email);
 		await page.getByLabel('Username', { exact: true }).fill(uniqueUsername());
 		await page.getByRole('button', { name: 'Send email invite' }).click();
 		await expect(page.getByRole('status')).toHaveText('Invitation sent.');
 		await expect(page.getByLabel('One-time invite link')).toHaveCount(0);
+		const admins = page.getByRole('table', { name: 'Admins', exact: true });
+		const users = page.getByRole('table', { name: 'Regular users', exact: true });
+		const destination = role === 'admin' ? admins : users;
+		const row = destination.getByRole('row').filter({ hasText: email });
+		await expect(row).toBeVisible();
+		if (role === 'admin') await expect(row.getByRole('cell', { name: 'Unverified' })).toBeVisible();
+		await expect((role === 'admin' ? users : admins).getByText(email, { exact: true })).toHaveCount(
+			0
+		);
 	});
 }

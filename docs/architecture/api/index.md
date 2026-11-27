@@ -65,6 +65,10 @@ session cookie after account creation, even when delivery fails. Retry using
 `503 {error: "email_delivery_failed"}` when sending fails. Public user/admin
 forgot-password responses do not disclose account existence or delivery failure.
 
+`GET /admin/users` returns regular users in `users` and non-deleted admin accounts
+in `admins`. Admin entries include their public ID, username, email, and email
+verification status.
+
 `POST /admin/invite` accepts `delivery: "email"` (the default) or `delivery: "link"`
 for regular users. Link mode returns an `inviteUrl` in a `Cache-Control: no-store`
 response. Email mode with missing sender or transport returns

@@ -125,36 +125,65 @@ export default function Users({ loaderData: page, actionData: invite }: Route.Co
 					</p>
 				</div>
 			)}
-			<div className="overflow-x-auto">
-				<table className="table">
-					<thead>
-						<tr>
-							<th>Username</th>
-							<th>Email</th>
-							<th>Role</th>
-							<th>Status</th>
-						</tr>
-					</thead>
-					<tbody>
-						{page.users.length ? (
-							page.users.map((user) => (
-								<tr key={user.publicId}>
-									<td>{user.username}</td>
-									<td>{user.email}</td>
-									<td>{user.role}</td>
-									<td>{user.statusLabel}</td>
-								</tr>
-							))
-						) : (
-							<tr>
-								<td colSpan={4} className="text-center text-base-content/60">
-									No users yet.
-								</td>
-							</tr>
-						)}
-					</tbody>
-				</table>
-			</div>
+			<AccountTable title="Regular users" rows={page.users} empty="No users yet." />
+			<AccountTable
+				title="Admins"
+				rows={page.admins.map((admin) => ({
+					...admin,
+					role: 'Admin',
+					statusLabel: admin.emailVerified ? 'Verified' : 'Unverified'
+				}))}
+				empty="No admins yet."
+			/>
 		</section>
+	);
+}
+
+function AccountTable({
+	title,
+	rows,
+	empty
+}: {
+	title: string;
+	rows: {
+		publicId: string;
+		username: string;
+		email: string | null;
+		role: string;
+		statusLabel: string;
+	}[];
+	empty: string;
+}) {
+	return (
+		<div className="mb-6 overflow-x-auto">
+			<table className="table">
+				<caption className="mb-2 text-left text-lg font-semibold">{title}</caption>
+				<thead>
+					<tr>
+						<th scope="col">Username</th>
+						<th scope="col">Email</th>
+						<th scope="col">Role</th>
+						<th scope="col">Status</th>
+					</tr>
+				</thead>
+				<tbody>
+					{rows.map((row) => (
+						<tr key={row.publicId}>
+							<td>{row.username}</td>
+							<td>{row.email}</td>
+							<td>{row.role}</td>
+							<td>{row.statusLabel}</td>
+						</tr>
+					))}
+					{rows.length === 0 && (
+						<tr>
+							<td colSpan={4} className="text-center text-base-content/60">
+								{empty}
+							</td>
+						</tr>
+					)}
+				</tbody>
+			</table>
+		</div>
 	);
 }

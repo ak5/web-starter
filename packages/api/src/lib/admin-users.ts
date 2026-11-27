@@ -40,13 +40,21 @@ type AdminAuthSubject = {
 };
 
 export async function adminUserList(db: Database) {
-	const rows = await db.query.users.findMany({
-		where: isNull(users.deletedAt),
-		orderBy: [desc(users.createdAt)],
-		limit: 100
-	});
+	const [rows, admins] = await Promise.all([
+		db.query.users.findMany({
+			where: isNull(users.deletedAt),
+			orderBy: [desc(users.createdAt)],
+			limit: 100
+		}),
+		db.query.adminUsers.findMany({
+			where: isNull(adminUsers.deletedAt),
+			orderBy: [adminUsers.username],
+			columns: { publicId: true, username: true, email: true, emailVerified: true }
+		})
+	]);
 
 	return {
+		admins,
 		users: rows.map((user) => ({
 			publicId: user.publicId,
 			username: user.username,
