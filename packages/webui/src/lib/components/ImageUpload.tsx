@@ -152,7 +152,7 @@ export default function ImageUpload({
 			{!value || editing ? (
 				<div>
 					<div
-						className={`relative overflow-hidden rounded-lg border-2 border-dashed ${dragging ? 'border-primary bg-primary/10' : 'border-base-300 bg-base-200'}`}
+						className={`relative overflow-hidden rounded-lg border-2 border-dashed ${dragging ? 'border-accent bg-accent/10' : 'border-raised bg-surface'}`}
 						style={{ height: imgHeight, width: imgWidth }}
 						onDragOver={(event) => {
 							event.preventDefault();
@@ -170,8 +170,8 @@ export default function ImageUpload({
 							<img src={preview} alt="Preview" className="h-full w-full object-cover" />
 						) : (
 							<div className="flex h-full w-full flex-col items-center justify-center gap-2 p-4">
-								<Upload className="h-6 w-6 text-primary" />
-								<span className="text-center text-sm text-primary">
+								<Upload className="h-6 w-6 text-accent" />
+								<span className="text-center text-sm text-accent">
 									Click to upload or drag and drop
 								</span>
 							</div>
@@ -196,19 +196,24 @@ export default function ImageUpload({
 								aria-label="Clear image"
 								disabled={busy}
 								onClick={() => void select()}
-								className="absolute top-1 right-1 block rounded-full bg-error p-1 hover:bg-error/80"
+								className="absolute top-1 right-1 block rounded-full bg-danger p-1 hover:bg-danger/80"
 							>
 								<X className="h-4 w-4" />
 							</button>
 						)}
 					</div>
 					{file && !autoupload && (
-						<button type="submit" form={id} className="btn mt-2 btn-primary" disabled={busy}>
+						<button
+							type="submit"
+							form={id}
+							className="ui-button ui-button-primary mt-2"
+							disabled={busy}
+						>
 							{busy ? 'Uploading...' : 'Upload Image'}
 						</button>
 					)}
 					{error && (
-						<p role="alert" className="text-xs text-error">
+						<p role="alert" className="text-xs text-danger">
 							{error}
 						</p>
 					)}
@@ -226,7 +231,7 @@ export default function ImageUpload({
 						type="button"
 						aria-label="Change image"
 						onClick={() => setEditing(true)}
-						className="absolute top-1 right-1 block rounded-full bg-error p-1 hover:bg-error/10"
+						className="absolute top-1 right-1 block rounded-full bg-danger p-1 hover:bg-danger/10"
 					>
 						<X className="h-4 w-4" />
 					</button>

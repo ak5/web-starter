@@ -23,9 +23,10 @@ export default function Modal({
 	return (
 		<dialog
 			ref={dialog}
+			data-density="comfortable"
 			aria-labelledby={title ? titleId : undefined}
 			aria-label={title ? undefined : 'Dialog'}
-			className="m-auto max-h-[90vh] w-[calc(100%-1rem)] max-w-md overflow-hidden rounded-2xl border border-base-300 bg-base-100 text-base-content shadow-2xl backdrop:bg-base-300/80 backdrop:backdrop-blur-sm"
+			className="m-auto max-h-[90vh] w-[calc(100%-1rem)] max-w-md overflow-hidden rounded-2xl border border-raised bg-canvas text-ink shadow-2xl backdrop:bg-raised/80 backdrop:backdrop-blur-sm"
 			onCancel={(event) => {
 				event.preventDefault();
 				onClose();
@@ -35,9 +36,9 @@ export default function Modal({
 			}}
 		>
 			<div className="relative text-left">
-				<div className="flex items-center justify-between border-b border-base-300 bg-base-200/50 px-4 py-3 sm:px-6 sm:py-4">
+				<div className="flex items-center justify-between border-b border-raised bg-surface/50 px-4 py-3 sm:px-6 sm:py-4">
 					{title ? (
-						<h3 id={titleId} className="text-lg font-semibold text-base-content">
+						<h3 id={titleId} className="text-lg font-semibold text-ink">
 							{title}
 						</h3>
 					) : (
@@ -47,7 +48,7 @@ export default function Modal({
 						type="button"
 						aria-label="Close"
 						onClick={onClose}
-						className="btn btn-circle btn-ghost btn-sm hover:bg-base-300"
+						className="ui-button ui-button-icon ui-button-quiet ui-button-small hover:bg-raised"
 					>
 						<X className="h-5 w-5" />
 					</button>

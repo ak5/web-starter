@@ -22,7 +22,7 @@ for your application's read, write, storage, and CPU usage.
 
 ## What's included
 
-- React Router 8 web and admin apps with Tailwind CSS and DaisyUI.
+- React Router 8 web and admin apps with Tailwind CSS and shared UI tokens.
 - Hono RPC types shared with web, admin, mobile, and the development CLI.
 - Email/password auth, email verification and recovery, optional Discord OAuth,
   role separation, and encrypted native session storage.

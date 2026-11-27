@@ -20,17 +20,7 @@ export default function ThemeToggle() {
 	}, []);
 	useEffect(() => {
 		if (!mode) return;
-		const media = window.matchMedia('(prefers-color-scheme: dark)');
-		const apply = () =>
-			document.documentElement.classList.toggle(
-				'dark',
-				mode === 'dark' || (mode === 'system' && media.matches)
-			);
-		apply();
-		if (mode === 'system') {
-			media.addEventListener('change', apply);
-			return () => media.removeEventListener('change', apply);
-		}
+		document.documentElement.dataset.theme = mode;
 	}, [mode]);
 
 	function select(next: ThemeMode) {
@@ -39,7 +29,7 @@ export default function ThemeToggle() {
 	}
 
 	return (
-		<div className="inline-flex overflow-hidden rounded-full border border-base-content/20 align-middle text-xs">
+		<div className="inline-flex overflow-hidden rounded-full border border-ink/20 align-middle text-xs">
 			{modes.map(({ value, Icon, label }) => (
 				<button
 					key={value}
@@ -48,7 +38,7 @@ export default function ThemeToggle() {
 					disabled={mode === null}
 					aria-pressed={(mode ?? 'system') === value}
 					title={label}
-					className={`flex h-8 w-8 items-center justify-center transition-colors ${value === 'system' ? 'border-x border-base-content/20' : ''} ${(mode ?? 'system') === value ? 'bg-primary text-primary-content' : 'hover:bg-base-300'}`}
+					className={`flex size-(--control-height) items-center justify-center focus-visible:-outline-offset-4 focus-visible:outline-current ${value === 'system' ? 'border-x border-ink/20' : ''} ${(mode ?? 'system') === value ? 'bg-accent text-on-accent' : 'hover:bg-raised'}`}
 					onClick={() => select(value)}
 				>
 					<Icon className="h-4 w-4" />

@@ -8,11 +8,11 @@ export default function Register({ actionData: form }: Route.ComponentProps) {
 	const [searchParams] = useSearchParams();
 	const oauthError = searchParams.get('error');
 	return (
-		<div className="card bg-base-200 p-6">
+		<div className="ui-panel bg-surface p-6">
 			<h1 className="mb-4 text-2xl font-bold">Create your account</h1>
 			{(form?.error || oauthError) && (
 				<>
-					<div role="alert" className="mb-4 alert alert-error">
+					<div role="alert" className="ui-message ui-message-error mb-4">
 						{form?.error ?? errorMessage(oauthError)}
 					</div>
 				</>
@@ -25,7 +25,7 @@ export default function Register({ actionData: form }: Route.ComponentProps) {
 					type="text"
 					placeholder="Username"
 					autoComplete="username"
-					className="input-bordered input w-full"
+					className="ui-field w-full"
 					defaultValue={form?.username ?? ''}
 					required
 				/>
@@ -36,7 +36,7 @@ export default function Register({ actionData: form }: Route.ComponentProps) {
 					type="email"
 					placeholder="Email"
 					autoComplete="email"
-					className="input-bordered input w-full"
+					className="ui-field w-full"
 					defaultValue={form?.email ?? ''}
 					required
 				/>
@@ -47,17 +47,17 @@ export default function Register({ actionData: form }: Route.ComponentProps) {
 					type="password"
 					placeholder="Password (min 8 characters)"
 					autoComplete="new-password"
-					className="input-bordered input w-full"
+					className="ui-field w-full"
 					required
 				/>
-				<button className="btn btn-primary" type="submit">
+				<button className="ui-button ui-button-primary" type="submit">
 					Create account
 				</button>
 			</Form>
 			<OAuthLogin />
-			<p className="mt-4 text-sm text-base-content/70">
+			<p className="mt-4 text-sm text-ink/70">
 				Already have an account?{' '}
-				<Link to="/login" className="link">
+				<Link to="/login" className="ui-link">
 					Sign in
 				</Link>
 			</p>

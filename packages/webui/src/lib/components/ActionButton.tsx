@@ -68,16 +68,16 @@ export default function ActionButton({
 					) : (
 						<div className="space-y-6">
 							<div className="text-center">
-								<div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-warning/20">
-									<TriangleAlert className="h-6 w-6 text-warning" />
+								<div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-caution/20">
+									<TriangleAlert className="h-6 w-6 text-caution" />
 								</div>
-								<p className="text-lg font-medium text-base-content">{confirm}</p>
+								<p className="text-lg font-medium text-ink">{confirm}</p>
 							</div>
 							<div className="flex gap-3">
-								<button {...no} className="btn-base-200 btn flex-1 btn-outline">
+								<button {...no} className="ui-button flex-1">
 									Cancel
 								</button>
-								<button {...yes} className="btn flex-1 btn-error">
+								<button {...yes} className="ui-button ui-button-danger flex-1">
 									Confirm
 								</button>
 							</div>

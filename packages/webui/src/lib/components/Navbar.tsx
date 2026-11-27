@@ -12,11 +12,11 @@ export default function Navbar({
 	actions?: ReactNode;
 }) {
 	return (
-		<header className="navbar border-b border-base-200 bg-base-100">
+		<header className="border-b border-surface bg-canvas py-2">
 			<div className="container mx-auto flex flex-wrap items-center gap-2 px-4">
 				<Link
 					to={href}
-					className="flex-1 text-xl font-bold tracking-tight transition-colors hover:text-primary"
+					className="flex-1 text-xl font-bold tracking-tight text-ink hover:text-accent"
 				>
 					{brand}
 				</Link>

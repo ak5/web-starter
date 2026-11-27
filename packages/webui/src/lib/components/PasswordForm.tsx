@@ -23,31 +23,31 @@ export default function PasswordForm({
 	return (
 		<>
 			<title>{title}</title>
-			<div className="card mx-auto my-8 max-w-md bg-base-200 p-6">
+			<div className="ui-panel mx-auto my-8 max-w-md bg-surface p-6">
 				<h1 className="mb-4 text-2xl font-bold">{title}</h1>
 				{form?.error && (
 					<>
-						<p role="alert" className="mb-4 alert alert-error">
+						<p role="alert" className="ui-message ui-message-error mb-4">
 							{form.error}
 						</p>
 					</>
 				)}
 				{form?.successMessage && (
 					<>
-						<p role="status" className="mb-4 alert alert-success">
+						<p role="status" className="ui-message ui-message-success mb-4">
 							{form.successMessage}
 						</p>
 					</>
 				)}
 				{reauth === 'ok' ? (
 					<>
-						<p role="status" className="mb-4 alert alert-success">
+						<p role="status" className="ui-message ui-message-success mb-4">
 							Identity confirmed. You can now update your password.
 						</p>
 					</>
 				) : reauth === 'failed' ? (
 					<>
-						<p role="alert" className="mb-4 alert alert-error">
+						<p role="alert" className="ui-message ui-message-error mb-4">
 							That confirmation link is invalid or expired. Request a new one below.
 						</p>
 					</>
@@ -62,7 +62,7 @@ export default function PasswordForm({
 								name="currentPassword"
 								type="password"
 								autoComplete="current-password"
-								className="input-bordered input w-full"
+								className="ui-field w-full"
 								required
 							/>
 						</>
@@ -75,7 +75,7 @@ export default function PasswordForm({
 						autoComplete="new-password"
 						minLength={8}
 						maxLength={128}
-						className="input-bordered input w-full"
+						className="ui-field w-full"
 						required
 					/>
 					<label htmlFor="confirm-password">Confirm new password</label>
@@ -86,23 +86,23 @@ export default function PasswordForm({
 						autoComplete="new-password"
 						minLength={8}
 						maxLength={128}
-						className="input-bordered input w-full"
+						className="ui-field w-full"
 						required
 					/>
-					<button type="submit" name="intent" value="save" className="btn btn-primary">
+					<button type="submit" name="intent" value="save" className="ui-button ui-button-primary">
 						Save password
 					</button>
 				</Form>
 				{!resetToken && (form?.code === 'recent_auth_required' || reauth === 'failed') && (
 					<>
 						<Form method="post" className="mt-4">
-							<button type="submit" name="intent" value="reauth" className="btn btn-secondary">
+							<button type="submit" name="intent" value="reauth" className="ui-button">
 								Email a confirmation link
 							</button>
 						</Form>
 					</>
 				)}
-				<Link to="/forgot-password" className="mt-4 link">
+				<Link to="/forgot-password" className="ui-link mt-4">
 					Request a new reset link
 				</Link>
 			</div>

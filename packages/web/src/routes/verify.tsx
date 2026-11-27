@@ -11,24 +11,24 @@ export async function action(event: Route.ActionArgs) {
 }
 export default function Verify({ loaderData: data, actionData: form }: Route.ComponentProps) {
 	return (
-		<div className="card mx-auto max-w-md bg-base-200 p-6">
+		<div className="ui-panel mx-auto max-w-md bg-surface p-6">
 			<h1 className="mb-4 text-2xl font-bold">Verify your email</h1>
 			<p className="mb-4">Enter the code from your email. You can request a new code below.</p>
 			{form?.error ? (
 				<>
-					<p role="alert" className="mb-4 alert alert-error">
+					<p role="alert" className="ui-message ui-message-error mb-4">
 						{form.error}
 					</p>
 				</>
 			) : data.deliverySent ? (
 				<>
-					<p role="status" className="mb-4 alert alert-success">
+					<p role="status" className="ui-message ui-message-success mb-4">
 						A new code has been sent.
 					</p>
 				</>
 			) : data.deliveryFailed ? (
 				<>
-					<p role="alert" className="mb-4 alert alert-error">
+					<p role="alert" className="ui-message ui-message-error mb-4">
 						Your account is ready, but we could not send the verification email. Please try
 						resending later.
 					</p>
@@ -36,19 +36,13 @@ export default function Verify({ loaderData: data, actionData: form }: Route.Com
 			) : null}
 			<Form method="post" className="flex flex-col gap-3">
 				<label htmlFor="pin">Verification code</label>
-				<input
-					id="pin"
-					name="pin"
-					autoComplete="one-time-code"
-					className="input-bordered input"
-					required
-				/>
-				<button type="submit" name="intent" value="verify" className="btn btn-primary">
+				<input id="pin" name="pin" autoComplete="one-time-code" className="ui-field" required />
+				<button type="submit" name="intent" value="verify" className="ui-button ui-button-primary">
 					Verify email
 				</button>
 			</Form>
 			<Form method="post" className="mt-4">
-				<button type="submit" name="intent" value="resend" className="btn btn-secondary">
+				<button type="submit" name="intent" value="resend" className="ui-button">
 					Resend verification email
 				</button>
 			</Form>

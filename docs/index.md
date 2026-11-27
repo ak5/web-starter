@@ -37,6 +37,7 @@ update this index in the **same PR**.
 | [conventions.md](development/conventions.md)     | File layout, naming, imports, commits               |
 | [contributing.md](development/contributing.md)   | Branching, CI, review, migration policy             |
 | [add-a-persona.md](development/add-a-persona.md) | Recipe for a 3rd+ React Router frontend             |
+| [design.md](development/design.md)               | Shared tokens, themes, and admin density            |
 
 ## operations/ — how to run it in prod
 

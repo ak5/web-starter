@@ -14,14 +14,14 @@ function Banner({ environment }: { environment: string }) {
 	return (
 		<aside
 			aria-label="Environment"
-			className="flex items-center justify-between gap-4 bg-warning px-4 py-2 text-sm text-warning-content"
+			className="flex items-center justify-between gap-4 bg-caution px-4 py-2 text-sm text-on-caution"
 		>
 			<span>
 				<strong>{environment}</strong> environment
 			</span>
 			<button
 				type="button"
-				className="btn btn-ghost btn-xs"
+				className="min-h-(--control-height) cursor-pointer rounded-md px-3 font-semibold underline underline-offset-2 focus-visible:outline-current"
 				aria-label="Dismiss environment banner"
 				disabled={!ready}
 				onClick={() => setDismissed(true)}

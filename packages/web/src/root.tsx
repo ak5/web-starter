@@ -36,30 +36,30 @@ export default function App({ loaderData }: Route.ComponentProps) {
 					<>
 						{loaderData.viewer ? (
 							<>
-								<Link to="/dashboard" className="btn btn-ghost btn-sm">
+								<Link to="/dashboard" className="ui-button ui-button-quiet ui-button-small">
 									Dashboard
 								</Link>
-								<Link to="/notes" className="btn btn-ghost btn-sm">
+								<Link to="/notes" className="ui-button ui-button-quiet ui-button-small">
 									Offline notes
 								</Link>
-								<Link to="/items" className="btn btn-ghost btn-sm">
+								<Link to="/items" className="ui-button ui-button-quiet ui-button-small">
 									Items
 								</Link>
-								<Link to="/account/password" className="btn btn-ghost btn-sm">
+								<Link to="/account/password" className="ui-button ui-button-quiet ui-button-small">
 									Password
 								</Link>
 								<Form method="post" action="/logout" reloadDocument>
-									<button type="submit" className="btn btn-ghost btn-sm">
+									<button type="submit" className="ui-button ui-button-quiet ui-button-small">
 										Sign out
 									</button>
 								</Form>
 							</>
 						) : (
 							<>
-								<Link to="/login" className="btn btn-ghost btn-sm">
+								<Link to="/login" className="ui-button ui-button-quiet ui-button-small">
 									Sign in
 								</Link>
-								<Link to="/register" className="btn btn-primary btn-sm">
+								<Link to="/register" className="ui-button ui-button-primary ui-button-small">
 									Get started
 								</Link>
 							</>

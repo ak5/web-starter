@@ -1,15 +1,9 @@
 @import 'tailwindcss';
+@import '../../webui/src/tokens.css';
+@import '../../webui/src/controls.css';
 @source '../../webui/src';
 @plugin '@tailwindcss/typography';
 @plugin '@tailwindcss/forms';
-
-@plugin 'daisyui' {
-	themes:
-		light --default,
-		dark --prefersdark;
-}
-
-@custom-variant dark (&:where(.dark, .dark *));
 
 @media (max-width: 640px) {
 	input,

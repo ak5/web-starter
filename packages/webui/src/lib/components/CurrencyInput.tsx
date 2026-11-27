@@ -15,7 +15,7 @@ export default function CurrencyInput({
 	inputRef?: Ref<HTMLInputElement>;
 }) {
 	return (
-		<label className="input-bordered no-ring input flex items-center gap-2">
+		<label className="no-ring ui-field flex items-center gap-2">
 			<DollarSign className="h-4 w-4 opacity-70" />
 			<input
 				type="number"
@@ -28,7 +28,7 @@ export default function CurrencyInput({
 				onBlur={() => onChange(Number(value.toFixed(2)))}
 				ref={inputRef}
 			/>
-			<span className="badge badge-ghost badge-sm">USD</span>
+			<span className="ui-tag">USD</span>
 		</label>
 	);
 }

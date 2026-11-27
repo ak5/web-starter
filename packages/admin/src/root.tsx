@@ -26,7 +26,10 @@ export const shouldRevalidate = () => true;
 
 export default function App({ loaderData }: Route.ComponentProps) {
 	return (
-		<div className="flex min-h-screen flex-col">
+		<div
+			className="flex min-h-screen flex-col"
+			data-density={loaderData.viewer ? 'compact' : 'comfortable'}
+		>
 			<EnvironmentBanner environment={loaderData.environmentBanner} />
 			<Navbar
 				brand="ak5-web admin"
@@ -34,17 +37,17 @@ export default function App({ loaderData }: Route.ComponentProps) {
 					<>
 						{loaderData.viewer && (
 							<>
-								<Link to="/" className="btn btn-ghost btn-sm">
+								<Link to="/" className="ui-button ui-button-quiet ui-button-small">
 									Users
 								</Link>
-								<Link to="/items" className="btn btn-ghost btn-sm">
+								<Link to="/items" className="ui-button ui-button-quiet ui-button-small">
 									Items
 								</Link>
-								<Link to="/account/password" className="btn btn-ghost btn-sm">
+								<Link to="/account/password" className="ui-button ui-button-quiet ui-button-small">
 									Password
 								</Link>
 								<Form method="post" action="/logout" reloadDocument>
-									<button type="submit" className="btn btn-ghost btn-sm">
+									<button type="submit" className="ui-button ui-button-quiet ui-button-small">
 										Sign out
 									</button>
 								</Form>
