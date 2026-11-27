@@ -1,4 +1,4 @@
-export const escape = (value: string) =>
+const escape = (value: string) =>
 	value.replace(
 		/[&<>"']/g,
 		(c) =>
@@ -11,7 +11,8 @@ export const escape = (value: string) =>
 			})[c]!
 	);
 
-export function consentPage(
+function consentPage(
+	theme: string | undefined,
 	title: string,
 	content: string,
 	headers = new Headers(),
@@ -36,24 +37,52 @@ export function consentPage(
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${escape(title)} · ak5-web</title><link rel="icon" href="/favicon.svg">
 <style>
-:root{color-scheme:dark;font:16px/1.5 system-ui,sans-serif;color:#e9eef6;background:#0f131a}
-*{box-sizing:border-box}body{min-height:100svh;margin:0;display:grid;place-items:center;padding:24px;background:radial-gradient(ellipse at 50% 0,#1b2b42,#0f131a 65%)}
-main{width:min(100%,34rem);padding:clamp(20px,6vw,36px);background:#171d27;border:1px solid #344154;border-radius:18px;box-shadow:0 18px 52px #0004}
-.brand,.account,.actions{display:flex;align-items:center;gap:12px}.brand img{width:34px;height:34px}.brand{font-weight:700}
-h1{font-size:clamp(1.6rem,6vw,2rem);line-height:1.15;margin:24px 0 8px;letter-spacing:-.025em}p{margin:0 0 16px;color:#bdc8d8;overflow-wrap:anywhere}strong{color:#f0f5fc}
-.account{margin:18px 0;padding:10px 12px;border-radius:8px;background:#202b3a;flex-wrap:wrap;overflow-wrap:anywhere}.role{color:#b8d8ff;font-size:.85rem;font-weight:700}
-fieldset{margin:0;padding:0;border:0}legend{font-weight:650;margin-bottom:8px}.option{display:flex;gap:10px;align-items:flex-start;border:1px solid #3a4960;border-radius:9px;padding:11px 13px;margin-bottom:8px;cursor:pointer}
-.option:has(:checked){border-color:#80baff;background:#20314a}input{accent-color:#90c6ff;margin:5px 0 0}small{display:block;color:#bdc8d8;font-size:.875rem}
-.actions{flex-wrap:wrap;margin-top:20px}.primary,.secondary{display:inline-flex;align-items:center;min-height:44px;padding:8px 14px;border-radius:8px;border:1px solid transparent;text-decoration:none;font:inherit;font-weight:650;cursor:pointer}
-.primary{color:#101a28;background:#8ec4ff}.secondary{color:#c0ddff;background:transparent;border-color:#43546d}a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid #a6d2ff;outline-offset:3px}
-.foot{margin-top:20px}.foot p{margin:12px 0 0;font-size:.875rem}
+:root {
+  color-scheme: ${theme === 'light' || theme === 'dark' ? theme : 'light dark'};
+  /* Match the starter’s DaisyUI light and dark palettes without loading scripts. */
+  --base: light-dark(oklch(100% 0 0), oklch(25.33% .016 252.42));
+  --surface: light-dark(oklch(98% 0 0), oklch(23.26% .014 253.1));
+  --ink: light-dark(oklch(21% .006 285.885), oklch(97.807% .029 256.847));
+  --primary: light-dark(oklch(45% .24 277.023), oklch(58% .233 277.117));
+  --on-primary: light-dark(oklch(93% .034 272.788), oklch(96% .018 272.314));
+  --border: color-mix(in oklab, var(--ink) 22%, var(--base));
+  font: 16px/1.5 system-ui, sans-serif;
+  color: var(--ink);
+  background: var(--base);
+}
+* { box-sizing: border-box; }
+body { min-height: 100svh; margin: 0; display: grid; place-items: center; padding: clamp(16px, 5vw, 32px); }
+main { width: min(100%, 30rem); padding: clamp(20px, 6vw, 32px); background: var(--surface); border: 1px solid var(--border); border-radius: .5rem; overflow-wrap: anywhere; }
+.brand, .account, .actions { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
+.brand { font-weight: 700; }
+.brand img { width: 24px; height: 24px; }
+h1 { font-size: clamp(1.5rem, 5vw, 1.875rem); line-height: 1.2; margin: 1.25rem 0 .5rem; }
+p { margin: 0 0 1rem; }
+.account { margin: 1rem 0; padding: .625rem .75rem; border: 1px solid var(--border); border-radius: .5rem; background: var(--base); }
+.role { font-size: .875rem; }
+fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
+legend { font-weight: 650; margin-bottom: .5rem; }
+.option { display: flex; align-items: flex-start; gap: .625rem; border: 1px solid var(--border); border-radius: .5rem; padding: .625rem .75rem; margin-bottom: .5rem; background: var(--base); cursor: pointer; }
+.option:has(:checked) { border-color: var(--primary); background: color-mix(in oklab, var(--primary) 8%, var(--base)); }
+input { accent-color: var(--primary); margin: .3rem 0 0; flex: none; }
+small, .foot { font-size: .875rem; }
+small { display: block; }
+.actions { margin-top: 1rem; }
+.primary, .secondary { display: inline-flex; align-items: center; min-height: 44px; padding: .5rem 1rem; border: 1px solid transparent; border-radius: .25rem; text-decoration: none; font: inherit; font-weight: 650; cursor: pointer; }
+.primary { color: var(--on-primary); background: var(--primary); }
+.primary:hover { background: color-mix(in oklab, var(--primary) 90%, black); }
+.secondary { color: var(--ink); background: var(--base); border-color: var(--border); }
+.secondary:hover { background: color-mix(in oklab, var(--ink) 8%, var(--base)); }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+.foot { margin-top: 1rem; }
+.foot p { margin: 0; }
 </style></head><body><main><div class="brand"><img src="/favicon.svg" alt=""><span>ak5-web</span></div>
 <h1>${escape(title)}</h1>${content}</main></body></html>`,
 		{ headers, status }
 	);
 }
 
-export async function renderMcpConsent(response: Response) {
+export async function renderMcpConsent(response: Response, theme?: string) {
 	const data = (await response.json()) as {
 		state: string;
 		role?: 'user' | 'admin';
@@ -69,6 +98,7 @@ export async function renderMcpConsent(response: Response) {
 	const headers = new Headers(response.headers);
 	if (data.state === 'expired')
 		return consentPage(
+			theme,
 			'Connection expired',
 			'<p>Start Connect again from Codex to approve a new request.</p>',
 			headers,
@@ -76,6 +106,7 @@ export async function renderMcpConsent(response: Response) {
 		);
 	if (data.state === 'unavailable')
 		return consentPage(
+			theme,
 			'Connection unavailable',
 			'<p>ak5-web could not verify your session. Try again in a moment.</p>',
 			headers,
@@ -83,6 +114,7 @@ export async function renderMcpConsent(response: Response) {
 		);
 	if (data.state === 'impersonating')
 		return consentPage(
+			theme,
 			'End impersonation to connect',
 			'<p>End the support session before connecting your own account.</p><a class="primary" href="/">Open ak5-web</a>',
 			headers
@@ -92,6 +124,7 @@ export async function renderMcpConsent(response: Response) {
 	const client = escape(data.client ?? 'Codex');
 	if (data.state === 'signed-out')
 		return consentPage(
+			theme,
 			'Connect ak5-web',
 			`
 			<p>Sign in with your ak5-web ${account.toLowerCase()} account to continue connecting <strong>${client}</strong>.</p>
@@ -100,12 +133,14 @@ export async function renderMcpConsent(response: Response) {
 		);
 	if (data.state !== 'ready' || !data.handle || !data.binding || !data.email || !data.redirectHost)
 		return consentPage(
+			theme,
 			'Connection unavailable',
 			'<p>Start Connect again from Codex.</p>',
 			headers,
 			503
 		);
 	return consentPage(
+		theme,
 		'Connect ak5-web',
 		`
 		<p>Choose what <strong>${client}</strong> can do in ak5-web.</p>

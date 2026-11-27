@@ -41,6 +41,10 @@ for (const role of ['user', 'admin'] as const) {
 		const admin = 'http://127.0.0.1:' + /^AK5_ADMIN_PORT=(\d+)/m.exec(slot)?.[1];
 		const origin = role === 'admin' ? admin : web;
 		const other = role === 'admin' ? web : admin;
+		const theme = role === 'admin' ? 'dark' : 'light';
+		await page.setViewportSize({ width: 375, height: 720 });
+		await page.emulateMedia({ colorScheme: theme === 'dark' ? 'light' : 'dark' });
+		await page.context().addCookies([{ name: 'theme', value: theme, url: origin }]);
 		const credentials = { email: uniqueEmail(), password: 'password1234' };
 		if (role === 'admin') {
 			execFileSync('pnpm', [
@@ -108,6 +112,8 @@ for (const role of ['user', 'admin'] as const) {
 		await page.getByRole('button', { name: 'Sign in', exact: true }).click();
 		await expect(page.getByRole('heading', { name: 'Connect ak5-web' })).toBeVisible();
 		await expect(page.getByText(credentials.email, { exact: true })).toBeVisible();
+		await expect(page.locator('html')).toHaveCSS('color-scheme', theme);
+		expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(375);
 		if (role === 'admin') await page.getByRole('radio', { name: /Read and operate/ }).check();
 		const approval = page.waitForResponse(
 			(response) =>

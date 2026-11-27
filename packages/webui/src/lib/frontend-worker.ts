@@ -1,5 +1,5 @@
 import { RouterContextProvider, type RequestHandler } from 'react-router';
-import { signJwt, type JwtType } from '@ak5/shared';
+import { parseCookie, signJwt, type JwtType } from '@ak5/shared';
 import { renderMcpConsent } from './mcp-consent.js';
 import { requestState, setRequestState, type FrontendEnv } from './request-context.js';
 
@@ -97,6 +97,6 @@ async function proxyMcp(
 	const response = await state.fetch(new Request(upstream, { headers, redirect: 'manual' }));
 	return url.pathname === '/oauth/authorize' &&
 		response.headers.get('content-type')?.includes('application/json')
-		? renderMcpConsent(response)
+		? renderMcpConsent(response, parseCookie(request.headers.get('cookie'), 'theme'))
 		: response;
 }
