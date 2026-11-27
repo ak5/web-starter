@@ -31,7 +31,7 @@ export default function Password({ loaderData: data, actionData: form }: Route.C
 			{data.mcpConnected && (
 				<form action="/oauth/disconnect" method="post" className="mx-auto mt-4 max-w-md">
 					{data.mcpDisconnected && <p role="status">MCP connections disconnected.</p>}
-					<button className="btn" type="submit">
+					<button className="ui-button" type="submit">
 						Disconnect MCP clients
 					</button>
 				</form>

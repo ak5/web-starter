@@ -19,7 +19,7 @@ export default function Items({ loaderData: data, actionData: form }: Route.Comp
 	return (
 		<section className="mx-auto max-w-3xl p-8">
 			<h1 className="mb-2 text-3xl font-bold">Your items</h1>
-			<p className="mb-6 text-base-content/70">
+			<p className="mb-6 text-ink/70">
 				An example CRUD resource, rendered with the shared <code>ItemsTable</code> component — the
 				same one the admin app uses to list all items.
 			</p>
@@ -28,15 +28,15 @@ export default function Items({ loaderData: data, actionData: form }: Route.Comp
 				<input
 					name="title"
 					placeholder="New item title"
-					className="input-bordered input flex-1"
+					className="ui-field flex-1"
 					aria-label="New item title"
 				/>
-				<button className="btn btn-primary" type="submit" name="intent" value="create">
+				<button className="ui-button ui-button-primary" type="submit" name="intent" value="create">
 					Add item
 				</button>
 			</Form>
 
-			{message && <p className="mb-4 text-sm text-error">{message}</p>}
+			{message && <p className="mb-4 text-sm text-danger">{message}</p>}
 
 			<ItemsTable
 				items={data.items}
@@ -44,7 +44,7 @@ export default function Items({ loaderData: data, actionData: form }: Route.Comp
 					<Form method="post">
 						<input type="hidden" name="id" value={item.id} />
 						<button
-							className="btn btn-ghost text-error btn-xs"
+							className="ui-button ui-button-quiet ui-button-small text-danger"
 							type="submit"
 							name="intent"
 							value="delete"

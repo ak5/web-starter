@@ -60,9 +60,9 @@ export default function SelectSingle({
 				if (!event.currentTarget.contains(event.relatedTarget)) close();
 			}}
 		>
-			<div className="join w-full">
-				<div className="no-ring input join-item w-full">
-					{selected && <span className="text-base-content/60">{selected.label}</span>}
+			<div className="flex w-full gap-1">
+				<div className="no-ring ui-field w-full">
+					{selected && <span className="text-ink/60">{selected.label}</span>}
 					<input type="hidden" name={name} value={value ?? ''} />
 					<input
 						ref={(element) => {
@@ -77,7 +77,7 @@ export default function SelectSingle({
 						aria-expanded={open}
 						aria-controls={id}
 						aria-activedescendant={open && visible[active] ? `${id}-${active}` : undefined}
-						className="no-ring input w-full"
+						className="no-ring ui-field w-full"
 						value={query}
 						onFocus={() => setOpen(true)}
 						onChange={(event) => {
@@ -91,7 +91,7 @@ export default function SelectSingle({
 				<button
 					aria-label="Toggle options"
 					type="button"
-					className="btn join-item btn-square btn-outline btn-soft"
+					className="ui-button ui-button-icon"
 					onClick={() => {
 						if (open) close();
 						else {
@@ -104,7 +104,7 @@ export default function SelectSingle({
 				</button>
 			</div>
 			{open && (
-				<div className="absolute z-10 mt-1 w-full rounded-box bg-base-100 shadow">
+				<div className="absolute z-10 mt-1 w-full rounded-md bg-canvas shadow">
 					<div role="listbox" id={id} aria-label="Options">
 						{visible.map((option, index) => (
 							<div
@@ -112,7 +112,7 @@ export default function SelectSingle({
 								id={`${id}-${index}`}
 								role="option"
 								aria-selected={value === option.value}
-								className={`menu-item flex cursor-pointer items-center px-2 py-1 text-base-content/80 hover:bg-base-300 ${index === active || option.value === value ? 'bg-base-200' : ''}`}
+								className={`flex cursor-pointer items-center px-2 py-1 text-ink/80 hover:bg-raised ${index === active || option.value === value ? 'bg-surface' : ''}`}
 								onMouseDown={(event) => event.preventDefault()}
 								onClick={() => select(option)}
 							>
@@ -122,7 +122,7 @@ export default function SelectSingle({
 						))}
 					</div>
 					{visible.length === 0 && (
-						<span className="block px-2 py-1 text-base-content/60">No results found</span>
+						<span className="block px-2 py-1 text-ink/60">No results found</span>
 					)}
 				</div>
 			)}

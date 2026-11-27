@@ -7,10 +7,10 @@ export default function Dashboard() {
 		<>
 			<section className="mx-auto max-w-2xl p-8">
 				<h1 className="text-3xl font-bold">You're signed in 🎉</h1>
-				<p className="py-4 text-base-content/70">
+				<p className="py-4 text-ink/70">
 					This is a protected route. Replace it with your application.
 				</p>
-				<div className="card flex flex-col gap-1 bg-base-200 p-4">
+				<div className="ui-panel flex flex-col gap-1 bg-surface p-4">
 					<p>
 						<span className="font-semibold">User:</span> {data?.viewer?.username}
 					</p>
@@ -24,12 +24,12 @@ export default function Dashboard() {
 				</div>
 				{!data?.viewer?.emailVerified && (
 					<>
-						<Link to="/account/verify" className="mt-4 inline-block link">
+						<Link to="/account/verify" className="ui-link mt-4 inline-block">
 							Verify your email or request a new code
 						</Link>
 					</>
 				)}
-				<p className="mt-6 text-sm text-base-content/60">Sign out from the top bar.</p>
+				<p className="mt-6 text-sm text-ink/60">Sign out from the top bar.</p>
 			</section>
 		</>
 	);

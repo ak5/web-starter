@@ -32,13 +32,13 @@ export default function Pagination({ pagination }: { pagination: PaginationMeta 
 	if (totalPages <= 1) return null;
 	function navigation({ label, Icon, page, enabled }: (typeof directions)[number]) {
 		return enabled ? (
-			<Link key={label} to={to(page)} className="btn join-item btn-sm" aria-label={label}>
+			<Link key={label} to={to(page)} className="ui-button ui-button-small" aria-label={label}>
 				<Icon className="h-4 w-4" />
 			</Link>
 		) : (
 			<span
 				key={label}
-				className="btn btn-disabled join-item btn-sm"
+				className="ui-button ui-button-disabled ui-button-small"
 				aria-disabled="true"
 				aria-label={label}
 			>
@@ -48,11 +48,14 @@ export default function Pagination({ pagination }: { pagination: PaginationMeta 
 	}
 	return (
 		<nav className="mt-6 flex flex-col items-center gap-4" aria-label="Pagination">
-			<div className="join">
+			<div className="flex gap-1">
 				{directions.slice(0, 2).map(navigation)}
 				{visiblePages(page, totalPages).map((number, index) =>
 					number === 'ellipsis' ? (
-						<span key={`ellipsis-${index}`} className="btn btn-disabled join-item btn-sm">
+						<span
+							key={`ellipsis-${index}`}
+							className="ui-button ui-button-disabled ui-button-small"
+						>
 							...
 						</span>
 					) : (
@@ -60,7 +63,7 @@ export default function Pagination({ pagination }: { pagination: PaginationMeta 
 							key={number}
 							to={to(number)}
 							aria-current={number === page ? 'page' : undefined}
-							className={`btn join-item btn-sm ${number === page ? 'btn-active' : ''}`}
+							className={`ui-button ui-button-small ${number === page ? 'ui-button-active' : ''}`}
 						>
 							{number + 1}
 						</Link>
@@ -68,7 +71,7 @@ export default function Pagination({ pagination }: { pagination: PaginationMeta 
 				)}
 				{directions.slice(2).map(navigation)}
 			</div>
-			<p className="text-sm text-base-content/60">
+			<p className="text-sm text-ink/60">
 				Showing page {page + 1} of {totalPages} ({total} total items)
 			</p>
 		</nav>

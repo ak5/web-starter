@@ -7,10 +7,12 @@ export default function OAuthLogin() {
 	if (!apiUrl) return null;
 	return (
 		<>
-			<div className="divider my-4 text-xs text-base-content/50">or</div>
+			<div className="my-4 flex justify-center border-b border-line pb-2 text-xs text-ink/50">
+				or
+			</div>
 			<a
 				href={new URL('/oauth/discord', apiUrl).href}
-				className="btn w-full gap-2 btn-outline"
+				className="ui-button w-full gap-2"
 				rel="external"
 			>
 				<IconSocial platform="discord" size="lg" />

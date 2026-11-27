@@ -76,3 +76,19 @@ test('item form intents update the server list and clear a successful creation',
 		await api.dispose();
 	}
 });
+
+test('explicit theme overrides the OS and survives reload at mobile width', async ({ page }) => {
+	await page.setViewportSize({ width: 375, height: 720 });
+	await page.emulateMedia({ colorScheme: 'dark' });
+	await page.goto('/');
+	const root = page.locator('html');
+	await expect(root).toHaveCSS('color-scheme', 'light dark');
+	await page.getByRole('button', { name: 'Use light theme' }).first().click();
+	await expect(root).toHaveCSS('color-scheme', 'light');
+	await page.reload();
+	await expect(root).toHaveCSS('color-scheme', 'light');
+	await page.getByRole('button', { name: 'Use dark theme' }).first().click();
+	await expect(root).toHaveCSS('color-scheme', 'dark');
+	await page.getByRole('button', { name: 'Use system theme' }).first().click();
+	await expect(root).toHaveCSS('color-scheme', 'light dark');
+});

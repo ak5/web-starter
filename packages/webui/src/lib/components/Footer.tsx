@@ -13,7 +13,7 @@ export default function Footer() {
 	}, []);
 	return (
 		<>
-			<footer className="bg-base-200 py-6 pb-20 text-base-content md:pb-6">
+			<footer className="bg-surface py-6 pb-20 text-ink md:pb-6">
 				<div className="container mx-auto px-4">
 					<div className="mb-4 flex flex-col items-center justify-center">
 						<div>
@@ -22,12 +22,12 @@ export default function Footer() {
 									<div className="relative mb-2 h-16 w-16">
 										<img src="/favicon.svg" alt="ak5-web Icon" className="object-contain" />
 									</div>
-									<span className="text-3xl font-bold text-secondary transition-all duration-300 hover:text-primary">
+									<span className="text-3xl font-bold text-muted transition-all duration-300 hover:text-accent">
 										ak5-web
 									</span>
 								</Link>
 							</div>
-							<p className="mb-6 text-center text-base-content/60">Your tagline goes here.</p>
+							<p className="mb-6 text-center text-ink/60">Your tagline goes here.</p>
 							{/* Replace these with your own social links (or delete the row). */}
 							<div className="flex justify-center space-x-4">
 								<IconSocial
@@ -40,11 +40,11 @@ export default function Footer() {
 						</div>
 					</div>
 
-					<div className="space-y-2 border-t border-base-content/20 pt-4 text-center">
+					<div className="space-y-2 border-t border-ink/20 pt-4 text-center">
 						<div className="text-sm">
 							<ThemeToggle />
 						</div>
-						<p className="text-xs text-base-content/60">
+						<p className="text-xs text-ink/60">
 							&copy; {new Date().getFullYear()} ak5-web. All rights reserved.
 						</p>
 					</div>

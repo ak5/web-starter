@@ -1,0 +1,38 @@
+:root {
+	color-scheme: light dark;
+	--canvas: light-dark(#f8fafc, #111827);
+	--surface: light-dark(#ffffff, #1f2937);
+	--raised: light-dark(#e2e8f0, #374151);
+	--ink: light-dark(#172033, #f1f5f9);
+	--muted: light-dark(#475569, #cbd5e1);
+	--line: light-dark(#64748b, #94a3b8);
+	--accent: light-dark(#4338ca, #a5b4fc);
+	--on-accent: light-dark(#ffffff, #111827);
+	--danger: light-dark(#b91c1c, #fca5a5);
+	--success: light-dark(#166534, #86efac);
+	--caution: light-dark(#92400e, #fcd34d);
+	--on-caution: light-dark(#ffffff, #111827);
+}
+:root,
+[data-density='comfortable'] {
+	--control-height: 2.75rem;
+	--row-padding: 0.75rem;
+	--toolbar-gap: 1rem;
+}
+:root[data-theme='light'] {
+	color-scheme: light;
+}
+:root[data-theme='dark'] {
+	color-scheme: dark;
+}
+
+[data-density='compact'] {
+	--control-height: 2.25rem;
+	--row-padding: 0.375rem;
+	--toolbar-gap: 0.5rem;
+}
+@media (any-pointer: coarse) {
+	[data-density='compact'] {
+		--control-height: 2.75rem;
+	}
+}

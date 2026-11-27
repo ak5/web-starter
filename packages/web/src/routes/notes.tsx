@@ -104,14 +104,14 @@ function NotesEditor({ publicId }: { publicId: string }) {
 						: 'No pending changes'}
 			</p>
 			{error && (
-				<p role="alert" className="mb-4 text-error">
+				<p role="alert" className="mb-4 text-danger">
 					{error}
 				</p>
 			)}
 			{!store && !error && <p role="status">Opening local database…</p>}
 			<form onSubmit={save} className="mb-6 flex gap-2">
 				<input
-					className="input-bordered input flex-1"
+					className="ui-field flex-1"
 					aria-label="Note text"
 					value={text}
 					onChange={(event) => setText(event.currentTarget.value)}
@@ -119,22 +119,22 @@ function NotesEditor({ publicId }: { publicId: string }) {
 					required
 					disabled={!store}
 				/>
-				<button className="btn btn-primary" disabled={!store}>
+				<button className="ui-button ui-button-primary" disabled={!store}>
 					{selected ? 'Save note' : 'Add note'}
 				</button>
 				{selected && (
-					<button type="button" className="btn" onClick={clearSelection}>
+					<button type="button" className="ui-button" onClick={clearSelection}>
 						Cancel
 					</button>
 				)}
 			</form>
 			<ul className="space-y-3">
 				{notes.map((note) => (
-					<li key={note.id} className="card bg-base-200 p-4" data-note-id={note.id}>
+					<li key={note.id} className="ui-panel bg-surface p-4" data-note-id={note.id}>
 						<p className="mb-2 break-words whitespace-pre-wrap">{note.text}</p>
 						<div className="flex gap-2">
 							<button
-								className="btn btn-sm"
+								className="ui-button ui-button-small"
 								onClick={() => {
 									setSelected(note.id);
 									setText(note.text);
@@ -142,7 +142,10 @@ function NotesEditor({ publicId }: { publicId: string }) {
 							>
 								Edit
 							</button>
-							<button className="btn btn-ghost btn-sm" onClick={() => remove(note.id)}>
+							<button
+								className="ui-button ui-button-quiet ui-button-small"
+								onClick={() => remove(note.id)}
+							>
 								Delete
 							</button>
 						</div>

@@ -12,19 +12,19 @@ export default function RecoveryForm({
 	return (
 		<>
 			<title>Reset password</title>
-			<div className="card mx-auto my-8 max-w-md bg-base-200 p-6">
+			<div className="ui-panel mx-auto my-8 max-w-md bg-surface p-6">
 				<h1 className="mb-4 text-2xl font-bold">Reset password</h1>
 				<p className="mb-4">Enter your account email and we’ll send you a reset link.</p>
 				{form?.error && (
 					<>
-						<p role="alert" className="mb-4 alert alert-error">
+						<p role="alert" className="ui-message ui-message-error mb-4">
 							{form.error}
 						</p>
 					</>
 				)}
 				{form?.successMessage && (
 					<>
-						<p role="status" className="mb-4 alert alert-success">
+						<p role="status" className="ui-message ui-message-success mb-4">
 							{form.successMessage}
 						</p>
 					</>
@@ -36,14 +36,14 @@ export default function RecoveryForm({
 						name="email"
 						type="email"
 						autoComplete="email"
-						className="input-bordered input w-full"
+						className="ui-field w-full"
 						required
 					/>
-					<button type="submit" className="btn btn-primary">
+					<button type="submit" className="ui-button ui-button-primary">
 						Send reset link
 					</button>
 				</Form>
-				<Link to="/login" className="mt-4 link">
+				<Link to="/login" className="ui-link mt-4">
 					Back to sign in
 				</Link>
 			</div>

@@ -6,7 +6,8 @@ import { requestState, setRequestState, type FrontendEnv } from './request-conte
 export function createFrontendWorker(
 	handle: RequestHandler,
 	isolate = false,
-	role: JwtType = isolate ? 'user' : 'admin'
+	role: JwtType = isolate ? 'user' : 'admin',
+	themeCss = ''
 ) {
 	return {
 		async fetch(request: Request, env: FrontendEnv) {
@@ -29,7 +30,7 @@ export function createFrontendWorker(
 				browserAction && crossOriginAction(request)
 					? new Response('Cross-site form submissions are forbidden.', { status: 403 })
 					: mcp
-						? await proxyMcp(request, url, role, requestState(context))
+						? await proxyMcp(request, url, role, requestState(context), themeCss)
 						: await handle(request, context);
 			const headers = new Headers(response.headers);
 			const containsToken = new URL(request.url).searchParams.has('t');
@@ -70,7 +71,8 @@ async function proxyMcp(
 	request: Request,
 	url: URL,
 	role: JwtType,
-	state: ReturnType<typeof requestState>
+	state: ReturnType<typeof requestState>,
+	themeCss: string
 ) {
 	const { JWT_SECRET, PUBLIC_API_URL } = state.env;
 	if (state.env.MCP_ENABLED !== 'true' || !JWT_SECRET || !PUBLIC_API_URL)
@@ -97,6 +99,6 @@ async function proxyMcp(
 	const response = await state.fetch(new Request(upstream, { headers, redirect: 'manual' }));
 	return url.pathname === '/oauth/authorize' &&
 		response.headers.get('content-type')?.includes('application/json')
-		? renderMcpConsent(response, parseCookie(request.headers.get('cookie'), 'theme'))
+		? renderMcpConsent(response, parseCookie(request.headers.get('cookie'), 'theme'), themeCss)
 		: response;
 }

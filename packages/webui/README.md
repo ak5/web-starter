@@ -15,7 +15,7 @@ and the upstream fetch function. The middleware checks the active session with
 the API before accepting or refreshing its cookie.
 
 Each app's Tailwind stylesheet includes `@source '../../webui/src';` to
-generate the components' utilities. Components use DaisyUI and React Router
+generate the components' utilities. Components use shared CSS and React Router
 forms and links.
 
 `pnpm --filter @ak5/webui build` emits JavaScript and declarations into

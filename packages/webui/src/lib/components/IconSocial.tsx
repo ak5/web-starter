@@ -55,7 +55,7 @@ export default function IconSocial({
 		url ||
 		(name === 'discord' && channelId ? `https://discord.com/channels/${channelId}` : undefined);
 	if (!entry)
-		return <span className="inline-block h-4 w-4 rounded-full bg-base-300" aria-label={name} />;
+		return <span className="inline-block h-4 w-4 rounded-full bg-raised" aria-label={name} />;
 	const [icon, brandColor] = entry;
 	const pixels =
 		typeof size === 'number' ? size : size ? (sizes[size] ?? (parseInt(size, 10) || 1) * 16) : 16;

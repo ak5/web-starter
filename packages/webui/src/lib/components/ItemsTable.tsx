@@ -19,7 +19,7 @@ export default function ItemsTable({
 	const colSpan = 2 + Number(showOwner) + Number(Boolean(actions));
 	return (
 		<div className="overflow-x-auto">
-			<table className="table">
+			<table className="ui-table">
 				<thead>
 					<tr>
 						<th>Title</th>
@@ -46,16 +46,13 @@ export default function ItemsTable({
 											{typeof title === 'string' && title.trim() ? title : '—'}
 										</div>
 										{rest.length > 0 && (
-											<div className="max-w-xs truncate font-mono text-xs text-base-content/50">
+											<div className="max-w-xs truncate font-mono text-xs text-ink/50">
 												{JSON.stringify(Object.fromEntries(rest))}
 											</div>
 										)}
 									</td>
 									{showOwner && <td>{item.owner ?? '—'}</td>}
-									<td
-										className="text-sm whitespace-nowrap text-base-content/70"
-										suppressHydrationWarning
-									>
+									<td className="text-sm whitespace-nowrap text-ink/70" suppressHydrationWarning>
 										{new Date(item.createdAt).toLocaleString()}
 									</td>
 									{actions && <td className="text-right">{actions(item)}</td>}
@@ -64,7 +61,7 @@ export default function ItemsTable({
 						})
 					) : (
 						<tr>
-							<td colSpan={colSpan} className="text-center text-base-content/60">
+							<td colSpan={colSpan} className="text-center text-ink/60">
 								No items yet.
 							</td>
 						</tr>

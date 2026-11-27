@@ -252,5 +252,6 @@ component for social-platform icons. **Do NOT use inline SVGs.**
 
 ## Design
 
-English-only UI. DaisyUI theme. Single-page app feel — minimize chrome, favor
-focused content per route.
+English-only UI. Use the shared tokens and controls described in the
+[portal design guide](docs/development/design.md). Keep customer pages focused
+on the next action and use compact layouts for signed-in admin work.
