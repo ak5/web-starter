@@ -27,6 +27,7 @@ export default function Users({ loaderData: page, actionData }: Route.ComponentP
 		setTarget({ id, name });
 	}
 	const navigation = useNavigation();
+	const [replacementId, setReplacementId] = useState('');
 	const [inviteRole, setInviteRole] = useState('user');
 	const [copiedUrl, setCopiedUrl] = useState('');
 	const [inviteOpen, setInviteOpen] = useState(false);
@@ -56,6 +57,29 @@ export default function Users({ loaderData: page, actionData }: Route.ComponentP
 			current = false;
 		};
 	}, [inviteUrl]);
+	function openInvite(id = '', role = 'user') {
+		if (navigation.state !== 'idle') return;
+		setTarget(null);
+		deletion.reset();
+		setPreviousInvite(actionData);
+		setCopiedUrl('');
+		setReplacementId(id);
+		setInviteRole(role);
+		setInviteOpen(true);
+	}
+	function replacementButton(row: AccountRow, role: 'user' | 'admin') {
+		return (
+			row.pendingInvite && (
+				<button
+					type="button"
+					className="ui-button ui-button-quiet ui-button-small"
+					onClick={() => openInvite(row.publicId, role)}
+				>
+					Replace invitation
+				</button>
+			)
+		);
+	}
 	return (
 		<section className="mx-auto w-full max-w-[96rem] px-4 py-5 sm:px-6">
 			<div className="mb-4 flex flex-wrap items-center justify-between gap-(--toolbar-gap)">
@@ -66,15 +90,7 @@ export default function Users({ loaderData: page, actionData }: Route.ComponentP
 					type="button"
 					className="ui-button ui-button-primary"
 					aria-disabled={navigation.state !== 'idle'}
-					onClick={() => {
-						if (navigation.state !== 'idle') return;
-						setTarget(null);
-						deletion.reset();
-						setPreviousInvite(actionData);
-						setCopiedUrl('');
-						setInviteRole('user');
-						setInviteOpen(true);
-					}}
+					onClick={() => openInvite()}
 				>
 					Invite
 				</button>
@@ -85,13 +101,16 @@ export default function Users({ loaderData: page, actionData }: Route.ComponentP
 					rows={page.users}
 					empty="No users yet."
 					actions={(row) => (
-						<button
-							type="button"
-							className="ui-button ui-button-quiet ui-button-small text-danger"
-							onClick={() => selectDeletion(row.publicId, row.username)}
-						>
-							Delete user
-						</button>
+						<>
+							{replacementButton(row, 'user')}
+							<button
+								type="button"
+								className="ui-button ui-button-quiet ui-button-small text-danger"
+								onClick={() => selectDeletion(row.publicId, row.username)}
+							>
+								Delete user
+							</button>
+						</>
 					)}
 				/>
 				{deletedId && <p role="status">User deleted.</p>}
@@ -102,49 +121,68 @@ export default function Users({ loaderData: page, actionData }: Route.ComponentP
 				rows={page.admins.map((admin) => ({
 					...admin,
 					role: 'Admin',
-					statusLabel: admin.emailVerified ? 'Verified' : 'Unverified'
+					statusLabel: admin.pendingInvite
+						? 'Pending invitation'
+						: admin.emailVerified
+							? 'Verified'
+							: 'Unverified'
 				}))}
 				empty="No admins yet."
+				actions={(row) => replacementButton(row, 'admin')}
 			/>
-			<Modal open={inviteOpen} title="Invite someone" onClose={() => setInviteOpen(false)}>
+			<Modal
+				open={inviteOpen}
+				title={replacementId ? 'Replace invitation' : 'Invite someone'}
+				onClose={() => setInviteOpen(false)}
+			>
 				{inviteOpen && (
 					<>
 						<Form method="post" className="grid gap-3">
-							<label htmlFor="invite-email">Email</label>
-							<input
-								id="invite-email"
-								name="email"
-								type="email"
-								required
-								className="ui-field w-full"
-							/>
-							<label htmlFor="invite-username">Username</label>
-							<input
-								id="invite-username"
-								name="username"
-								pattern="[A-Za-z0-9_]{5,20}"
-								required
-								className="ui-field w-full"
-								aria-describedby="invite-username-help"
-							/>
-							<p id="invite-username-help" className="text-sm">
-								Use 5–20 letters, numbers, or underscores.
-							</p>
-							<label htmlFor="invite-role">Role</label>
-							<select
-								id="invite-role"
-								name="role"
-								className="ui-field w-full"
-								value={inviteRole}
-								onChange={(event) => setInviteRole(event.currentTarget.value)}
-								aria-describedby="invite-role-help"
-							>
-								<option value="user">User</option>
-								<option value="admin">Admin</option>
-							</select>
-							<p id="invite-role-help" className="text-sm">
-								Admin invitations must be sent by email.
-							</p>
+							{replacementId ? (
+								<>
+									<input type="hidden" name="replacementId" value={replacementId} />
+									<input type="hidden" name="role" value={inviteRole} />
+									<p>Creating a replacement makes the previous invitation link invalid.</p>
+								</>
+							) : (
+								<>
+									<label htmlFor="invite-email">Email</label>
+									<input
+										id="invite-email"
+										name="email"
+										type="email"
+										required
+										className="ui-field w-full"
+									/>
+									<label htmlFor="invite-username">Username</label>
+									<input
+										id="invite-username"
+										name="username"
+										pattern="[A-Za-z0-9_]{5,20}"
+										required
+										className="ui-field w-full"
+										aria-describedby="invite-username-help"
+									/>
+									<p id="invite-username-help" className="text-sm">
+										Use 5–20 letters, numbers, or underscores.
+									</p>
+									<label htmlFor="invite-role">Role</label>
+									<select
+										id="invite-role"
+										name="role"
+										className="ui-field w-full"
+										value={inviteRole}
+										onChange={(event) => setInviteRole(event.currentTarget.value)}
+										aria-describedby="invite-role-help"
+									>
+										<option value="user">User</option>
+										<option value="admin">Admin</option>
+									</select>
+									<p id="invite-role-help" className="text-sm">
+										Admin invitations must be sent by email.
+									</p>
+								</>
+							)}
 							<div className="flex flex-wrap gap-2">
 								<button
 									name="delivery"
@@ -152,7 +190,7 @@ export default function Users({ loaderData: page, actionData }: Route.ComponentP
 									className="ui-button ui-button-primary"
 									disabled={navigation.state !== 'idle'}
 								>
-									Send email invite
+									{replacementId ? 'Send replacement email' : 'Send email invite'}
 								</button>
 								<button
 									name="delivery"
@@ -160,7 +198,9 @@ export default function Users({ loaderData: page, actionData }: Route.ComponentP
 									className="ui-button"
 									disabled={inviteRole === 'admin' || navigation.state !== 'idle'}
 								>
-									Create and copy invite link
+									{replacementId
+										? 'Create and copy replacement link'
+										: 'Create and copy invite link'}
 								</button>
 							</div>
 						</Form>
@@ -245,6 +285,7 @@ type AccountRow = {
 	email: string | null;
 	role: string;
 	statusLabel: string;
+	pendingInvite: boolean;
 };
 
 function AccountTable({

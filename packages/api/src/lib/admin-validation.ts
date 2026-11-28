@@ -54,6 +54,8 @@ export const auditLogQuerySchema = z.object({
 export const auditLogActionOptions = [
 	'user.invite',
 	'admin_user.invite',
+	'user.invite.replace',
+	'admin_user.invite.replace',
 	'user.delete',
 	'user.ban',
 	'user.unban',

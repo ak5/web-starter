@@ -94,7 +94,8 @@ for (const role of ['user', 'admin']) {
 		const destination = role === 'admin' ? admins : users;
 		const row = destination.getByRole('row').filter({ hasText: email });
 		await expect(row).toBeVisible();
-		if (role === 'admin') await expect(row.getByRole('cell', { name: 'Unverified' })).toBeVisible();
+		if (role === 'admin')
+			await expect(row.getByRole('cell', { name: 'Pending invitation' })).toBeVisible();
 		await expect((role === 'admin' ? users : admins).getByText(email, { exact: true })).toHaveCount(
 			0
 		);
@@ -176,4 +177,22 @@ test('audit log shows invitations and filters by record', async ({ page }) => {
 	await expect(page.getByText('No audit entries found.')).toBeVisible();
 	await page.goto('/audit-log?action=user.invite&page=999999');
 	await expect(page).not.toHaveURL(/page=999999/);
+});
+
+test('can replace a pending invitation from the Users list', async ({ page }) => {
+	await page.getByRole('button', { name: 'Invite', exact: true }).click();
+	const email = uniqueEmail();
+	await page.getByLabel('Email', { exact: true }).fill(email);
+	await page.getByLabel('Username', { exact: true }).fill(uniqueUsername());
+	await page.getByRole('button', { name: 'Create and copy invite link' }).click();
+	const url = page.getByLabel('One-time invite link');
+	await expect(url).toHaveValue(/\/invite\?t=[a-f0-9]{48}$/);
+	const previous = await url.inputValue();
+	await page.keyboard.press('Escape');
+	const row = page.getByRole('row').filter({ hasText: email });
+	await expect(row.getByText('Pending invitation')).toBeVisible();
+	await row.getByRole('button', { name: 'Replace invitation' }).click();
+	await page.getByRole('button', { name: 'Create and copy replacement link' }).click();
+	await expect(url).toHaveValue(/\/invite\?t=[a-f0-9]{48}$/);
+	expect(await url.inputValue()).not.toBe(previous);
 });
