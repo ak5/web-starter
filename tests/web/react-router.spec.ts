@@ -71,8 +71,75 @@ test('item form intents update the server list and clear a successful creation',
 		const row = page.getByRole('row').filter({ hasText: 'Starter item' });
 		await expect(row).toBeVisible();
 		await expect(title).toHaveValue('');
-		await row.getByRole('button', { name: 'Delete' }).click();
+		const trigger = row.getByRole('button', { name: 'Delete' });
+		await trigger.click();
+		const dialog = page.getByRole('dialog', { name: 'Delete Starter item?' });
+		const confirmation = dialog.getByRole('textbox', { name: 'Type DELETE to confirm' });
+		const confirm = dialog.getByRole('button', { name: 'Delete permanently' });
+		await expect(confirmation).toBeFocused();
+		await confirmation.fill('delete');
+		await expect(confirm).toBeDisabled();
+		await page.keyboard.press('Escape');
+		await expect(trigger).toBeFocused();
+		await trigger.click();
+		await expect(confirmation).toHaveValue('');
+		await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
+		await expect(row).toBeVisible();
+		await trigger.click();
+		const { items } = await (await api.get('/items')).json();
+		const action = new URL('/items', webUrl).href;
+		for (const confirmation of [undefined, 'delete']) {
+			const response = await page.request.post(action, {
+				headers: { origin: webUrl },
+				form: {
+					intent: 'delete',
+					id: items[0].id,
+					...(confirmation === undefined ? {} : { confirmation })
+				}
+			});
+			expect(response.status()).toBe(400);
+		}
+
+		let attempts = 0;
+		let releasePost!: () => void;
+		const holdPost = new Promise<void>((resolve) => {
+			releasePost = resolve;
+		});
+		await page.route(/\/items(?:\.data)?(?:\?|$)/, async (route) => {
+			const request = route.request();
+			if (request.method() !== 'POST') return route.fallback();
+			attempts++;
+			if (attempts === 1) {
+				const fields = new URLSearchParams(request.postData() ?? '');
+				fields.set('confirmation', 'delete');
+				await route.fulfill({ response: await route.fetch({ postData: fields.toString() }) });
+				return;
+			}
+			await holdPost;
+			await route.continue();
+		});
+		await confirmation.fill('DELETE');
+		await confirm.click();
+		await expect(dialog.getByRole('alert')).toHaveText('Type DELETE to confirm.');
+		await expect(row).toBeVisible();
+		try {
+			await dialog.locator('form').evaluate((form: HTMLFormElement) => {
+				form.requestSubmit();
+				form.requestSubmit();
+			});
+			await expect(dialog.getByRole('button', { name: 'Working…' })).toBeDisabled();
+			await page.keyboard.press('Escape');
+			await expect(dialog).toBeVisible();
+		} finally {
+			releasePost();
+		}
+
 		await expect(row).toHaveCount(0);
+		await expect(
+			page.getByRole('status', { name: '' }).filter({ hasText: 'Item deleted.' })
+		).toBeVisible();
+		await expect(page.getByRole('heading', { name: 'Your items' })).toBeFocused();
+		expect(attempts).toBe(2);
 		for (let index = 0; index < 51; index++) {
 			const response = await api.post('/items', {
 				data: { data: { title: `Page item ${index}` } }
@@ -82,7 +149,16 @@ test('item form intents update the server list and clear a successful creation',
 		await page.reload();
 		await page.getByRole('link', { name: 'Next page' }).click();
 		await expect(page).toHaveURL(`${webUrl}/items?page=1`);
-		await expect(page.getByRole('row').filter({ hasText: 'Page item 0' })).toBeVisible();
+		const lastRow = page.getByRole('row').filter({ hasText: /Page item \d+/ });
+		await expect(lastRow).toHaveCount(1);
+		const lastTitle = (await lastRow.getByRole('cell').first().innerText()).trim();
+		await lastRow.getByRole('button', { name: 'Delete', exact: true }).click();
+		const lastDialog = page.getByRole('dialog', { name: `Delete ${lastTitle}?` });
+		await lastDialog.getByRole('textbox', { name: 'Type DELETE to confirm' }).fill('DELETE');
+		await lastDialog.getByRole('button', { name: 'Delete permanently' }).click();
+		await expect(page).toHaveURL(`${webUrl}/items?page=0`);
+		await expect(lastDialog).toBeHidden();
+		await expect(page.getByRole('heading', { name: 'Your items' })).toBeFocused();
 	} finally {
 		await api.dispose();
 	}

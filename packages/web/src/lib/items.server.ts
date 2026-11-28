@@ -3,6 +3,7 @@
  * Server-side throughout so the JWT cookie travels to the api; the route module
  * just re-exports these (keeps the route thin per the split-boundary audit).
  */
+import { DELETE_CONFIRMATION } from '@ak5/webui';
 import { data, redirect } from 'react-router';
 import type { ApiRequestEvent } from '@ak5/webui/server';
 import { apiLoadJson } from '@ak5/webui/server';
@@ -17,7 +18,7 @@ export const loadItems = async (event: ApiRequestEvent) => {
 	if (!('items' in body)) throw data('Could not load items. Please retry.', { status: 502 });
 	if (body.pagination.page >= body.pagination.totalPages) {
 		url.searchParams.set('page', String(body.pagination.totalPages - 1));
-		throw redirect(url.pathname + url.search);
+		throw redirect('/items' + url.search);
 	}
 	return { items: body.items, pagination: body.pagination };
 };
@@ -31,6 +32,8 @@ export const itemsActions = {
 		return { created: true };
 	},
 	delete: async (event: ApiRequestEvent, form: FormData) => {
+		if (form.get('confirmation') !== DELETE_CONFIRMATION)
+			return data({ message: 'Type DELETE to confirm.' }, { status: 400 });
 		const id = String(form.get('id') ?? '');
 		if (!id) return data({ message: 'Missing item id.' }, { status: 400 });
 		const res = await api(event).items[':id'].$delete({ param: { id } });
