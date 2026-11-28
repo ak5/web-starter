@@ -10,3 +10,9 @@ gem 'benchmark'
 gem 'mutex_m'
 gem 'nkf'
 gem 'tsort'
+
+# shortcut: pin Core until a released version supports patched Active Support.
+gem 'cocoapods-core', git: 'https://github.com/CocoaPods/Core.git', ref: 'b026f6c820bab79a83536907145317fc7e1b473d'
+gem 'activesupport', '>= 8.0.5.2', '< 8.1'
+# Active Support 8.0 passes a JSON option that JSON 3 rejects.
+gem 'json', '>= 2.21.2', '< 3'
