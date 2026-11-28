@@ -1,3 +1,4 @@
+import { requestEmailChange, confirmEmailChange } from '../lib/auth-postlogin';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { eq } from 'drizzle-orm';
@@ -507,4 +508,63 @@ test('D1 lists active accounts beyond the first admin users page', async (t) => 
 		Array.from({ length: 9 }, (_, index) => `account-00${9 - index}`)
 	);
 	assert.equal(second.pagination.hasNext, false);
+});
+
+test('email changes verify the new address atomically for users and admins', async (t) => {
+	const local = await createTestDatabase();
+	t.after(local.dispose);
+	const db = makeDb(local.binding);
+	for (const role of ['user', 'admin'] as const) {
+		const table = role === 'user' ? users : adminUsers;
+		const id = role + '-change';
+		const publicId = (role === 'user' ? 'u-' : 'a-') + id;
+		const before = role + '@example.test';
+		const after = role + '-new@example.test';
+		let code = '';
+		let fail = false;
+		const env = {
+			JWT_SECRET: 'email-change-test',
+			COOKIE_ORIGIN: 'localhost',
+			PUBLIC_EMAIL_FROM: 'sender@example.test',
+			EMAIL: {
+				send: async (message: { html: string }) => {
+					if (fail) throw new Error('delivery failed');
+					code = message.html.match(/<strong>([A-Z2-9]{6})<\/strong>/)?.[1] ?? code;
+					return { messageId: 'test' };
+				}
+			}
+		} as unknown as Env;
+		await db.insert(table).values({ id, publicId, username: role + 'test', email: before });
+		await db
+			.insert(authEmail)
+			.values({ subjectType: role, subjectId: id, email: before, passwordHashed: 'fixture' });
+		const auth = {
+			sub: publicId,
+			type: role,
+			email: before,
+			name: role,
+			hasPassword: true,
+			emailConfirmed: true,
+			recentAuthAt: Math.floor(Date.now() / 1000)
+		};
+		const confirm = () => confirmEmailChange(db, env, auth, code, () => {});
+		fail = true;
+		assert.equal((await requestEmailChange(db, env, auth, after)).ok, false);
+		assert.equal((await db.select().from(tokens)).length, 0);
+		fail = false;
+		assert.equal((await requestEmailChange(db, env, auth, after)).ok, true);
+		assert.match(code, /^[A-Z2-9]{6}$/);
+		await db.update(tokens).set({ expiresAt: new Date(0) });
+		assert.equal((await confirm()).ok, false);
+		assert.equal((await requestEmailChange(db, env, auth, after)).ok, true);
+		const attempts = await Promise.all([confirm(), confirm()]);
+		assert.equal(attempts.filter((result) => result.ok).length, 1);
+		const [changed] = await db.select().from(table).where(eq(table.id, id));
+		assert.equal(changed.email, after);
+		assert.equal(changed.emailVerified, true);
+		assert.equal(changed.sessionVersion, 1);
+		assert.ok(await db.query.authEmail.findFirst({ where: eq(authEmail.email, after) }));
+		assert.equal((await confirm()).ok, false);
+		assert.equal((await db.select().from(tokens)).length, 0);
+	}
 });

@@ -2,6 +2,7 @@ import { data } from 'react-router';
 import {
 	apiCookieStaticRedirectAction,
 	apiErrorBody,
+	emailChangeAction,
 	apiJsonAction,
 	apiLoadJson,
 	formString,
@@ -36,6 +37,28 @@ export async function updateProfile(event: ApiRequestEvent) {
 	const form = await event.request.formData();
 	const client = api(event);
 	switch (form.get('intent')) {
+		case 'request-email-change':
+			return emailChangeAction(
+				await client.auth['request-email-change'].$post({
+					json: { newEmail: formString(form, 'newEmail') }
+				}),
+				cookies,
+				'Check the new address for your code.'
+			);
+		case 'confirm-email-change':
+			return emailChangeAction(
+				await client.auth['confirm-email-change'].$post({
+					json: { code: formString(form, 'code') }
+				}),
+				cookies,
+				'Email updated.'
+			);
+		case 'reauth-security':
+			return emailChangeAction(
+				await client.auth['request-reauth'].$post(),
+				cookies,
+				'Check your email to continue.'
+			);
 		case 'profile':
 			return apiJsonAction<{ successMessage: string }>(
 				await client.me.profile.$patch({

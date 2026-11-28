@@ -122,3 +122,8 @@ frontend session-validity check. See [session revocation](../auth.md#session-rev
 and file signature. Objects are served with `image/webp` metadata. This is a
 signature check rather than an image decoder. Admin user deletion and its audit
 entry commit atomically; see [retention](../security.md#avatar-uploads-and-retention).
+
+`POST /auth/request-email-change` accepts `{newEmail}` and emails a code.
+`POST /auth/confirm-email-change` accepts `{code}` and returns the replacement
+session cookie. Both require recent authentication and apply to the signed-in
+user or admin.

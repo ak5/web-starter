@@ -265,3 +265,11 @@ Open **Account** to update your profile, upload a WebP avatar, or check email
 verification. Use **Password settings** to manage your password. To delete an
 account, sign in again when prompted and type `DELETE` to confirm. Deletion
 revokes sign-in and retains stored data and uploads.
+
+### Change a sign-in email
+
+Users and admins with a password can request a code after a recent sign-in.
+Enter the code from the new address within ten minutes. Confirmation verifies
+the new address, invalidates outstanding recovery links, and signs out other
+sessions. The current browser stays signed in. The old address receives a
+notification.
