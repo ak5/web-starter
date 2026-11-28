@@ -15,7 +15,7 @@ type AdminAuditLogQuery = {
 
 export async function adminAuditLog(db: Database, query: AdminAuditLogQuery) {
 	const limit = queryLimit(query.limit, 50, 100);
-	const page = queryOffsetPage(query.page);
+	const page = queryOffsetPage(query.page, limit);
 	const action = optionalQueryFilter(query.action, 128);
 	const entityType = optionalQueryFilter(query.entityType, 64);
 	const entityId = optionalQueryFilter(query.entityId, 24);
