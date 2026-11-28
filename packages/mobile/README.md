@@ -16,6 +16,11 @@ selects Ruby 4 and Java 25. For iOS, run `bundle install` from this package and
 simulator runtime checks so the app can access its Keychain group. The entitlement
 uses the build's application identifier.
 
+The Ruby bundle pins a [CocoaPods Core commit](https://github.com/CocoaPods/Core/pull/790)
+to allow patched Active Support. It uses JSON 2 while Active Support 8.0 needs
+that compatibility. Replace these pins when the released CocoaPods stack
+supports the patched dependencies together.
+
 Android debug builds need a local `android/app/debug.keystore`. From this
 package, create it if it is missing:
 
