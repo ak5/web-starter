@@ -1,4 +1,4 @@
-import { and, desc, eq, exists, isNull, sql } from 'drizzle-orm';
+import { and, desc, eq, exists, isNotNull, isNull, not, or, sql } from 'drizzle-orm';
 import {
 	COOKIE_ADMIN_TOKEN,
 	COOKIE_TOKEN,
@@ -61,7 +61,47 @@ function pendingInvitation(db: Database, account: typeof users | typeof adminUse
 	)!;
 }
 
-export async function adminUserList(db: Database, page: number, offset: number, limit: number) {
+export async function adminUserList(
+	db: Database,
+	page: number,
+	offset: number,
+	limit: number,
+	filter: { q?: string; status?: string } = {}
+) {
+	const q = filter.q?.trim().slice(0, 254) ?? '';
+	const status = filter.status ?? 'all';
+	function search(account: typeof users | typeof adminUsers) {
+		if (!q) return undefined;
+		return or(
+			...[account.email, account.username, account.publicId].map(
+				(column) => sql`instr(lower(${column}), lower(${q})) > 0`
+			)
+		);
+	}
+	const pendingUser = pendingInvitation(db, users);
+	const pendingAdmin = pendingInvitation(db, adminUsers);
+	const userWhere = and(
+		isNull(users.deletedAt),
+		search(users),
+		status === 'pending'
+			? pendingUser
+			: status === 'banned'
+				? isNotNull(users.bannedAt)
+				: status === 'active'
+					? and(isNull(users.bannedAt), not(pendingUser))
+					: undefined
+	);
+	const adminWhere = and(
+		isNull(adminUsers.deletedAt),
+		search(adminUsers),
+		status === 'pending'
+			? pendingAdmin
+			: status === 'banned'
+				? sql`0`
+				: status === 'active'
+					? not(pendingAdmin)
+					: undefined
+	);
 	const [rows, admins, total] = await Promise.all([
 		db
 			.select({
@@ -76,7 +116,7 @@ export async function adminUserList(db: Database, page: number, offset: number, 
 					sql<boolean>`case when ${pendingInvitation(db, users)} then 1 else 0 end`.mapWith(Boolean)
 			})
 			.from(users)
-			.where(isNull(users.deletedAt))
+			.where(userWhere)
 			.orderBy(desc(users.createdAt), desc(users.publicId))
 			.limit(limit)
 			.offset(offset),
@@ -92,13 +132,14 @@ export async function adminUserList(db: Database, page: number, offset: number, 
 					)
 			})
 			.from(adminUsers)
-			.where(isNull(adminUsers.deletedAt))
+			.where(adminWhere)
 			.orderBy(adminUsers.username),
-		db.$count(users, isNull(users.deletedAt))
+		db.$count(users, userWhere)
 	]);
 
 	return {
 		admins,
+		filters: { q, status },
 		pagination: getPaginationMeta(total, page, limit),
 		users: rows.map((user) => ({
 			publicId: user.publicId,
