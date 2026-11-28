@@ -196,3 +196,21 @@ test('can replace a pending invitation from the Users list', async ({ page }) =>
 	await expect(url).toHaveValue(/\/invite\?t=[a-f0-9]{48}$/);
 	expect(await url.inputValue()).not.toBe(previous);
 });
+
+test('searches account sections and filters pending invitations', async ({ page }) => {
+	await page.getByRole('button', { name: 'Invite', exact: true }).click();
+	const email = uniqueEmail();
+	await page.getByLabel('Email', { exact: true }).fill(email);
+	await page.getByLabel('Username', { exact: true }).fill(uniqueUsername());
+	await page.getByRole('button', { name: 'Send email invite' }).click();
+	await expect(page.getByRole('status')).toHaveText('Invitation sent.');
+	await page.keyboard.press('Escape');
+	await page.getByLabel('Search accounts').fill(email.toUpperCase());
+	await page.getByRole('combobox', { name: 'Status', exact: true }).selectOption('pending');
+	await page.getByRole('button', { name: 'Search', exact: true }).click();
+	await expect(page.getByRole('row').filter({ hasText: email })).toBeVisible();
+	await expect(page.getByText('No admins match.')).toBeVisible();
+	await page.getByRole('combobox', { name: 'Status', exact: true }).selectOption('active');
+	await page.getByRole('button', { name: 'Search', exact: true }).click();
+	await expect(page.getByText('No users match.')).toBeVisible();
+});

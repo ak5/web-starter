@@ -485,6 +485,19 @@ test('D1 lists active accounts beyond the first admin users page', async (t) => 
 		)
 	);
 	const first = await adminUserList(db, 0, 0, 100);
+	const filtered = await adminUserList(db, 0, 0, 100, { q: 'U-ACCOUNT-009', status: 'active' });
+	assert.deepEqual(
+		filtered.users.map(({ username }) => username),
+		['account-009']
+	);
+	assert.equal(filtered.pagination.total, 1);
+	await db.update(users).set({ bannedAt: createdAt }).where(eq(users.id, 'account-009'));
+	const banned = await adminUserList(db, 0, 0, 100, { status: 'banned' });
+	assert.deepEqual(
+		banned.users.map(({ username }) => username),
+		['account-009']
+	);
+	await db.update(users).set({ bannedAt: null }).where(eq(users.id, 'account-009'));
 	const second = await adminUserList(db, 1, 100, 100);
 	assert.equal(first.users.length, 100);
 	assert.equal(first.pagination.total, 109);

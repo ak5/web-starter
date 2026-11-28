@@ -95,11 +95,38 @@ export default function Users({ loaderData: page, actionData }: Route.ComponentP
 					Invite
 				</button>
 			</div>
+			<Form
+				method="get"
+				className="mb-4 flex flex-wrap items-end gap-(--toolbar-gap)"
+				key={JSON.stringify(page.filters)}
+			>
+				<label className="grid gap-1">
+					Search accounts
+					<input
+						name="q"
+						type="search"
+						maxLength={254}
+						defaultValue={page.filters.q}
+						placeholder="Email, username, or account ID"
+						className="ui-field"
+					/>
+				</label>
+				<label className="grid gap-1">
+					Status
+					<select name="status" defaultValue={page.filters.status} className="ui-field">
+						<option value="all">All</option>
+						<option value="active">Active</option>
+						<option value="banned">Banned</option>
+						<option value="pending">Pending invitations</option>
+					</select>
+				</label>
+				<button className="ui-button">Search</button>
+			</Form>
 			<div className="mb-6">
 				<AccountTable
 					title="Regular users"
 					rows={page.users}
-					empty="No users yet."
+					empty="No users match."
 					actions={(row) => (
 						<>
 							{replacementButton(row, 'user')}
@@ -127,7 +154,7 @@ export default function Users({ loaderData: page, actionData }: Route.ComponentP
 							? 'Verified'
 							: 'Unverified'
 				}))}
-				empty="No admins yet."
+				empty="No admins match."
 				actions={(row) => replacementButton(row, 'admin')}
 			/>
 			<Modal

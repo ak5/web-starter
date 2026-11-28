@@ -2,12 +2,20 @@ import { DELETE_CONFIRMATION } from '@ak5/webui';
 import { data, redirect } from 'react-router';
 import { apiLoadJson, type ApiRequestEvent } from '@ak5/webui/server';
 import { api } from './api.server';
+function accountStatus(value: string | null) {
+	return value === 'active' || value === 'banned' || value === 'pending' ? value : 'all';
+}
 export async function loadUsers(event: ApiRequestEvent) {
 	const url = new URL(event.request.url);
 	const response = await api(event).admin.users.$get({
-		query: { page: url.searchParams.get('page') ?? '0' }
+		query: {
+			page: url.searchParams.get('page') ?? '0',
+			q: url.searchParams.get('q') ?? undefined,
+			status: accountStatus(url.searchParams.get('status'))
+		}
 	});
 	const data = await apiLoadJson(response, 'Could not load users. Please retry.');
+	if (!('pagination' in data)) throw new Response('Invalid users response', { status: 502 });
 	if (data.pagination.page >= data.pagination.totalPages) {
 		url.searchParams.set('page', String(data.pagination.totalPages - 1));
 		throw redirect('/' + url.search);
