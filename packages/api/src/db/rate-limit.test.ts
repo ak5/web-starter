@@ -27,12 +27,22 @@ test('D1 rate limits serialize attempts and expire without extending a blocked w
 	assert.equal(responses.filter((r) => r.status === 200).length, 5);
 	assert.equal(responses.filter((r) => r.status === 429).length, 15);
 	const blocked = responses.find((r) => r.status === 429)!;
-	assert.equal(blocked.headers.get('retry-after'), '300');
-	assert.deepEqual(await blocked.json(), { error: 'rate_limited', retryAfter: 300 });
+	const initialRetry = Number(blocked.headers.get('retry-after'));
+	assert.ok(initialRetry > 0 && initialRetry <= 300);
+	assert.deepEqual(await blocked.json(), { error: 'rate_limited', retryAfter: initialRetry });
 	const before = await db.query.rateLimits.findFirst();
 	assert.equal(before?.attempts, 5);
 	assert.equal((await probe.request('/', {}, env)).status, 429);
 	assert.deepEqual(await db.query.rateLimits.findFirst(), before);
+	await db
+		.update(rateLimits)
+		.set({ expiresAt: new Date(Date.now() + 30_000) })
+		.where(eq(rateLimits.key, 'probe:ip:unknown'));
+	const nearExpiry = await probe.request('/', {}, env);
+	assert.equal(nearExpiry.status, 429);
+	const remainingRetry = Number(nearExpiry.headers.get('retry-after'));
+	assert.ok(remainingRetry > 0 && remainingRetry <= 30);
+	assert.deepEqual(await nearExpiry.json(), { error: 'rate_limited', retryAfter: remainingRetry });
 	assert.equal(
 		(await probe.request('/', { headers: { 'cf-connecting-ip': '192.0.2.1' } }, env)).status,
 		200
@@ -50,7 +60,6 @@ test('D1 rate limits serialize attempts and expire without extending a blocked w
 	await db.insert(rateLimits).values({ key: 'expired', attempts: 1, expiresAt: new Date(0) });
 	await purgeExpiredRateLimits({
 		db,
-		kv: {} as KVNamespace,
 		logger: new Logger(undefined, undefined)
 	});
 	assert.equal(

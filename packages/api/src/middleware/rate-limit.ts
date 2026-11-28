@@ -1,5 +1,5 @@
 import type { MiddlewareHandler } from 'hono';
-import { sql } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { rateLimits } from '../db/schema';
 import type { AppContext } from '../types';
 
@@ -22,11 +22,12 @@ export const rateLimit =
 		const auth = c.var.auth;
 		if (config.scope === 'account' && !auth) return c.json({ error: 'unauthorized' }, 401);
 		const identity = config.scope === 'account' ? `${auth!.type}:${auth!.sub}` : `ip:${ip}`;
+		const key = `${config.key}:${identity}`;
 		const now = Date.now();
 		const expiresAt = new Date(now + config.windowSeconds * 1000);
 		const [accepted] = await c.var.db
 			.insert(rateLimits)
-			.values({ key: `${config.key}:${identity}`, attempts: 1, expiresAt })
+			.values({ key, attempts: 1, expiresAt })
 			.onConflictDoUpdate({
 				target: rateLimits.key,
 				set: {
@@ -37,8 +38,14 @@ export const rateLimit =
 			})
 			.returning({ key: rateLimits.key });
 		if (!accepted) {
-			c.header('Retry-After', String(config.windowSeconds));
-			return c.json({ error: 'rate_limited', retryAfter: config.windowSeconds }, 429);
+			const current = await c.var.db.query.rateLimits.findFirst({
+				where: eq(rateLimits.key, key),
+				columns: { expiresAt: true }
+			});
+			const remaining = current ? Math.ceil((current.expiresAt.getTime() - Date.now()) / 1000) : 0;
+			const retryAfter = Math.max(1, Math.min(config.windowSeconds, remaining));
+			c.header('Retry-After', String(retryAfter));
+			return c.json({ error: 'rate_limited', retryAfter }, 429);
 		}
 		await next();
 	};

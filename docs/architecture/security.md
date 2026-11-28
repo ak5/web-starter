@@ -16,8 +16,8 @@ are not authorization: every private resource still needs an ownership/role chec
 D1 stores one counter per action and caller. An atomic upsert admits at most the
 configured number of requests in a fixed window starting with the first attempt.
 Blocked requests neither increment the counter nor extend the window. A rejection
-returns `429 {error: "rate_limited", retryAfter: 300}` with `Retry-After: 300`;
-waiting that long is sufficient even if the window expires sooner.
+returns HTTP 429 and reports the remaining seconds in both the `Retry-After`
+header and the `retryAfter` response field.
 
 Public login, registration, password recovery and invite acceptance use the caller
 IP (`cf-connecting-ip`, falling back to `x-forwarded-for` for local/proxy traffic).
