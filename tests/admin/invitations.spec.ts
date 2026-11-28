@@ -214,3 +214,28 @@ test('searches account sections and filters pending invitations', async ({ page 
 	await page.getByRole('button', { name: 'Search', exact: true }).click();
 	await expect(page.getByText('No users match.')).toBeVisible();
 });
+
+test('bans and unbans from Users and records both actions', async ({ page, playwright }) => {
+	const userApi = await newApiContext(playwright);
+	try {
+		const account = await registerUser(userApi);
+		await page.getByLabel('Search accounts').fill(account.email);
+		await page.getByRole('button', { name: 'Search', exact: true }).click();
+		const row = page.getByRole('row').filter({ hasText: account.email });
+		await row.getByRole('button', { name: 'Ban', exact: true }).click();
+		await page.getByRole('dialog').getByRole('button', { name: 'Ban user' }).click();
+		await expect(row.getByRole('cell', { name: 'Banned', exact: true })).toBeVisible();
+		const login = () =>
+			userApi.post('/auth/login', { data: { email: account.email, password: account.password } });
+		expect((await login()).status()).toBe(401);
+		await row.getByRole('button', { name: 'Unban', exact: true }).click();
+		await page.getByRole('dialog').getByRole('button', { name: 'Unban user' }).click();
+		await expect(row.getByRole('cell', { name: 'Active', exact: true })).toBeVisible();
+		expect((await login()).ok()).toBe(true);
+		await page.getByRole('link', { name: 'Audit Log' }).click();
+		await expect(page.getByRole('cell', { name: 'user.ban', exact: true }).first()).toBeVisible();
+		await expect(page.getByRole('cell', { name: 'user.unban', exact: true }).first()).toBeVisible();
+	} finally {
+		await userApi.dispose();
+	}
+});
