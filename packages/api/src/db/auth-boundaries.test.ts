@@ -40,6 +40,21 @@ test('auth boundaries preserve other subjects and reject inactive accounts', asy
 		hasPassword: true,
 		recentAuthAt: Math.floor(Date.now() / 1000)
 	};
+	const staleToken = await signJwt(env.JWT_SECRET, {
+		...claims,
+		recentAuthAt: Math.floor(Date.now() / 1000) - 3600
+	});
+	const deletion = await app.request(
+		'/me',
+		{
+			method: 'DELETE',
+			headers: { cookie: `ak5_token=${staleToken}` }
+		},
+		env
+	);
+	assert.equal(deletion.status, 403);
+	assert.equal(((await deletion.json()) as { code: string }).code, 'recent_auth_required');
+	assert.equal((await db.query.users.findFirst({ where: eq(users.id, 'alice') }))?.deletedAt, null);
 	for (const purpose of ['verify_email', 'magic_login'] as const) {
 		const plain = `${purpose}-test`;
 		await issueToken(db, { userId: 'bob' }, purpose, plain, new Date(Date.now() + 60_000));

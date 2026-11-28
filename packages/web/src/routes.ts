@@ -6,6 +6,7 @@ export default [
 		route('login', 'routes/login.tsx', { caseSensitive: true }),
 		route('register', 'routes/register.tsx', { caseSensitive: true })
 	]),
+	route('account', 'routes/account.tsx', { caseSensitive: true }),
 	route('account/password', 'routes/password.tsx', { caseSensitive: true }),
 	route('auth/magic/:token', 'routes/magic.tsx', { caseSensitive: true }),
 	route('forgot-password', 'routes/forgot-password.tsx', { caseSensitive: true }),

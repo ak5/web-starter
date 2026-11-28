@@ -45,8 +45,8 @@ export default function App({ loaderData }: Route.ComponentProps) {
 								<Link to="/items" className="ui-button ui-button-quiet ui-button-small">
 									Items
 								</Link>
-								<Link to="/account/password" className="ui-button ui-button-quiet ui-button-small">
-									Password
+								<Link to="/account" className="ui-button ui-button-quiet ui-button-small">
+									Account
 								</Link>
 								<Form method="post" action="/logout" reloadDocument>
 									<button type="submit" className="ui-button ui-button-quiet ui-button-small">
