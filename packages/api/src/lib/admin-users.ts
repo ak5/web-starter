@@ -1,4 +1,4 @@
-import { and, desc, eq, isNull } from 'drizzle-orm';
+import { and, desc, eq, exists, isNull, sql } from 'drizzle-orm';
 import {
 	COOKIE_ADMIN_TOKEN,
 	COOKIE_TOKEN,
@@ -45,28 +45,55 @@ type AdminAuthSubject = {
 	sub: string;
 };
 
+function pendingInvitation(db: Database, account: typeof users | typeof adminUsers) {
+	const action = account === users ? 'user.invite' : 'admin_user.invite';
+	return and(
+		isNull(account.deletedAt),
+		isNull(account.lastLoginAt),
+		eq(account.sessionVersion, 0),
+		isNull(account === users ? users.bannedAt : account.deletedAt),
+		exists(
+			db
+				.select({ id: auditLog.id })
+				.from(auditLog)
+				.where(and(eq(auditLog.action, action), eq(auditLog.entityId, account.publicId)))
+		)
+	)!;
+}
+
 export async function adminUserList(db: Database, page: number, offset: number, limit: number) {
 	const [rows, admins, total] = await Promise.all([
-		db.query.users.findMany({
-			where: isNull(users.deletedAt),
-			orderBy: [desc(users.createdAt), desc(users.publicId)],
-			limit,
-			offset,
-			columns: {
-				publicId: true,
-				username: true,
-				email: true,
-				role: true,
-				emailVerified: true,
-				bannedAt: true,
-				createdAt: true
-			}
-		}),
-		db.query.adminUsers.findMany({
-			where: isNull(adminUsers.deletedAt),
-			orderBy: [adminUsers.username],
-			columns: { publicId: true, username: true, email: true, emailVerified: true }
-		}),
+		db
+			.select({
+				publicId: users.publicId,
+				username: users.username,
+				email: users.email,
+				role: users.role,
+				emailVerified: users.emailVerified,
+				bannedAt: users.bannedAt,
+				createdAt: users.createdAt,
+				pendingInvite:
+					sql<boolean>`case when ${pendingInvitation(db, users)} then 1 else 0 end`.mapWith(Boolean)
+			})
+			.from(users)
+			.where(isNull(users.deletedAt))
+			.orderBy(desc(users.createdAt), desc(users.publicId))
+			.limit(limit)
+			.offset(offset),
+		db
+			.select({
+				publicId: adminUsers.publicId,
+				username: adminUsers.username,
+				email: adminUsers.email,
+				emailVerified: adminUsers.emailVerified,
+				pendingInvite:
+					sql<boolean>`case when ${pendingInvitation(db, adminUsers)} then 1 else 0 end`.mapWith(
+						Boolean
+					)
+			})
+			.from(adminUsers)
+			.where(isNull(adminUsers.deletedAt))
+			.orderBy(adminUsers.username),
 		db.$count(users, isNull(users.deletedAt))
 	]);
 
@@ -79,7 +106,8 @@ export async function adminUserList(db: Database, page: number, offset: number, 
 			email: user.email,
 			role: user.role,
 			emailVerified: user.emailVerified,
-			statusLabel: user.bannedAt ? 'Banned' : 'Active',
+			pendingInvite: user.pendingInvite,
+			statusLabel: user.pendingInvite ? 'Pending invitation' : user.bannedAt ? 'Banned' : 'Active',
 			statusBadgeClass: user.bannedAt ? 'badge-error' : 'badge-success',
 			canBan: !user.bannedAt,
 			canUnban: !!user.bannedAt,
@@ -231,6 +259,71 @@ export async function adminInviteAccount(
 		};
 	}
 	return { ok: true as const, result: { ok: true, publicId: adminPub, role } };
+}
+
+export async function replaceAdminInvite(
+	db: Database,
+	env: Env,
+	actorId: string,
+	publicId: string,
+	delivery: 'email' | 'link'
+) {
+	const actor = await adminActor(db, actorId);
+	if (!actor) return { ok: false as const, error: 'admin_not_found', status: 404 as const };
+	const role = publicId.startsWith('a-') ? 'admin' : 'user';
+	const account = role === 'admin' ? adminUsers : users;
+	const copy = delivery === 'link';
+	if (copy && role === 'admin')
+		return { ok: false as const, error: 'invalid_invite_delivery', status: 400 as const };
+	if (!copy && (!env.PUBLIC_EMAIL_FROM?.trim() || (!env.EMAIL && !env.EMAIL_MOCK_URL)))
+		return { ok: false as const, error: 'invite_email_unavailable', status: 503 as const };
+
+	const eligible = and(eq(account.publicId, publicId), pendingInvitation(db, account));
+	const [target] = await db
+		.select({ id: account.id, email: authEmail.email })
+		.from(account)
+		.innerJoin(authEmail, and(eq(authEmail.subjectType, role), eq(authEmail.subjectId, account.id)))
+		.where(eligible);
+	const unavailable = { ok: false, error: 'invitation_not_pending', status: 409 } as const;
+	if (!target) return unavailable;
+	const token = generateMagicToken();
+	const hash = await sha256Hex(token);
+	const expires = Date.now() + 7 * 24 * 60 * 60 * 1000;
+	const subject = role === 'user' ? tokens.userId : tokens.adminId;
+	const payload = JSON.stringify({
+		purpose: role === 'admin' ? 'invite_admin' : copy ? 'invite_user_link' : 'invite_user'
+	});
+	const stillPending = exists(db.select({ id: account.id }).from(account).where(eligible));
+	const [inserted] = await db.batch([
+		db
+			.insert(tokens)
+			.select(
+				sql`SELECT ${crypto.randomUUID()},
+			${role === 'user' ? target.id : null}, ${role === 'admin' ? target.id : null},
+			'reset_password', ${hash}, ${expires}, 0, ${payload}, ${Date.now()} WHERE ${stillPending}`
+			)
+			.returning({ id: tokens.id }),
+		db
+			.delete(tokens)
+			.where(
+				and(
+					eq(subject, target.id),
+					eq(tokens.purpose, 'reset_password'),
+					sql`${tokens.tokenHash} <> ${hash}`,
+					sql`json_extract(${tokens.payload}, '$.purpose') IN ('invite_user','invite_user_link','invite_admin')`,
+					stillPending
+				)
+			),
+		db.insert(auditLog).select(sql`SELECT ${crypto.randomUUID()}, ${actor.id},
+			${role === 'admin' ? 'admin_user.invite.replace' : 'user.invite.replace'},
+			${role === 'admin' ? 'admin_user' : 'user'}, ${publicId}, NULL, ${Date.now()} WHERE ${stillPending}`)
+	]);
+	if (!inserted.length) return unavailable;
+	if (copy)
+		return { ok: true as const, result: { inviteUrl: inviteUrl(env.PUBLIC_APP_URL, token) } };
+	if (!(await sendAdminInviteEmail(env, { email: target.email, role, token })))
+		return { ok: false as const, error: 'invitation_delivery_failed', status: 503 as const };
+	return { ok: true as const, result: { ok: true } };
 }
 
 function inviteUrl(appUrl: string, token: string) {

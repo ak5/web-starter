@@ -16,7 +16,12 @@ import {
 	loginUserPreAuth,
 	loginAdminPreAuth
 } from '../lib/auth-prelogin';
-import { adminDeleteUser, adminInviteAccount, adminUserList } from '../lib/admin-users';
+import {
+	adminDeleteUser,
+	adminInviteAccount,
+	replaceAdminInvite,
+	adminUserList
+} from '../lib/admin-users';
 import { softDeleteUserById } from '../lib/account-deletion';
 import type { Env } from '../types';
 
@@ -212,6 +217,44 @@ test('D1 preserves identity constraints, atomic writes and auth workflows', asyn
 			await db.query.auditLog.findFirst({ where: eq(auditLog.entityId, account.publicId) })
 		);
 	});
+
+	await t.test(
+		'pending invitation survives provider failure and cleanup and can be replaced once',
+		async () => {
+			const email = 'replace@example.test';
+			await adminInviteAccount(db, env, 'a-admin', { email, username: 'replaceable' });
+			const account = await db.query.users.findFirst({
+				where: eq(users.email, email)
+			});
+			assert.ok(account);
+			await db.delete(tokens).where(eq(tokens.userId, account.id));
+			const list = await adminUserList(db, 0, 0, 100);
+			assert.equal(
+				list.users.find((user) => user.publicId === account.publicId)?.pendingInvite,
+				true
+			);
+			const getLink = async () => {
+				const r = await replaceAdminInvite(db, env, 'a-admin', account.publicId, 'link');
+				assert.ok(r.ok && 'inviteUrl' in r.result && r.result.inviteUrl);
+				const token = new URL(r.result.inviteUrl).searchParams.get('t');
+				assert.ok(token);
+				return token;
+			};
+			const previous = await getLink();
+			const token = await getLink();
+			const password = 'password1234';
+			assert.equal((await acceptInvitePreAuth(db, env, { token: previous, password })).ok, false);
+			const attempts = await Promise.all([
+				acceptInvitePreAuth(db, env, { token, password }),
+				acceptInvitePreAuth(db, env, { token, password })
+			]);
+			assert.equal(attempts.filter((result) => result.ok).length, 1);
+			assert.equal(
+				(await replaceAdminInvite(db, env, 'a-admin', account.publicId, 'link')).ok,
+				false
+			);
+		}
+	);
 
 	await t.test(
 		'email invites require a sender and transport before creating an account',

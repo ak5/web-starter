@@ -23,14 +23,21 @@ export async function createInvite(event: ApiRequestEvent, form: FormData) {
 		return { error: 'Admin invitations must be sent by email.' };
 	if (delivery !== 'link' && delivery !== 'email')
 		return { error: 'Choose how to deliver the invitation.' };
-	const response = await api(event).admin.invite.$post({
-		json: {
-			username: String(form.get('username') ?? ''),
-			email: String(form.get('email') ?? ''),
-			role,
-			delivery
-		}
-	});
+	const replacementId = form.get('replacementId');
+	const response =
+		typeof replacementId === 'string' && replacementId
+			? await api(event).admin.invite[':publicId'].replace.$post({
+					param: { publicId: replacementId },
+					json: { delivery }
+				})
+			: await api(event).admin.invite.$post({
+					json: {
+						username: String(form.get('username') ?? ''),
+						email: String(form.get('email') ?? ''),
+						role,
+						delivery
+					}
+				});
 	if (!response.ok) {
 		const body: unknown = await response.json().catch(() => null);
 		if (
@@ -47,9 +54,11 @@ export async function createInvite(event: ApiRequestEvent, form: FormData) {
 			};
 		const message =
 			response.status === 409
-				? 'That email address or username is already in use.'
+				? replacementId
+					? 'This account no longer has a pending invitation.'
+					: 'That email address or username is already in use.'
 				: response.status === 503
-					? 'The account was created, but the invitation email could not be sent.'
+					? 'The invitation email could not be sent. The invitation is pending and can be replaced again.'
 					: 'Could not create the invitation. Check the email and username.';
 		return { error: message };
 	}

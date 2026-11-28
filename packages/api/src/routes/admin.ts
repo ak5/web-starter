@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { getPaginationParams } from '@ak5/shared';
@@ -14,6 +15,7 @@ import {
 	adminCreateAccount,
 	adminDeleteUser,
 	adminInviteAccount,
+	replaceAdminInvite,
 	adminStartImpersonationSessionForTarget,
 	adminUnbanUser,
 	adminUserList
@@ -49,6 +51,24 @@ export const adminRoutes = new Hono<AppContext>()
 		const result = await adminInviteAccount(c.var.db, c.env, activeAuthSub(c), c.req.valid('json'));
 		return apiResultJson(c, result, 201);
 	})
+	.post(
+		'/invite/:publicId/replace',
+		zValidator('json', z.object({ delivery: z.enum(['email', 'link']) })),
+		async (c) => {
+			c.header('Cache-Control', 'no-store');
+			return apiResultJson(
+				c,
+				await replaceAdminInvite(
+					c.var.db,
+					c.env,
+					activeAuthSub(c),
+					c.req.param('publicId'),
+					c.req.valid('json').delivery
+				),
+				201
+			);
+		}
+	)
 	.get('/items', async (c) => {
 		const { page, offset, limit } = getPaginationParams(new URL(c.req.url));
 		return c.json(await listAllItems(c.var.db, page, offset, limit));

@@ -1,5 +1,5 @@
 import { isRegistrationOpen } from './registration';
-import { and, eq, isNull, sql } from 'drizzle-orm';
+import { and, eq, exists, gt, isNull, ne, sql } from 'drizzle-orm';
 import { EmailDeliveryError, sendTemplate } from '@ak5/email';
 import { COOKIE_TOKEN, PASSWORD_MAX_LENGTH, publicId, TIME_MS } from '@ak5/shared';
 import type { z } from 'zod';
@@ -9,7 +9,7 @@ import type { Env } from '../types';
 import { hashPassword, verifyPassword } from './password';
 import { acceptInviteSchema, forgotPasswordSchema, loginSchema, registerSchema } from './auth-form';
 import { jwtCookie, signJwt } from './jwt';
-import { generateMagicToken, generatePin, issueToken, consumeToken } from './tokens';
+import { generateMagicToken, generatePin, issueToken, sha256Hex } from './tokens';
 import { emailConfig } from '../middleware/email-config';
 import { appRedirectUrl } from './return-paths';
 
@@ -289,7 +289,18 @@ export async function acceptInvitePreAuth(
 		return { ok: false, status: 400, body: { error: 'passwords_do_not_match' } };
 	}
 
-	const row = await consumeToken(db, 'reset_password', token);
+	const hash = await sha256Hex(token);
+	const [row] = await db
+		.select()
+		.from(tokens)
+		.where(
+			and(
+				eq(tokens.purpose, 'reset_password'),
+				eq(tokens.tokenHash, hash),
+				gt(tokens.expiresAt, new Date())
+			)
+		)
+		.limit(1);
 	if (!row) return { ok: false, status: 400, body: { error: 'invalid_token' } };
 
 	const subjectType = row.userId ? 'user' : 'admin';
@@ -301,7 +312,15 @@ export async function acceptInvitePreAuth(
 	});
 	if (!identity) return { ok: false, status: 404, body: { error: 'identity_not_found' } };
 
+	const passwordHashed = await hashPassword(password);
 	const now = Math.floor(Date.now() / 1000);
+	const liveToken = exists(
+		db
+			.select({ id: tokens.id })
+			.from(tokens)
+			.where(and(eq(tokens.id, row.id), gt(tokens.expiresAt, new Date())))
+	);
+	const stale = { ok: false, status: 400, body: { error: 'invalid_token' } } as const;
 	if (subjectType === 'user') {
 		const user = await db.query.users.findFirst({
 			where: eq(users.id, subjectId)
@@ -312,14 +331,21 @@ export async function acceptInvitePreAuth(
 
 		const copiedInvite =
 			(row.payload as { purpose?: string } | null)?.purpose === 'invite_user_link';
+		const eligible = and(eq(users.id, subjectId), isNull(users.deletedAt), isNull(users.bannedAt));
 		const [, [updated]] = await db.batch([
 			db
 				.update(authEmail)
 				.set({
-					passwordHashed: await hashPassword(password),
+					passwordHashed,
 					...(!copiedInvite && { verified: true })
 				})
-				.where(eq(authEmail.id, identity.id)),
+				.where(
+					and(
+						eq(authEmail.id, identity.id),
+						liveToken,
+						exists(db.select({ id: users.id }).from(users).where(eligible))
+					)
+				),
 			db
 				.update(users)
 				.set({
@@ -327,10 +353,21 @@ export async function acceptInvitePreAuth(
 					lastLoginAt: new Date(),
 					sessionVersion: sql`${users.sessionVersion} + 1`
 				})
-				.where(eq(users.id, subjectId))
+				.where(
+					and(
+						eligible,
+						liveToken,
+						exists(
+							db.select({ id: authEmail.id }).from(authEmail).where(eq(authEmail.id, identity.id))
+						)
+					)
+				)
 				.returning({ sessionVersion: users.sessionVersion, emailVerified: users.emailVerified }),
-			db.delete(tokens).where(eq(tokens.userId, subjectId))
+			db.delete(tokens).where(and(eq(tokens.userId, subjectId), ne(tokens.id, row.id), liveToken)),
+			db.delete(tokens).where(eq(tokens.id, row.id))
 		]);
+
+		if (!updated) return stale;
 
 		const jwt = await signJwt(env.JWT_SECRET, {
 			sub: user.publicId,
@@ -361,11 +398,18 @@ export async function acceptInvitePreAuth(
 		return { ok: false, status: 404, body: { error: 'admin_not_found' } };
 	}
 
+	const eligible = and(eq(adminUsers.id, subjectId), isNull(adminUsers.deletedAt));
 	const [, [updated]] = await db.batch([
 		db
 			.update(authEmail)
-			.set({ passwordHashed: await hashPassword(password), verified: true })
-			.where(eq(authEmail.id, identity.id)),
+			.set({ passwordHashed, verified: true })
+			.where(
+				and(
+					eq(authEmail.id, identity.id),
+					liveToken,
+					exists(db.select({ id: adminUsers.id }).from(adminUsers).where(eligible))
+				)
+			),
 		db
 			.update(adminUsers)
 			.set({
@@ -373,10 +417,21 @@ export async function acceptInvitePreAuth(
 				lastLoginAt: new Date(),
 				sessionVersion: sql`${adminUsers.sessionVersion} + 1`
 			})
-			.where(eq(adminUsers.id, subjectId))
+			.where(
+				and(
+					eligible,
+					liveToken,
+					exists(
+						db.select({ id: authEmail.id }).from(authEmail).where(eq(authEmail.id, identity.id))
+					)
+				)
+			)
 			.returning({ sessionVersion: adminUsers.sessionVersion }),
-		db.delete(tokens).where(eq(tokens.adminId, subjectId))
+		db.delete(tokens).where(and(eq(tokens.adminId, subjectId), ne(tokens.id, row.id), liveToken)),
+		db.delete(tokens).where(eq(tokens.id, row.id))
 	]);
+
+	if (!updated) return stale;
 
 	const jwt = await signJwt(env.JWT_SECRET, {
 		sub: admin.publicId,
