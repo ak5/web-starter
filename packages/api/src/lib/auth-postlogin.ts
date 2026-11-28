@@ -560,3 +560,33 @@ export async function confirmEmailChange(
 		setCookie: authCookie(env, jwt)
 	};
 }
+
+export async function logoutAllPostAuth(
+	db: Database,
+	env: Env,
+	auth: JwtPayload
+): Promise<PostAuthResult<{ ok: true }>> {
+	if (auth.impersonatedBy) return { ok: false, status: 403, body: { error: 'forbidden' } };
+	const subject = await getActiveAuthSubjectByAuth(db, auth);
+	if ('error' in subject)
+		return { ok: false, status: subject.status, body: { error: subject.error } };
+	const table = subject.subjectType === 'user' ? users : adminUsers;
+	const version = (auth.sessionVersion ?? 0) + 1;
+	const tokenAccount = eq(
+		subject.subjectType === 'user' ? tokens.userId : tokens.adminId,
+		subject.subjectId
+	);
+	const guarded = accountVersionGuard(subject, auth);
+	const [, [updated]] = await db.batch([
+		db
+			.delete(tokens)
+			.where(and(tokenAccount, exists(db.select({ id: table.id }).from(table).where(guarded)))),
+		db.update(table).set({ sessionVersion: version }).where(guarded).returning({ id: table.id })
+	]);
+	if (!updated) return { ok: false, status: 401, body: { error: 'unauthorized' } };
+	return {
+		ok: true,
+		body: { ok: true },
+		setCookie: clearJwtCookie(COOKIE_TOKEN, env.COOKIE_ORIGIN)
+	};
+}

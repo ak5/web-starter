@@ -35,6 +35,7 @@ import {
 	confirmEmailChange,
 	changePasswordPostAuth,
 	logoutPostAuth,
+	logoutAllPostAuth,
 	magicLoginPostAuthWithInput,
 	requestReauthPostAuth,
 	resendVerificationPostAuth,
@@ -178,6 +179,15 @@ export const postAuth = new Hono<AppContext>()
 					c.executionCtx.waitUntil(task)
 				)
 			);
+		}
+	)
+	.post(
+		'/logout-all',
+		requireRecentAuth(),
+		zValidator('json', z.object({ confirm: z.literal(true) })),
+		async (c) => {
+			c.header('Cache-Control', 'no-store');
+			return authJson(c, await logoutAllPostAuth(c.var.db, c.env, activeAuth(c)));
 		}
 	)
 	.get('/me', async (c) => {

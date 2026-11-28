@@ -127,3 +127,6 @@ entry commit atomically; see [retention](../security.md#avatar-uploads-and-reten
 `POST /auth/confirm-email-change` accepts `{code}` and returns the replacement
 session cookie. Both require recent authentication and apply to the signed-in
 user or admin.
+
+`POST /auth/logout-all` accepts `{confirm: true}` and requires recent authentication. It revokes the caller's
+app sessions and pending tokens, and clears the current browser's session cookie.

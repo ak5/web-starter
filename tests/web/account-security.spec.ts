@@ -4,13 +4,14 @@ import { newApiContext, registerUser, uniqueEmail, uniqueUsername } from '../hel
 import { adminUrl, apiUrl, mockUrl, webUrl } from '../helpers/env';
 
 for (const role of ['user', 'admin'] as const) {
-	test(`${role} verifies and signs in with a new email address`, async ({
+	test(`${role} changes their sign-in email and signs out everywhere`, async ({
 		page,
 		context,
 		playwright
 	}) => {
 		const api = await newApiContext(playwright);
 		const other = await newApiContext(playwright);
+		const unrelated = await newApiContext(playwright);
 		try {
 			const login = role === 'admin' ? '/auth/admin/login' : '/auth/login';
 			const seed = () => {
@@ -46,6 +47,10 @@ for (const role of ['user', 'admin'] as const) {
 					return code;
 				})
 				.toMatch(/^[A-Z2-9]{6}$/);
+			await registerUser(unrelated);
+			expect(
+				(await unrelated.post('/auth/confirm-email-change', { data: { code } })).status()
+			).toBe(400);
 			await page.getByLabel('Email change code').fill(code);
 			await page.getByRole('button', { name: 'Confirm email change' }).click();
 			await expect(page.getByText('Email updated.')).toBeVisible();
@@ -53,9 +58,28 @@ for (const role of ['user', 'admin'] as const) {
 			expect((await other.get('/auth/me')).status()).toBe(401);
 			expect((await other.post(login, { data: { email, password } })).status()).toBe(401);
 			expect((await other.post(login, { data: { email: newEmail, password } })).ok()).toBe(true);
+			const recover = role === 'admin' ? '/auth/admin/forgot-password' : '/auth/forgot-password';
+			expect((await other.post(recover, { data: { email: newEmail } })).ok()).toBe(true);
+			await expect
+				.poll(async () => {
+					const response = await api.get(`${mockUrl}/emails/to/${encodeURIComponent(newEmail)}`);
+					const messages = (await response.json()) as Array<{ html: string }>;
+					return messages.some(({ html }) => html.includes('/account/password?t='));
+				})
+				.toBe(true);
+
+			await page.getByRole('button', { name: 'Sign out everywhere', exact: true }).click();
+			await page
+				.getByRole('dialog', { name: 'Sign out everywhere?' })
+				.getByRole('button', { name: 'Sign out everywhere', exact: true })
+				.click();
+			await expect(page).toHaveURL((role === 'admin' ? adminUrl : webUrl) + '/login');
+			expect((await other.get('/auth/me')).status()).toBe(401);
+			expect((await unrelated.get('/auth/me')).status()).toBe(200);
 		} finally {
 			await api.dispose();
 			await other.dispose();
+			await unrelated.dispose();
 		}
 	});
 }

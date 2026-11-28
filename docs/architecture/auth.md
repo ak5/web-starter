@@ -273,3 +273,9 @@ Enter the code from the new address within ten minutes. Confirmation verifies
 the new address, invalidates outstanding recovery links, and signs out other
 sessions. The current browser stays signed in. The old address receives a
 notification.
+
+### Sign out everywhere
+
+After a recent sign-in, users and admins can revoke all their app sessions from
+account settings. This also invalidates outstanding recovery and reauthentication
+tokens. Other devices lose authenticated access on their next server request.

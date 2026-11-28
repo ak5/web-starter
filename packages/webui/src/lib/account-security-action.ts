@@ -1,11 +1,11 @@
-import { data } from 'react-router';
+import { data, redirect } from 'react-router';
 import { apiErrorBody, apiErrorMessage } from './api-error.js';
 import { forwardSetCookie } from './forward-cookie.js';
 
-export async function emailChangeAction(
+export async function accountSecurityAction(
 	response: Pick<Response, 'ok' | 'status' | 'headers' | 'json'>,
 	cookies: Headers,
-	successMessage: string
+	success: { message: string } | { redirectTo: string }
 ) {
 	if (!response.ok) {
 		const body = await apiErrorBody(response);
@@ -18,5 +18,6 @@ export async function emailChangeAction(
 		);
 	}
 	forwardSetCookie(response, cookies);
-	return data({ successMessage }, { headers: { 'Cache-Control': 'no-store' } });
+	if ('redirectTo' in success) return redirect(success.redirectTo, 303);
+	return data({ successMessage: success.message }, { headers: { 'Cache-Control': 'no-store' } });
 }

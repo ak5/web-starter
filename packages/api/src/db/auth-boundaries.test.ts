@@ -141,3 +141,71 @@ test('auth boundaries preserve other subjects and reject inactive accounts', asy
 		assert.equal((await app.request('/me', { headers }, env)).status, 401);
 	}
 });
+
+test('logout everywhere revokes the current role and its pending recovery tokens', async (t) => {
+	const local = await createTestDatabase();
+	t.after(local.dispose);
+	const db = makeDb(local.binding);
+	const env = {
+		DB: local.binding,
+		JWT_SECRET: 'logout-everywhere-test',
+		COOKIE_ORIGIN: 'localhost'
+	} as Env;
+	await db.insert(users).values({ id: 'shared-id', publicId: 'u-owner', username: 'owner' });
+	await db.insert(adminUsers).values({
+		id: 'shared-id',
+		publicId: 'a-owner',
+		username: 'owner',
+		email: 'owner@example.test'
+	});
+	const recentAuthAt = Math.floor(Date.now() / 1000);
+	for (const type of ['user', 'admin'] as const) {
+		const sub = type === 'user' ? 'u-owner' : 'a-owner';
+		const target = type === 'user' ? { userId: 'shared-id' } : { adminId: 'shared-id' };
+		await issueToken(
+			db,
+			target,
+			'reset_password',
+			type + '-recovery',
+			new Date(Date.now() + 60_000)
+		);
+		const headers = async (lastAuth: number) => ({
+			cookie:
+				'ak5_token=' +
+				(await signJwt(env.JWT_SECRET, {
+					type,
+					sub,
+					email: 'owner@example.test',
+					hasPassword: true,
+					name: 'owner',
+					emailConfirmed: true,
+					recentAuthAt: lastAuth
+				}))
+		});
+		const stale = await app.request(
+			'/auth/logout-all',
+			{ method: 'POST', headers: await headers(recentAuthAt - 3600) },
+			env
+		);
+		assert.equal(stale.status, 403);
+		const currentHeaders = await headers(recentAuthAt);
+		assert.equal(
+			(await app.request('/auth/logout-all', { method: 'POST', headers: currentHeaders }, env))
+				.status,
+			400
+		);
+		const result = await app.request(
+			'/auth/logout-all',
+			{
+				method: 'POST',
+				headers: { ...currentHeaders, 'content-type': 'application/json' },
+				body: JSON.stringify({ confirm: true })
+			},
+			env
+		);
+		assert.equal(result.status, 200);
+		assert.match(result.headers.get('set-cookie') ?? '', /Max-Age=0/);
+		assert.equal((await app.request('/auth/me', { headers: currentHeaders }, env)).status, 401);
+		assert.equal(await consumeToken(db, 'reset_password', type + '-recovery', target), null);
+	}
+});
