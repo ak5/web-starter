@@ -7,17 +7,17 @@ checks its generation with the API before accepting or refreshing it.
 
 ## Routes
 
-| Route                 | Auth                   | Purpose                            |
-| --------------------- | ---------------------- | ---------------------------------- |
-| `/`                   | admin                  | Search, filter, and manage users and admins |
-| `/login`              | guest                  | Admin sign in                      |
-| `/logout`             | admin                  | Clear the session (POST) → `/`     |
-| `/forgot-password`    | public                 | Request a reset link by email      |
-| `/account/password`   | session or reset token | Set, reset or change password      |
-| `/invite`             | public                 | Open the invitation password form  |
-| `/auth/magic/[token]` | session                | Confirm a reauthentication link    |
-| `/audit-log` | admin | Filter and page through recorded admin actions |
-| `/items`              | session                | Paginated read-only item list      |
+| Route                 | Auth                   | Purpose                                        |
+| --------------------- | ---------------------- | ---------------------------------------------- |
+| `/`                   | admin                  | Search, filter, and manage users and admins    |
+| `/login`              | guest                  | Admin sign in                                  |
+| `/logout`             | admin                  | Clear the session (POST) → `/`                 |
+| `/forgot-password`    | public                 | Request a reset link by email                  |
+| `/account/password`   | session or reset token | Set, reset or change password                  |
+| `/invite`             | public                 | Open the invitation password form              |
+| `/auth/magic/[token]` | session                | Confirm a reauthentication link                |
+| `/audit-log`          | admin                  | Filter and page through recorded admin actions |
+| `/items`              | session                | Paginated read-only item list                  |
 
 Recovery and invitation pages accept emailed tokens while signed out.
 `/account/password` requires either a session or a reset token; the route loader
@@ -42,3 +42,6 @@ and can be used once to set a password.
 
 Use **Pending invitations** to find users who still need to set a password.
 A replacement invalidates the previous invitation link.
+
+Use **Ban** or **Unban** on a regular user's row. A ban blocks sign-in and
+authenticated access while it is in effect. Both actions appear in **Audit Log**.

@@ -5,26 +5,46 @@ import Pagination from '@ak5/webui/components/Pagination';
 import type { Route } from './+types/home';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { data, Form, useFetcher, useNavigation } from 'react-router';
-import { createInvite, deleteUser, loadUsers } from '../lib/users.server';
+import { createInvite, deleteUser, loadUsers, setUserBan } from '../lib/users.server';
 
 export const loader = loadUsers;
 export const headers = () => ({ 'Cache-Control': 'no-store' });
 export async function action(event: Route.ActionArgs) {
 	const form = await event.request.formData();
-	if (form.get('intent') === 'delete-user') return deleteUser(event, form);
+	const intent = form.get('intent');
+	if (intent === 'delete-user') return deleteUser(event, form);
+	if (intent === 'ban-user' || intent === 'unban-user') return setUserBan(event, form, intent);
 	return data(await createInvite(event, form), { headers: { 'Cache-Control': 'no-store' } });
 }
 
 export default function Users({ loaderData: page, actionData }: Route.ComponentProps) {
 	const heading = useRef<HTMLHeadingElement>(null);
-	const [target, setTarget] = useState<{ id: string; name: string } | null>(null);
-	const deletion = useFetcher<typeof action>();
-	const pending = deletion.state !== 'idle';
+	const [target, setTarget] = useState<{
+		id: string;
+		name: string;
+		intent: 'delete-user' | 'ban-user' | 'unban-user';
+	} | null>(null);
+	const accountAction = useFetcher<typeof action>();
+	const pending = accountAction.state !== 'idle';
 	const deletedId =
-		!pending && deletion.data && 'deletedId' in deletion.data ? deletion.data.deletedId : undefined;
-	function selectDeletion(id: string, name: string) {
-		deletion.reset();
-		setTarget({ id, name });
+		!pending && accountAction.data && 'deletedId' in accountAction.data
+			? accountAction.data.deletedId
+			: undefined;
+	const updated =
+		!pending && accountAction.data && 'updatedId' in accountAction.data
+			? accountAction.data
+			: undefined;
+	const completedId = deletedId ?? updated?.updatedId;
+	const deleting = target?.intent === 'delete-user';
+	const banning = target?.intent === 'ban-user';
+	const actionLabel = deleting ? 'Delete user' : banning ? 'Ban user' : 'Unban user';
+	function selectAccountAction(
+		id: string,
+		name: string,
+		intent: NonNullable<typeof target>['intent']
+	) {
+		accountAction.reset();
+		setTarget({ id, name, intent });
 	}
 	const navigation = useNavigation();
 	const [replacementId, setReplacementId] = useState('');
@@ -37,7 +57,8 @@ export default function Users({ loaderData: page, actionData }: Route.ComponentP
 		actionData !== previousInvite &&
 		actionData &&
 		!('message' in actionData) &&
-		!('deletedId' in actionData)
+		!('deletedId' in actionData) &&
+		!('updatedId' in actionData)
 			? actionData
 			: undefined;
 	const inviteUrl = invite?.inviteUrl;
@@ -60,7 +81,7 @@ export default function Users({ loaderData: page, actionData }: Route.ComponentP
 	function openInvite(id = '', role = 'user') {
 		if (navigation.state !== 'idle') return;
 		setTarget(null);
-		deletion.reset();
+		accountAction.reset();
 		setPreviousInvite(actionData);
 		setCopiedUrl('');
 		setReplacementId(id);
@@ -130,10 +151,25 @@ export default function Users({ loaderData: page, actionData }: Route.ComponentP
 					actions={(row) => (
 						<>
 							{replacementButton(row, 'user')}
+							{!row.pendingInvite && (row.canBan || row.canUnban) && (
+								<button
+									type="button"
+									className="ui-button ui-button-quiet ui-button-small"
+									onClick={() =>
+										selectAccountAction(
+											row.publicId,
+											row.username,
+											row.canUnban ? 'unban-user' : 'ban-user'
+										)
+									}
+								>
+									{row.canUnban ? 'Unban' : 'Ban'}
+								</button>
+							)}
 							<button
 								type="button"
 								className="ui-button ui-button-quiet ui-button-small text-danger"
-								onClick={() => selectDeletion(row.publicId, row.username)}
+								onClick={() => selectAccountAction(row.publicId, row.username, 'delete-user')}
 							>
 								Delete user
 							</button>
@@ -141,6 +177,7 @@ export default function Users({ loaderData: page, actionData }: Route.ComponentP
 					)}
 				/>
 				{deletedId && <p role="status">User deleted.</p>}
+				{updated && <p role="status">{updated.statusMessage}</p>}
 				<Pagination pagination={page.pagination} />
 			</div>
 			<AccountTable
@@ -278,17 +315,31 @@ export default function Users({ loaderData: page, actionData }: Route.ComponentP
 				)}
 			</Modal>
 			<ConfirmationDialog
-				open={Boolean(target) && target?.id !== deletedId}
-				title={`Delete ${target?.name ?? 'this user'}’s account?`}
-				description="This revokes sign-in and removes the account from the user list. Stored data and uploads are retained."
-				requiredText={DELETE_CONFIRMATION}
-				confirmLabel="Delete user"
+				open={Boolean(target) && target?.id !== completedId}
+				title={
+					deleting
+						? `Delete ${target?.name ?? 'this user'}’s account?`
+						: `${banning ? 'Ban' : 'Unban'} ${target?.name ?? 'this user'}?`
+				}
+				description={
+					deleting
+						? 'This revokes sign-in and removes the account from the user list. Stored data and uploads are retained.'
+						: banning
+							? 'This blocks sign-in and authenticated access until you unban the user.'
+							: 'This restores sign-in and authenticated access for this user.'
+				}
+				requiredText={deleting ? DELETE_CONFIRMATION : undefined}
+				confirmLabel={actionLabel}
 				pending={pending}
-				error={deletion.data && 'message' in deletion.data ? deletion.data.message : undefined}
+				error={
+					accountAction.data && 'message' in accountAction.data
+						? accountAction.data.message
+						: undefined
+				}
 				onConfirm={async (confirmation) => {
 					if (target)
-						await deletion.submit(
-							{ intent: 'delete-user', id: target.id, confirmation },
+						await accountAction.submit(
+							{ intent: target.intent, id: target.id, confirmation },
 							{ method: 'post' }
 						);
 				}}
@@ -296,8 +347,8 @@ export default function Users({ loaderData: page, actionData }: Route.ComponentP
 					if (!pending) setTarget(null);
 				}}
 				onClosed={() => {
-					if (target && target.id === deletedId) {
-						setTarget((current) => (current?.id === deletedId ? null : current));
+					if (target && target.id === completedId) {
+						setTarget((current) => (current?.id === completedId ? null : current));
 						heading.current?.focus();
 					}
 				}}
@@ -313,6 +364,8 @@ type AccountRow = {
 	role: string;
 	statusLabel: string;
 	pendingInvite: boolean;
+	canBan?: boolean;
+	canUnban?: boolean;
 };
 
 function AccountTable({

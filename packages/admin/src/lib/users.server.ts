@@ -88,3 +88,29 @@ export async function deleteUser(event: ApiRequestEvent, form: FormData) {
 		return data({ message: 'Could not delete the user.' }, { status: response.status, headers });
 	return data({ deletedId: publicId }, { headers });
 }
+
+export async function setUserBan(
+	event: ApiRequestEvent,
+	form: FormData,
+	intent: 'ban-user' | 'unban-user'
+) {
+	const headers = { 'Cache-Control': 'no-store' };
+	const publicId = form.get('id');
+	if (typeof publicId !== 'string' || !publicId)
+		return data({ message: 'Missing user ID.' }, { status: 400, headers });
+	const user = api(event).admin.users[':publicId'];
+	const action = intent === 'ban-user' ? user.ban : user.unban;
+	const response = await action.$post({ param: { publicId } });
+	if (!response.ok)
+		return data(
+			{ message: intent === 'ban-user' ? 'Could not ban the user.' : 'Could not unban the user.' },
+			{ status: response.status, headers }
+		);
+	return data(
+		{
+			updatedId: publicId,
+			statusMessage: intent === 'ban-user' ? 'User banned.' : 'User unbanned.'
+		},
+		{ headers }
+	);
+}
