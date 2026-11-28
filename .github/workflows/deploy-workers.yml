@@ -52,6 +52,11 @@ jobs:
           sed -i "s|__PROD_DOMAIN__|${{ vars.PROD_DOMAIN }}|g" \
             packages/api/wrangler.jsonc packages/web/wrangler.jsonc packages/admin/wrangler.jsonc
 
+      - name: Configure private attachments
+        env:
+          PRIVATE_ATTACHMENTS_BUCKET: ${{ vars.PRIVATE_ATTACHMENTS_BUCKET }}
+        run: node scripts/configure-private-attachments.mjs
+
       - name: Configure non-production asset URL
         env:
           R2_PUBLIC_URL: ${{ vars.R2_PUBLIC_URL }}

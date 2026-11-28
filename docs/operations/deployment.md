@@ -204,10 +204,26 @@ Bootstrap in this order:
 5. Check login, notes sync and a real application-generated email in dev. Promote
    that exact SHA through the enabled stages using the manual workflow.
 
-Give the deployment token only the account/zone permissions needed for these
-resources: Worker scripts and routes, D1 edit, R2, and Email Sending edit when
-enabled. Optional remote MCP also requires access to its dedicated KV namespace.
-Runtime D1 uses a native binding; do not copy the deployment token into the Worker.
+### Deployment token permissions
+
+- **Account → Workers Scripts → Edit** for Worker deployments and secret updates.
+  The development token needs account-wide access to create and delete preview Workers.
+- **Account → D1 → Edit** for applying remote database migrations.
+- **Zone → Workers Routes → Edit** for zones where deployment manages Worker routes
+  or custom domains.
+
+Deploying with existing R2 or KV bindings requires no separate R2 or KV
+permissions. If you provision R2 buckets with a token, give that provisioning
+token **Account → Workers R2 Storage → Edit**. The deployment token stays in
+GitHub. The Worker uses its bindings at runtime.
+See [Cloudflare's binding authorization](https://developers.cloudflare.com/workers/authorization/workers/#bindings)
+and [R2 token permissions](https://developers.cloudflare.com/r2/api/tokens/#permission-groups).
+
+The optional [email-delivery diagnostic](email-sending.md) requires
+**Account → Email Sending → Edit** because it calls the Cloudflare API directly.
+
+### Deployment behavior
+
 Complete [Email Sending onboarding](email-sending.md) for your verified domain
 before enabling sends. Local setup uses the mock.
 
@@ -291,3 +307,12 @@ query strings from any external request logging to protect invitation and
 password-reset tokens.
 
 For optional remote MCP and its dedicated KV binding, see [Remote MCP](codex-mcp.md).
+
+### Private item attachments
+
+Local development uses an emulated private bucket. To enable attachments in a
+hosted environment, create a dedicated R2 bucket with public access disabled and
+set its name in the GitHub Environment variable `PRIVATE_ATTACHMENTS_BUCKET`.
+Keep the public development URL and custom domains disabled for this bucket.
+PR previews use the development configuration. An environment without this
+variable deploys with the attachment controls hidden.

@@ -6,7 +6,7 @@
 import { DELETE_CONFIRMATION } from '@ak5/webui';
 import { data, redirect } from 'react-router';
 import type { ApiRequestEvent } from '@ak5/webui/server';
-import { apiLoadJson } from '@ak5/webui/server';
+import { apiBaseUrl, apiLoadJson, requestState } from '@ak5/webui/server';
 import { api } from './api.server';
 
 export const loadItems = async (event: ApiRequestEvent) => {
@@ -20,7 +20,11 @@ export const loadItems = async (event: ApiRequestEvent) => {
 		url.searchParams.set('page', String(body.pagination.totalPages - 1));
 		throw redirect('/items' + url.search);
 	}
-	return { items: body.items, pagination: body.pagination };
+	return {
+		items: body.items,
+		pagination: body.pagination,
+		attachmentsEnabled: body.attachmentsEnabled
+	};
 };
 
 export const itemsActions = {
@@ -36,8 +40,54 @@ export const itemsActions = {
 			return data({ message: 'Type DELETE to confirm.' }, { status: 400 });
 		const id = String(form.get('id') ?? '');
 		if (!id) return data({ message: 'Missing item id.' }, { status: 400 });
-		const res = await api(event).items[':id'].$delete({ param: { id } });
-		if (!res.ok) return data({ message: 'Could not delete the item.' }, { status: res.status });
-		return { deletedId: id };
+		const attachment = form.get('intent') === 'delete-attachment';
+		const item = api(event).items[':id'];
+		const res = await (attachment ? item.attachment : item).$delete({ param: { id } });
+		if (!res.ok)
+			return data(
+				{ message: attachment ? 'Could not delete the attachment.' : 'Could not delete the item.' },
+				{ status: res.status }
+			);
+		return { deletedId: id, attachment };
 	}
 };
+
+export async function loadItemAttachment(event: ApiRequestEvent, id: string) {
+	const response = await api(event).items[':id'].attachment.$get({ param: { id } });
+	const headers = new Headers({
+		'Cache-Control': 'private, no-store',
+		'X-Content-Type-Options': 'nosniff'
+	});
+	for (const header of ['Content-Type', 'Content-Disposition']) {
+		const value = response.headers.get(header);
+		if (value && response.ok) headers.set(header, value);
+	}
+	return new Response(response.ok ? response.body : null, { status: response.status, headers });
+}
+
+export async function uploadItemAttachment(event: ApiRequestEvent, id: string) {
+	const { env, fetch } = requestState(event.context);
+	const response = await fetch(
+		new URL(`/items/${encodeURIComponent(id)}/attachment`, apiBaseUrl(env)),
+		{
+			method: 'POST',
+			headers: {
+				'content-type': event.request.headers.get('content-type') ?? '',
+				cookie: event.request.headers.get('cookie') ?? ''
+			},
+			body: event.request.body
+		}
+	);
+	if (!response.ok) {
+		const message =
+			response.status === 413
+				? 'Choose a file no larger than 5 MiB.'
+				: response.status === 415
+					? 'Choose a valid PDF or WebP file.'
+					: response.status === 409
+						? 'This item already has an attachment.'
+						: 'Could not upload the attachment.';
+		return data({ message }, { status: response.status });
+	}
+	return { uploaded: true };
+}

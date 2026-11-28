@@ -48,3 +48,16 @@ Delete `routes/items.ts`, `lib/items.ts`, `lib/items-validation.ts`, the two
 `/items` mounts in `app.ts`, the `items` table + relation + `Item` type in
 `db/schema.ts`, and the `item` prefix in `@ak5/shared`'s `public-id.ts`. Then
 regenerate a migration. On the client, remove `packages/mobile`'s items feature.
+
+### Private attachment
+
+An item can hold one PDF or WebP file up to 5 MiB. The item owner can upload
+with `POST /items/:id/attachment` (multipart field `file`), download with
+`GET`, and remove it with `DELETE`. The API validates the size, MIME type,
+filename extension, and file signature. Impersonation sessions cannot access
+attachments. Downloads use `Content-Disposition: attachment` and
+`Cache-Control: private, no-store`.
+
+The owner list reports `attachmentsEnabled` and each item's attachment name,
+type, and size when present. It does not return storage keys. Deleting the item
+immediately removes access and queues its attached object for deletion.

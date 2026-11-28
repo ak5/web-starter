@@ -10,22 +10,23 @@ auth wiring.
 
 ## Routes
 
-| Route                 | Auth                   | Purpose                                        |
-| --------------------- | ---------------------- | ---------------------------------------------- |
-| `/`                   | public                 | Starter overview and author credit             |
-| `/login`              | guest                  | Sign in (email + password)                     |
-| `/register`           | guest                  | Create an account when registration is open    |
-| `/account`            | user                   | Profile, avatar, security and account deletion |
-| `/account/verify`     | user                   | Enter verification code or resend              |
-| `/dashboard`          | user                   | Authed example dashboard (protected)           |
-| `/notes`              | user                   | Local SQLite notes with LiveStore sync         |
-| `/sync`               | user                   | POST proxy to the API sync service             |
-| `/logout`             | user                   | Clear the session (POST) → `/`                 |
-| `/forgot-password`    | public                 | Request a reset link by email                  |
-| `/account/password`   | session or reset token | Set, reset or change password                  |
-| `/invite`             | public                 | Open the invitation password form              |
-| `/auth/magic/[token]` | session                | Confirm a reauthentication link                |
-| `/items`              | session                | Paginated item list and CRUD                   |
+| Route                   | Auth                   | Purpose                                        |
+| ----------------------- | ---------------------- | ---------------------------------------------- |
+| `/`                     | public                 | Starter overview and author credit             |
+| `/login`                | guest                  | Sign in (email + password)                     |
+| `/register`             | guest                  | Create an account when registration is open    |
+| `/account`              | user                   | Profile, avatar, security and account deletion |
+| `/account/verify`       | user                   | Enter verification code or resend              |
+| `/dashboard`            | user                   | Authed example dashboard (protected)           |
+| `/notes`                | user                   | Local SQLite notes with LiveStore sync         |
+| `/sync`                 | user                   | POST proxy to the API sync service             |
+| `/logout`               | user                   | Clear the session (POST) → `/`                 |
+| `/forgot-password`      | public                 | Request a reset link by email                  |
+| `/account/password`     | session or reset token | Set, reset or change password                  |
+| `/invite`               | public                 | Open the invitation password form              |
+| `/auth/magic/[token]`   | session                | Confirm a reauthentication link                |
+| `/items`                | session                | Paginated item list and CRUD                   |
+| `/items/:id/attachment` | user                   | Upload or download a private item attachment   |
 
 Recovery and invitation pages accept emailed tokens while signed out.
 `/account/password` requires either a session or a reset token; the route loader
@@ -47,3 +48,7 @@ on `/account/password`.
 
 List pages report API failures instead of presenting an empty list. Malformed
 JSON from the API is treated as an upstream failure.
+
+On **Items**, attach a private PDF or WebP up to 5 MiB when the private bucket is
+configured. `/items/:id/attachment` proxies owner-only uploads and downloads.
+Deleting an item also removes access to its attachment.

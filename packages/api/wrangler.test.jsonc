@@ -1,6 +1,7 @@
 {
 	"name": "api-db-test",
 	"compatibility_date": "2026-10-23",
+	"r2_buckets": [{ "binding": "PRIVATE_ATTACHMENTS", "bucket_name": "test-attachments" }],
 	"d1_databases": [
 		{
 			"binding": "DB",

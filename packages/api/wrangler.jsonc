@@ -56,7 +56,8 @@
 		{
 			"binding": "R2",
 			"bucket_name": "ak5"
-		}
+		},
+		{ "binding": "PRIVATE_ATTACHMENTS", "bucket_name": "ak5-attachments-local" }
 	],
 	"triggers": {
 		"crons": ["0 * * * *"]

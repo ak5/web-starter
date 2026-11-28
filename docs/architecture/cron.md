@@ -48,3 +48,11 @@ D1 claim or a Durable Object, and make its external side effects retry-safe too.
 
 Keep jobs short and chunked: Workers have execution limits, so prefer many small
 idempotent passes over one long sweep.
+
+## Private attachment cleanup
+
+The existing hourly job deletes up to 50 due private R2 objects. Failed deletes
+stay queued for retry. Removed items and attachments become unavailable as soon
+as their database change commits. Abandoned uploads become eligible for cleanup
+after one hour. Environments that store attachments must keep the private bucket
+bound until their cleanup backlog has drained.
