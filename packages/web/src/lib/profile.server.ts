@@ -2,7 +2,7 @@ import { data } from 'react-router';
 import {
 	apiCookieStaticRedirectAction,
 	apiErrorBody,
-	emailChangeAction,
+	accountSecurityAction,
 	apiJsonAction,
 	apiLoadJson,
 	formString,
@@ -38,26 +38,32 @@ export async function updateProfile(event: ApiRequestEvent) {
 	const client = api(event);
 	switch (form.get('intent')) {
 		case 'request-email-change':
-			return emailChangeAction(
+			return accountSecurityAction(
 				await client.auth['request-email-change'].$post({
 					json: { newEmail: formString(form, 'newEmail') }
 				}),
 				cookies,
-				'Check the new address for your code.'
+				{ message: 'Check the new address for your code.' }
 			);
 		case 'confirm-email-change':
-			return emailChangeAction(
+			return accountSecurityAction(
 				await client.auth['confirm-email-change'].$post({
 					json: { code: formString(form, 'code') }
 				}),
 				cookies,
-				'Email updated.'
+				{ message: 'Email updated.' }
 			);
 		case 'reauth-security':
-			return emailChangeAction(
-				await client.auth['request-reauth'].$post(),
+			return accountSecurityAction(await client.auth['request-reauth'].$post(), cookies, {
+				message: 'Check your email to continue.'
+			});
+		case 'logout-all':
+			return accountSecurityAction(
+				await client.auth['logout-all'].$post({ json: { confirm: true } }),
 				cookies,
-				'Check your email to continue.'
+				{
+					redirectTo: '/login'
+				}
 			);
 		case 'profile':
 			return apiJsonAction<{ successMessage: string }>(
