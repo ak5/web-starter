@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { requireAuth, requireRecentAuth } from '../middleware/auth';
-import { apiBodyJsonWithSetCookie, apiNamedJson, apiResultJson } from '../lib/api-response';
+import { apiBodyJsonWithSetCookie, apiErrorJson, apiResultJson } from '../lib/api-response';
 import { activeAuth } from '../lib/auth-context';
 import {
 	deleteMeAccountResponse,
@@ -29,11 +29,11 @@ export const meRoutes = new Hono<AppContext>()
 	.use(requireAuth())
 	.get('/', async (c) => {
 		const result = await meAccount(c.var.db, activeAuth(c));
-		return apiNamedJson(c, result, 'account');
+		return result.ok ? c.json(result.account) : apiErrorJson(c, result);
 	})
 	.get('/security', async (c) => {
 		const result = await meSecuritySummary(c.var.db, activeAuth(c));
-		return apiNamedJson(c, result, 'security');
+		return result.ok ? c.json(result.security) : apiErrorJson(c, result);
 	})
 	.route('/auth', meAuthRoutes)
 	.patch('/profile', zValidator('json', profilePatchSchema), async (c) => {
@@ -51,6 +51,8 @@ export const meRoutes = new Hono<AppContext>()
 		return apiResultJson(c, result);
 	})
 	.delete('/', requireRecentAuth(), async (c) => {
-		const result = await deleteMeAccountResponse(c.var.db, c.env, activeAuth(c));
+		const auth = activeAuth(c);
+		if (auth.impersonatedBy) return c.json({ error: 'forbidden' }, 403);
+		const result = await deleteMeAccountResponse(c.var.db, c.env, auth);
 		return apiBodyJsonWithSetCookie(c, result);
 	});

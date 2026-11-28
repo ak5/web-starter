@@ -258,3 +258,10 @@ To enable public registration, set `REGISTRATION_MODE=open` in
 `packages/api/.env` for local development, or set
 `"REGISTRATION_MODE": "open"` in the API Wrangler `vars` for the hosted
 environment. Restart the local API or redeploy the hosted API after the change.
+
+## Web account settings
+
+Open **Account** to update your profile, upload a WebP avatar, or check email
+verification. Use **Password settings** to manage your password. To delete an
+account, sign in again when prompted and type `DELETE` to confirm. Deletion
+revokes sign-in and retains stored data and uploads.
