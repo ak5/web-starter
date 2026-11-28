@@ -1,4 +1,5 @@
-import { redirect } from 'react-router';
+import { DELETE_CONFIRMATION } from '@ak5/webui';
+import { data, redirect } from 'react-router';
 import { apiLoadJson, type ApiRequestEvent } from '@ak5/webui/server';
 import { api } from './api.server';
 export async function loadUsers(event: ApiRequestEvent) {
@@ -9,13 +10,12 @@ export async function loadUsers(event: ApiRequestEvent) {
 	const data = await apiLoadJson(response, 'Could not load users. Please retry.');
 	if (data.pagination.page >= data.pagination.totalPages) {
 		url.searchParams.set('page', String(data.pagination.totalPages - 1));
-		throw redirect(url.pathname + url.search);
+		throw redirect('/' + url.search);
 	}
 	return data;
 }
 
-export async function createInvite(event: ApiRequestEvent) {
-	const form = await event.request.formData();
+export async function createInvite(event: ApiRequestEvent, form: FormData) {
 	const delivery = form.get('delivery');
 	const role = form.get('role') ?? 'user';
 	if (role !== 'user' && role !== 'admin') return { error: 'Choose a valid account role.' };
@@ -57,4 +57,17 @@ export async function createInvite(event: ApiRequestEvent) {
 	return {
 		inviteUrl: 'inviteUrl' in body && typeof body.inviteUrl === 'string' ? body.inviteUrl : null
 	};
+}
+
+export async function deleteUser(event: ApiRequestEvent, form: FormData) {
+	const headers = { 'Cache-Control': 'no-store' };
+	if (form.get('confirmation') !== DELETE_CONFIRMATION)
+		return data({ message: 'Type DELETE to confirm.' }, { status: 400, headers });
+	const publicId = form.get('id');
+	if (typeof publicId !== 'string' || !publicId)
+		return data({ message: 'Missing user id.' }, { status: 400, headers });
+	const response = await api(event).admin.users[':publicId'].$delete({ param: { publicId } });
+	if (!response.ok)
+		return data({ message: 'Could not delete the user.' }, { status: response.status, headers });
+	return data({ deleted: true }, { headers });
 }

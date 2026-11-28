@@ -1,6 +1,13 @@
 import { execFileSync } from 'node:child_process';
 import { test, expect } from '@playwright/test';
-import { syntheticIp, uniqueEmail, uniqueUsername } from '../helpers/api';
+import {
+	newApiContext,
+	registerUser,
+	syntheticIp,
+	uniqueEmail,
+	uniqueUsername
+} from '../helpers/api';
+import { adminUrl, apiUrl } from '../helpers/env';
 
 const adminEmail = uniqueEmail();
 const password = 'password1234';
@@ -19,6 +26,7 @@ test.beforeAll(() => {
 test.beforeEach(async ({ page }) => {
 	await page.setExtraHTTPHeaders({ 'cf-connecting-ip': syntheticIp() });
 	await page.goto('/login');
+	await expect(page.getByRole('button', { name: 'Use dark theme' }).first()).toBeEnabled();
 	await page.getByLabel('Email', { exact: true }).fill(adminEmail);
 	await page.getByLabel('Password', { exact: true }).fill(password);
 	await page.getByRole('button', { name: 'Sign in' }).click();
@@ -103,4 +111,53 @@ test('account overview returns to a valid page and keeps the admin section', asy
 		.getByRole('row')
 		.filter({ hasText: adminEmail });
 	await expect(admin.getByRole('cell', { name: 'Verified', exact: true })).toBeVisible();
+});
+
+test('typed confirmation deletes a regular account and revokes its session', async ({
+	page,
+	playwright
+}) => {
+	const api = await newApiContext(playwright);
+	try {
+		const account = await registerUser(api);
+		const me = await api.get('/auth/me');
+		const { sub } = await me.json();
+		await page.setViewportSize({ width: 375, height: 740 });
+		await page.getByRole('button', { name: 'Use dark theme' }).first().click();
+		await page.reload();
+		const row = page.getByRole('row').filter({ hasText: account.email });
+		await expect(row).toBeVisible();
+		for (const confirmation of [undefined, 'delete']) {
+			const response = await page.request.post(`${adminUrl}/?index`, {
+				headers: { origin: adminUrl },
+				form: {
+					intent: 'delete-user',
+					id: sub,
+					...(confirmation === undefined ? {} : { confirmation })
+				}
+			});
+			expect(response.status()).toBe(400);
+		}
+		expect((await api.get('/auth/me')).status()).toBe(200);
+		await row.getByRole('button', { name: 'Delete user' }).click();
+		const dialog = page.getByRole('dialog', { name: `Delete ${account.username}’s account?` });
+		await expect(dialog).toBeVisible();
+		const input = dialog.getByRole('textbox', { name: 'Type DELETE to confirm' });
+		await expect(input).toBeFocused();
+		await input.fill('DELETE');
+		await dialog.getByRole('button', { name: 'Delete user' }).click();
+		await expect(row).toHaveCount(0);
+		await expect(page.getByRole('status').filter({ hasText: 'User deleted.' })).toBeVisible();
+		await expect(page.getByRole('heading', { name: 'Users', exact: true })).toBeFocused();
+		expect((await api.get('/auth/me')).status()).toBe(401);
+		const audit = await page.request.get(`${apiUrl}/admin/audit-log`, {
+			params: { action: 'user.delete', entityId: sub }
+		});
+		expect(audit.status()).toBe(200);
+		expect((await audit.json()).entries).toEqual([
+			expect.objectContaining({ action: 'user.delete', entityId: sub })
+		]);
+	} finally {
+		await api.dispose();
+	}
 });

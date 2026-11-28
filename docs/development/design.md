@@ -16,3 +16,16 @@ The theme cookie saves System, Light, or Dark independently of density.
 Signed-in admin uses compact density. Customer pages, sign-in, and dialogs use
 comfortable density. Keep labels readable, keyboard focus visible, and touch
 targets generous. Let wide tables scroll inside their containers.
+
+## Destructive actions
+
+Use [ConfirmationDialog](../../packages/webui/src/lib/components/ConfirmationDialog.tsx)
+for irreversible or high-impact actions. Name the target and describe what the
+action will remove or retain. Require exact text for high-impact actions and
+allow paste. Give the confirm button a specific verb. Customer Items and Admin
+Users show how to submit through a fetcher, display errors in the dialog, and
+move focus after a deleted row disappears.
+
+Validate the submitted phrase in the server action before mutating data. Keep
+authorization and ownership checks at the API. If every API client must provide
+confirmation, enforce the phrase at the API boundary as well.

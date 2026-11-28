@@ -14,7 +14,7 @@ export default function ItemsTable({
 }: {
 	items: ItemRow[];
 	showOwner?: boolean;
-	actions?: (item: ItemRow) => ReactNode;
+	actions?: (item: ItemRow, displayTitle: string | null) => ReactNode;
 }) {
 	const colSpan = 2 + Number(showOwner) + Number(Boolean(actions));
 	return (
@@ -36,15 +36,14 @@ export default function ItemsTable({
 									? (item.data as Record<string, unknown>)
 									: {};
 							const title = record.title ?? record.name ?? record.label;
+							const displayTitle = typeof title === 'string' && title.trim() ? title : null;
 							const rest = Object.entries(record).filter(
 								([key]) => !['title', 'name', 'label'].includes(key)
 							);
 							return (
 								<tr key={item.id}>
 									<td>
-										<div className="font-medium">
-											{typeof title === 'string' && title.trim() ? title : '—'}
-										</div>
+										<div className="font-medium">{displayTitle ?? '—'}</div>
 										{rest.length > 0 && (
 											<div className="max-w-xs truncate font-mono text-xs text-ink/50">
 												{JSON.stringify(Object.fromEntries(rest))}
@@ -55,7 +54,7 @@ export default function ItemsTable({
 									<td className="text-sm whitespace-nowrap text-ink/70" suppressHydrationWarning>
 										{new Date(item.createdAt).toLocaleString()}
 									</td>
-									{actions && <td className="text-right">{actions(item)}</td>}
+									{actions && <td className="text-right">{actions(item, displayTitle)}</td>}
 								</tr>
 							);
 						})
