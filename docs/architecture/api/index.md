@@ -54,7 +54,8 @@ PR that adds the router, and link it from here.
 
 `POST /auth/register` accepts `email`, `password` and `username`. The starter does
 not require or record policy acceptance. `GET /auth/options` returns password and
-username constraints and `registrationOpen`. Public registration requires
+username constraints, `registrationOpen`, and `discordEnabled`. Discord OAuth
+returns `503 {error: "discord_unavailable"}` when credentials are missing. Public registration requires
 `REGISTRATION_MODE=open`; the default is invite-only. Add application policy handling across all signup paths as
 described in [auth](../auth.md#signup-policies).
 

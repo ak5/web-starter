@@ -11,10 +11,15 @@
  * `lib/oauth/`, the `auth_discord` table, and the `/oauth` mount in `app.ts`.
  */
 import { Hono } from 'hono';
+import { isDiscordConfigured } from '../../lib/discord-config';
 import type { AppContext } from '../../types';
 import { handleDiscordOAuthCallbackResponse, startDiscordOAuth } from '../../lib/oauth/discord';
 
 export const oauthRoutes = new Hono<AppContext>()
+	.use('/discord/*', async (c, next) => {
+		if (!isDiscordConfigured(c.env)) return c.json({ error: 'discord_unavailable' }, 503);
+		await next();
+	})
 	.get('/discord', (c) => {
 		return startDiscordOAuth(c);
 	})

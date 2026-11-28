@@ -10,22 +10,22 @@ auth wiring.
 
 ## Routes
 
-| Route                 | Auth                   | Purpose                                |
-| --------------------- | ---------------------- | -------------------------------------- |
-| `/`                   | public                 | Starter overview and author credit     |
-| `/login`              | guest                  | Sign in (email + password)             |
-| `/register`           | guest                  | Create an account when registration is open |
-| `/account` | user | Profile, avatar, security and account deletion |
-| `/account/verify`     | user                   | Enter verification code or resend      |
-| `/dashboard`          | user                   | Authed example dashboard (protected)   |
-| `/notes`              | user                   | Local SQLite notes with LiveStore sync |
-| `/sync`               | user                   | POST proxy to the API sync service     |
-| `/logout`             | user                   | Clear the session (POST) → `/`         |
-| `/forgot-password`    | public                 | Request a reset link by email          |
-| `/account/password`   | session or reset token | Set, reset or change password          |
-| `/invite`             | public                 | Open the invitation password form      |
-| `/auth/magic/[token]` | session                | Confirm a reauthentication link        |
-| `/items`              | session                | Paginated item list and CRUD           |
+| Route                 | Auth                   | Purpose                                        |
+| --------------------- | ---------------------- | ---------------------------------------------- |
+| `/`                   | public                 | Starter overview and author credit             |
+| `/login`              | guest                  | Sign in (email + password)                     |
+| `/register`           | guest                  | Create an account when registration is open    |
+| `/account`            | user                   | Profile, avatar, security and account deletion |
+| `/account/verify`     | user                   | Enter verification code or resend              |
+| `/dashboard`          | user                   | Authed example dashboard (protected)           |
+| `/notes`              | user                   | Local SQLite notes with LiveStore sync         |
+| `/sync`               | user                   | POST proxy to the API sync service             |
+| `/logout`             | user                   | Clear the session (POST) → `/`                 |
+| `/forgot-password`    | public                 | Request a reset link by email                  |
+| `/account/password`   | session or reset token | Set, reset or change password                  |
+| `/invite`             | public                 | Open the invitation password form              |
+| `/auth/magic/[token]` | session                | Confirm a reauthentication link                |
+| `/items`              | session                | Paginated item list and CRUD                   |
 
 Recovery and invitation pages accept emailed tokens while signed out.
 `/account/password` requires either a session or a reset token; the route loader
@@ -41,7 +41,8 @@ has no label and shows no banner. See [deployment](../../docs/operations/deploym
 
 Signup does not claim agreement to policies. Add your application's policies and
 acknowledgement flow before launch; see [auth](../../docs/architecture/auth.md#signup-policies).
-Discord callback errors appear on login/register, and account-link results appear
+Discord sign-in appears once both API credentials are set. Callback errors appear
+on login/register, and account-link results appear
 on `/account/password`.
 
 List pages report API failures instead of presenting an empty list. Malformed

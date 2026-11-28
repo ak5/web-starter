@@ -1,3 +1,4 @@
+import { isDiscordConfigured } from './discord-config';
 import { isRegistrationOpen } from './registration';
 import { and, eq, exists, gt, isNull, ne, sql } from 'drizzle-orm';
 import { EmailDeliveryError, sendTemplate } from '@ak5/email';
@@ -33,6 +34,7 @@ type AuthWorkflowResult<TBody> =
 export function preLoginAuthOptions(env: Env) {
 	return {
 		registrationOpen: isRegistrationOpen(env),
+		discordEnabled: isDiscordConfigured(env),
 		password: {
 			minLength: 8,
 			maxLength: PASSWORD_MAX_LENGTH
