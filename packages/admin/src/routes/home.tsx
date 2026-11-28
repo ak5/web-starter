@@ -42,8 +42,9 @@ export default function Users({ loaderData: page, actionData }: Route.ComponentP
 				<button
 					type="button"
 					className="ui-button ui-button-primary"
-					disabled={navigation.state !== 'idle'}
+					aria-disabled={navigation.state !== 'idle'}
 					onClick={() => {
+						if (navigation.state !== 'idle') return;
 						setPreviousInvite(actionData);
 						setCopiedUrl('');
 						setInviteRole('user');
