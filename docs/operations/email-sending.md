@@ -21,7 +21,7 @@ Rebranding the starter does not onboard a domain or enable billing.
 3. Wait until the sender domain is verified. A domain or parent domain used by
    another app does not prove this app's configured sender is ready.
 4. Give the deployment token **Email Sending:Edit** on that account, alongside
-   the usual Worker, route, KV, and R2 permissions. Native runtime sending needs
+   the usual Worker, route, and R2 permissions. Native runtime sending needs
    no email API token and no email credential in Worker secrets.
 
 An unactivated account can return HTTP 403 with

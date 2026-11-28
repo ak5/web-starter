@@ -6,7 +6,7 @@ export const PAGE_SIZE = 50;
 export function getPaginationParams(url: URL, pageSize: number = PAGE_SIZE) {
 	// Coerce missing / negative / non-numeric `page` to 0 so `offset` is never NaN.
 	const raw = parseInt(url.searchParams.get('page') ?? '', 10);
-	const page = Number.isFinite(raw) && raw > 0 ? raw : 0;
+	const page = Number.isSafeInteger(raw * pageSize) && raw > 0 ? raw : 0;
 	const offset = page * pageSize;
 	return { page, offset, limit: pageSize };
 }

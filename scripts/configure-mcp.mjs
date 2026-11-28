@@ -11,6 +11,7 @@ for (const name of localOutput ? ['api'] : ['api', 'web', 'admin']) {
 	const target = process.env.TARGET;
 	const selected = localOutput || target === 'production' || !target ? config : config.env[target];
 	if (name === 'api') {
+		selected.kv_namespaces ??= [];
 		if (selected.kv_namespaces.some((namespace) => namespace.id === id))
 			throw new Error('MCP OAuth must use a separate KV namespace.');
 		selected.kv_namespaces.push({ binding: 'OAUTH_KV', id });

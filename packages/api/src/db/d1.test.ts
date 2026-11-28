@@ -16,7 +16,7 @@ import {
 	loginUserPreAuth,
 	loginAdminPreAuth
 } from '../lib/auth-prelogin';
-import { adminDeleteUser, adminInviteAccount } from '../lib/admin-users';
+import { adminDeleteUser, adminInviteAccount, adminUserList } from '../lib/admin-users';
 import { softDeleteUserById } from '../lib/account-deletion';
 import type { Env } from '../types';
 
@@ -46,8 +46,16 @@ test('D1 preserves identity constraints, atomic writes and auth workflows', asyn
 	});
 
 	await t.test('admin diagnostics and relational item reads execute on D1', async () => {
-		const result = await listAllItems(db, 0, 0, 20);
-		assert.equal(result.items[0].owner, 'owner');
+		const createdAt = new Date('2100-01-01');
+		await db.insert(items).values([
+			{ publicId: 'i-same-a', userId: 'owner', createdAt },
+			{ publicId: 'i-same-b', userId: 'owner', createdAt }
+		]);
+		const first = await listAllItems(db, 0, 0, 1);
+		const second = await listAllItems(db, 1, 1, 1);
+		assert.equal(first.items[0].owner, 'owner');
+		assert.equal(first.items[0].id, 'i-same-b');
+		assert.equal(second.items[0].id, 'i-same-a');
 		const health = await adminHealthReport(db);
 		assert.equal(health.checks.find((check) => check.name === 'Database')?.status, 'ok');
 	});
@@ -388,4 +396,37 @@ test('D1 preserves identity constraints, atomic writes and auth workflows', asyn
 			undefined
 		);
 	});
+});
+
+test('D1 lists active accounts beyond the first admin users page', async (t) => {
+	const local = await createTestDatabase();
+	t.after(local.dispose);
+	const db = makeDb(local.binding);
+	const createdAt = new Date(1000);
+	await db.batch(
+		Array.from({ length: 11 }, (_, chunk) =>
+			db.insert(users).values(
+				Array.from({ length: 10 }, (_, index) => {
+					const name = `account-${String(chunk * 10 + index).padStart(3, '0')}`;
+					return {
+						id: name,
+						publicId: `u-${name}`,
+						username: name,
+						createdAt,
+						deletedAt: chunk === 0 && index === 0 ? createdAt : null
+					};
+				})
+			)
+		)
+	);
+	const first = await adminUserList(db, 0, 0, 100);
+	const second = await adminUserList(db, 1, 100, 100);
+	assert.equal(first.users.length, 100);
+	assert.equal(first.pagination.total, 109);
+	assert.equal(first.pagination.hasNext, true);
+	assert.deepEqual(
+		second.users.map(({ username }) => username),
+		Array.from({ length: 9 }, (_, index) => `account-00${9 - index}`)
+	);
+	assert.equal(second.pagination.hasNext, false);
 });

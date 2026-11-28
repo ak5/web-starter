@@ -26,7 +26,7 @@ for your application's read, write, storage, and CPU usage.
 - Hono RPC types shared with web, admin, mobile, and the development CLI.
 - Email/password auth, email verification and recovery, optional Discord OAuth,
   role separation, and encrypted native session storage.
-- Cloudflare Workers, KV, R2, and native Cloudflare Email Sending, with React
+- Cloudflare Workers, R2, optional MCP with KV, and Cloudflare Email Sending, with React
   templates, a local email mock, and a template preview.
 - React Native screens for iOS and Android, with Expo modules for secure storage
   and local SQLite.

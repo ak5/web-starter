@@ -17,6 +17,7 @@ describe('getPaginationParams', () => {
 	it('clamps negative and non-numeric page to 0 (never NaN offset)', () => {
 		assert.equal(params('?page=-5').page, 0);
 		assert.equal(params('?page=abc').offset, 0);
+		assert.equal(params(`?page=${Number.MAX_SAFE_INTEGER}`).offset, 0);
 		assert.ok(Number.isFinite(params('?page=abc').offset));
 	});
 });

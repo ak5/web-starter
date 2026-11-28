@@ -5,7 +5,6 @@ import type { Logger } from '../lib/logger';
 
 export interface JobDeps {
 	db: Database;
-	kv: KVNamespace;
 	logger: Logger;
 }
 

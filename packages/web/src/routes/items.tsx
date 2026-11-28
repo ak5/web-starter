@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import type { Route } from './+types/items';
 import { Form, data as actionData } from 'react-router';
 import ItemsTable from '@ak5/webui/components/ItemsTable';
+import Pagination from '@ak5/webui/components/Pagination';
 import { itemsActions, loadItems } from '../lib/items.server';
 export const loader = loadItems;
 export async function action(event: Route.ActionArgs) {
@@ -54,6 +55,7 @@ export default function Items({ loaderData: data, actionData: form }: Route.Comp
 					</Form>
 				)}
 			/>
+			<Pagination pagination={data.pagination} />
 		</section>
 	);
 }

@@ -66,8 +66,9 @@ session cookie after account creation, even when delivery fails. Retry using
 forgot-password responses do not disclose account existence or delivery failure.
 
 `GET /admin/users` returns regular users in `users` and non-deleted admin accounts
-in `admins`. Admin entries include their public ID, username, email, and email
-verification status.
+in `admins`. Pass a zero-based `page` to access later pages of regular users. The
+response includes `pagination` for the 100-user pages. Admin entries include their
+public ID, username, email, and email verification status.
 
 `POST /admin/invite` accepts `delivery: "email"` (the default) or `delivery: "link"`
 for regular users. Link mode returns an `inviteUrl` in a `Cache-Control: no-store`

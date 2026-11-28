@@ -120,9 +120,10 @@ previously qualified SHA that still supports the current database schema.
 `preview.yml` deploys the PR head to dedicated API, web and admin Workers. It
 rewrites the frontend service bindings and public URLs to that PR's API, so SSR
 and browser requests run the PR's code. It uses the **Dev Cloudflare** environment's
-D1 database, KV, R2 and secrets. **Preview writes affect development.**
+D1 database, R2 and secrets. **Preview writes affect development.**
 Previews do not apply migrations; merge additive schema changes into trunk and
-let dev apply them before testing code that needs them.
+let dev apply them before testing code that needs them. Closing a PR attempts cleanup
+of all three preview Workers and reports any failed deletion.
 
 PRs also bind to development's `NotesSync` Durable Object. Sharing D1 requires
 one ordering authority per notes store. The preview API and frontend code are
@@ -167,31 +168,30 @@ the selected environment's ID before deployment. Previews use development's ID.
 The API alone has a native `DB` binding. Local Wrangler uses the committed
 placeholder IDs for local persistence and never reaches a remote database.
 
-Create KV namespaces and R2 buckets and configure the matching bindings in
-`packages/api/wrangler.jsonc`. Use separate production, development and staging KV namespaces and R2 buckets;
-only PR previews intentionally share development resources. Set each non-production environment's `R2_PUBLIC_URL` to its bucket's HTTPS public URL.
+Create separate production, development and staging R2 buckets and configure
+the matching bindings in `packages/api/wrangler.jsonc`;
+only PR previews intentionally share development resources. Set each non-production environment's `R2_PUBLIC_URL` to its bucket’s HTTPS origin, for example `https://assets-dev.example.com`.
 The workflow writes it to the API's `PUBLIC_R2_URL`; production uses its configured CDN domain. Create the GitHub Environments before enabling deployments.
 
-| Setting                 | Kind / scope                        | Purpose                                          |
-| ----------------------- | ----------------------------------- | ------------------------------------------------ |
-| `DEPLOY_WORKERS=true`   | repository variable                 | Enable Worker deployment jobs                    |
-| `HOSTED_DEV=true`       | repository variable                 | Automatic dev + shared-data PR previews          |
-| `ENABLE_STAGING=false`  | repository variable                 | Require manual stable staging before production  |
-| `D1_DATABASE_ID`        | environment variable                | This environment's actual D1 UUID                |
-| `CLOUDFLARE_ACCOUNT_ID` | environment variable                | Consuming app's Cloudflare account               |
-| `KV_NAMESPACE_ID`       | environment variable                | API KV namespace                                 |
-| `R2_PUBLIC_URL`         | non-production environment variable | HTTPS public URL of this environment's R2 bucket |
-| `EMAIL_FROM`            | environment variable                | Optional verified sender address                 |
-| `PROD_DOMAIN`           | production environment variable     | App domain, without protocol                     |
-| `CLOUDFLARE_API_TOKEN`  | environment secret                  | Deployment token                                 |
-| `JWT_SECRET`            | environment secret                  | Shared by API, web and admin in this environment |
-| `TOKEN_ENCRYPTION_KEY`  | environment secret                  | API encryption key                               |
-| `DISCORD_CLIENT_SECRET` | optional environment secret         | OAuth provider secret                            |
+| Setting                 | Kind / scope                        | Purpose                                             |
+| ----------------------- | ----------------------------------- | --------------------------------------------------- |
+| `DEPLOY_WORKERS=true`   | repository variable                 | Enable Worker deployment jobs                       |
+| `HOSTED_DEV=true`       | repository variable                 | Automatic dev + shared-data PR previews             |
+| `ENABLE_STAGING=false`  | repository variable                 | Require manual stable staging before production     |
+| `D1_DATABASE_ID`        | environment variable                | This environment's actual D1 UUID                   |
+| `CLOUDFLARE_ACCOUNT_ID` | environment variable                | Consuming app's Cloudflare account                  |
+| `R2_PUBLIC_URL`         | non-production environment variable | HTTPS public origin of this environment’s R2 bucket |
+| `EMAIL_FROM`            | environment variable                | Optional verified sender address                    |
+| `PROD_DOMAIN`           | production environment variable     | App domain, without protocol                        |
+| `CLOUDFLARE_API_TOKEN`  | environment secret                  | Deployment token                                    |
+| `JWT_SECRET`            | environment secret                  | Shared by API, web and admin in this environment    |
+| `TOKEN_ENCRYPTION_KEY`  | environment secret                  | API encryption key                                  |
+| `DISCORD_CLIENT_SECRET` | optional environment secret         | OAuth provider secret                               |
 
 Bootstrap in this order:
 
 1. Rebrand the starter, choose the profile above, and provision its D1 databases,
-   KV namespaces, R2 buckets and optional public asset domains.
+   R2 buckets and optional public asset domains.
 2. Fill `env.development`, optional `env.staging`, and production bindings in
    the three Wrangler configs. Update the example `ak5.workers.dev` URLs to your
    account's actual subdomain; keep frontend API service bindings aligned.
@@ -205,7 +205,8 @@ Bootstrap in this order:
    that exact SHA through the enabled stages using the manual workflow.
 
 Give the deployment token only the account/zone permissions needed for these
-resources: Worker scripts and routes, D1 edit, KV, R2 and Email Sending edit.
+resources: Worker scripts and routes, D1 edit, R2, and Email Sending edit when
+enabled. Optional remote MCP also requires access to its dedicated KV namespace.
 Runtime D1 uses a native binding; do not copy the deployment token into the Worker.
 Complete [Email Sending onboarding](email-sending.md) for your verified domain
 before enabling sends. Local setup uses the mock.
@@ -239,7 +240,8 @@ For a configured remote D1 database, authenticate Wrangler, set `D1_DATABASE_ID`
 to the intended target, and add `--remote` to the same command. The flag is
 explicit and uses the target D1 remote binding. Protect shell history and never
 commit a bootstrap password. The script creates or updates the email credential
-with an atomic batch and prints only the public ID. Updating an existing admin
+and marks the operator-provisioned email as verified in one atomic batch. It prints
+only the public ID. Updating an existing admin
 also advances its session generation and deletes outstanding one-time tokens. It is operator tooling, not
 a public bootstrap endpoint.
 

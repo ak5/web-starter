@@ -22,7 +22,7 @@ merge or collaborative editor. Materializers replay that order identically on
 every client. Keep published event names and materializers stable; follow
 [LiveStore's schema guidance](https://docs.livestore.dev/) for application changes.
 
-The web notes screen shows when a write is still saving to the device.
+Both notes screens show when a write is still saving to the device.
 After local persistence, the pending count shows events awaiting server
 acknowledgement. The shared status subscription reads the pinned LiveStore
 version's leader sync state. Recheck it when upgrading LiveStore.

@@ -60,9 +60,10 @@ Two rules fall out, both enforced mechanically by `pnpm audit:split`:
 ## Runtime & data
 
 Every worker runs on **Cloudflare Workers**. The database is **Cloudflare D1**
-accessed through **Drizzle ORM**, and only `@ak5/api` ever touches it. KV backs
-optional cache data; D1 enforces auth rate limits and R2 backs uploads. The frontends have no DB binding
-and no data secrets — only `JWT_SECRET`, and only to verify cookies.
+accessed through **Drizzle ORM**, and only `@ak5/api` ever touches it. D1 enforces
+auth rate limits, R2 backs uploads, and optional remote MCP uses dedicated KV
+for OAuth grants. The frontends have no DB binding. They use `JWT_SECRET` to
+verify and refresh session cookies.
 
 ## Where to go next
 

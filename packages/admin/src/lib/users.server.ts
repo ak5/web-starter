@@ -1,9 +1,17 @@
+import { redirect } from 'react-router';
 import { apiLoadJson, type ApiRequestEvent } from '@ak5/webui/server';
 import { api } from './api.server';
 export async function loadUsers(event: ApiRequestEvent) {
-	const response = await api(event).admin.users.$get();
+	const url = new URL(event.request.url);
+	const response = await api(event).admin.users.$get({
+		query: { page: url.searchParams.get('page') ?? '0' }
+	});
 	const data = await apiLoadJson(response, 'Could not load users. Please retry.');
-	return { users: data.users, admins: data.admins };
+	if (data.pagination.page >= data.pagination.totalPages) {
+		url.searchParams.set('page', String(data.pagination.totalPages - 1));
+		throw redirect(url.pathname + url.search);
+	}
+	return data;
 }
 
 export async function createInvite(event: ApiRequestEvent) {

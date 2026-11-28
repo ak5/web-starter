@@ -53,7 +53,10 @@ export const adminRoutes = new Hono<AppContext>()
 		const { page, offset, limit } = getPaginationParams(new URL(c.req.url));
 		return c.json(await listAllItems(c.var.db, page, offset, limit));
 	})
-	.get('/users', async (c) => c.json(await adminUserList(c.var.db)))
+	.get('/users', async (c) => {
+		const { page, offset, limit } = getPaginationParams(new URL(c.req.url), 100);
+		return c.json(await adminUserList(c.var.db, page, offset, limit));
+	})
 	.post('/users', zValidator('json', adminCreateUserSchema), async (c) => {
 		const result = await adminCreateAccount(c.var.db, c.req.valid('json'));
 		return apiResultJson(c, result, 201);

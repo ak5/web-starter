@@ -16,7 +16,7 @@ export function LocalNotes({ publicId, cookie }: { publicId: string; cookie: str
 	const [notes, setNotes] = useState<readonly Note[]>([]);
 	const [text, setText] = useState('');
 	const [selected, setSelected] = useState<string | null>(null);
-	const [pending, setPending] = useState(0);
+	const [{ pending, localPending }, setSync] = useState({ pending: 0, localPending: 0 });
 	const [error, setError] = useState('');
 
 	useEffect(() => {
@@ -40,7 +40,9 @@ export function LocalNotes({ publicId, cookie }: { publicId: string; cookie: str
 					return;
 				}
 				const unsubscribeNotes = opened.subscribe(notesQuery, setNotes);
-				const unsubscribeStatus = subscribeNotesSync(opened, setPending);
+				const unsubscribeStatus = subscribeNotesSync(opened, (pending, localPending) =>
+					setSync({ pending, localPending })
+				);
 				dispose = () => {
 					unsubscribeNotes();
 					unsubscribeStatus();
@@ -97,7 +99,11 @@ export function LocalNotes({ publicId, cookie }: { publicId: string; cookie: str
 		<View style={[styles.fill, styles.notes]}>
 			<Text style={styles.heading}>Offline notes</Text>
 			<Text style={styles.body} accessibilityLiveRegion="polite">
-				{pending ? `${pending} changes waiting to sync` : 'No pending changes'}
+				{localPending
+					? 'Saving changes on this device…'
+					: pending
+						? `${pending} changes waiting to sync`
+						: 'No pending changes'}
 			</Text>
 			{error !== '' && (
 				<Text style={styles.error} accessibilityRole="alert">

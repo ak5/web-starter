@@ -16,14 +16,14 @@ to the same runner as needed.
 }
 ```
 
-The handler builds the job dependencies (a DB connection, the KV namespace, a
-logger) and dispatches to a single runner, wrapping the work in
+The handler builds the job dependencies (a DB connection and a logger) and dispatches to a single runner, wrapping the work in
 `ctx.waitUntil(...)` so it completes after the handler returns:
 
 ```ts
 async scheduled(controller, env, ctx) {
   const db = makeDb(env.DB);
-  ctx.waitUntil(runAllCronJobs(controller.cron, { db, kv: env.KV, logger }));
+  const logger = new Logger(env.DISCORD_LOG_ENDPOINT, ctx);
+  ctx.waitUntil(runAllCronJobs(controller.cron, { db, logger }));
 }
 ```
 
@@ -33,7 +33,7 @@ different jobs by schedule.
 ## Adding a job
 
 1. Add (or reuse) a cron expression in `wrangler.jsonc` → `triggers.crons`.
-2. Write the job as a function taking the shared deps `{ db, kv, logger }`.
+2. Write the job as a function taking the shared deps `{ db, logger }`.
 3. Dispatch it from the runner — branch on `cron` if it should only run on a
    specific schedule.
 4. Make concurrent and repeated runs safe (below). Document the job in this file.

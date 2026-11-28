@@ -1,5 +1,11 @@
 import { and, desc, eq, isNull } from 'drizzle-orm';
-import { COOKIE_ADMIN_TOKEN, COOKIE_TOKEN, jwtCookie, parseCookie } from '@ak5/shared';
+import {
+	COOKIE_ADMIN_TOKEN,
+	COOKIE_TOKEN,
+	getPaginationMeta,
+	jwtCookie,
+	parseCookie
+} from '@ak5/shared';
 import { EmailDeliveryError, sendTemplate } from '@ak5/email';
 import type { Database } from '../db';
 import { adminUsers, auditLog, authEmail, tokens, users } from '../db/schema';
@@ -39,22 +45,34 @@ type AdminAuthSubject = {
 	sub: string;
 };
 
-export async function adminUserList(db: Database) {
-	const [rows, admins] = await Promise.all([
+export async function adminUserList(db: Database, page: number, offset: number, limit: number) {
+	const [rows, admins, total] = await Promise.all([
 		db.query.users.findMany({
 			where: isNull(users.deletedAt),
-			orderBy: [desc(users.createdAt)],
-			limit: 100
+			orderBy: [desc(users.createdAt), desc(users.publicId)],
+			limit,
+			offset,
+			columns: {
+				publicId: true,
+				username: true,
+				email: true,
+				role: true,
+				emailVerified: true,
+				bannedAt: true,
+				createdAt: true
+			}
 		}),
 		db.query.adminUsers.findMany({
 			where: isNull(adminUsers.deletedAt),
 			orderBy: [adminUsers.username],
 			columns: { publicId: true, username: true, email: true, emailVerified: true }
-		})
+		}),
+		db.$count(users, isNull(users.deletedAt))
 	]);
 
 	return {
 		admins,
+		pagination: getPaginationMeta(total, page, limit),
 		users: rows.map((user) => ({
 			publicId: user.publicId,
 			username: user.username,

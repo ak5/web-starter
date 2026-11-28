@@ -48,7 +48,7 @@ export default function Pagination({ pagination }: { pagination: PaginationMeta 
 	}
 	return (
 		<nav className="mt-6 flex flex-col items-center gap-4" aria-label="Pagination">
-			<div className="flex gap-1">
+			<div className="flex flex-wrap justify-center gap-1">
 				{directions.slice(0, 2).map(navigation)}
 				{visiblePages(page, totalPages).map((number, index) =>
 					number === 'ellipsis' ? (
@@ -72,7 +72,7 @@ export default function Pagination({ pagination }: { pagination: PaginationMeta 
 				{directions.slice(2).map(navigation)}
 			</div>
 			<p className="text-sm text-ink/60">
-				Showing page {page + 1} of {totalPages} ({total} total items)
+				Showing page {page + 1} of {totalPages} ({total} total)
 			</p>
 		</nav>
 	);
