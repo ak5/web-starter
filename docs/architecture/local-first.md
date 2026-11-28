@@ -82,6 +82,7 @@ notes; an explicit server rejection clears the session. Cached identity never
 authorizes server sync. Sign in again when the session expires to resume syncing.
 
 Signing out closes the local store and clears the visible notes and session.
+Native sign-out clears secure storage and works offline.
 It retains the account-scoped local database so pending edits can resume after
 signing into the same account. Shared devices retain this data on disk; use OS
 protection. Clearing app/browser storage or uninstalling can lose unsynced edits.

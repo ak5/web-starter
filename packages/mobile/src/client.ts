@@ -116,11 +116,6 @@ export function createClient(baseUrl: string, storage: SessionStorage, transport
 			return { result, user: await viewer() };
 		},
 		async logout() {
-			try {
-				await read(await api.auth.logout.$post());
-			} catch {
-				// Server logout only clears this stateless cookie; local removal is authoritative.
-			}
 			await storage.clear();
 			token = null;
 		},
