@@ -117,16 +117,15 @@ test('verification replaces the saved session; resend failures remain retryable'
 	assert.equal(f.saved(), 'verified');
 });
 
-test('uses zero-based pagination and removes local session even if logout fails', async () => {
-	const f = fixture(
-		[json(user), json({ items: [], pagination: { page: 2 } }), json({ error: 'unavailable' }, 503)],
-		'saved'
-	);
+test('uses zero-based pagination and signs out without a network request', async () => {
+	const f = fixture([json(user), json({ items: [], pagination: { page: 2 } })], 'saved');
 	await f.client.restore();
 	await f.client.list(2);
 	assert.equal(new URL(f.requests[1].url).searchParams.get('page'), '2');
 	await f.client.logout();
+	assert.equal(f.requests.length, 2);
 	assert.equal(f.saved(), null);
+	assert.equal(f.client.sessionCookie(), '');
 });
 
 test('rejects login without a session cookie and validates the JSON editor', async () => {
