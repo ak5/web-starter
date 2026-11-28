@@ -121,6 +121,7 @@ test('D1 preserves identity constraints, atomic writes and auth workflows', asyn
 	});
 
 	const env = {
+		REGISTRATION_MODE: 'open',
 		DB: local.binding,
 		JWT_SECRET: 'local-d1-test',
 		COOKIE_ORIGIN: 'localhost',
@@ -133,6 +134,20 @@ test('D1 preserves identity constraints, atomic writes and auth workflows', asyn
 			}
 		}
 	} as unknown as Env;
+	await t.test('invite-only rejects public signup without creating a user', async () => {
+		const email = 'blocked@example.test';
+		const result = await registerUserPreAuth(
+			db,
+			{ ...env, REGISTRATION_MODE: undefined },
+			{
+				email,
+				username: 'blocked',
+				password: 'password1234'
+			}
+		);
+		assert.deepEqual(result, { ok: false, status: 403, body: { error: 'registration_closed' } });
+		assert.equal(await db.query.users.findFirst({ where: eq(users.email, email) }), undefined);
+	});
 	t.mock.method(console, 'error', () => {});
 	await t.test(
 		'password signup reports an email owned by an account without password auth',

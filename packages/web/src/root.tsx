@@ -59,9 +59,11 @@ export default function App({ loaderData }: Route.ComponentProps) {
 								<Link to="/login" className="ui-button ui-button-quiet ui-button-small">
 									Sign in
 								</Link>
-								<Link to="/register" className="ui-button ui-button-primary ui-button-small">
-									Get started
-								</Link>
+								{loaderData.registrationOpen && (
+									<Link to="/register" className="ui-button ui-button-primary ui-button-small">
+										Get started
+									</Link>
+								)}
 							</>
 						)}
 					</>

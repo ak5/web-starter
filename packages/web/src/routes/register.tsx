@@ -1,12 +1,25 @@
 import type { Route } from './+types/register';
-import { Form, Link, useSearchParams } from 'react-router';
+import { Form, Link, useSearchParams, useRouteLoaderData } from 'react-router';
 import { errorMessage } from '@ak5/webui';
 import OAuthLogin from '../lib/OAuthLogin';
 import { registerAction } from '../lib/register.server';
+import type { loader as rootLoader } from '../root';
 export const action = registerAction;
 export default function Register({ actionData: form }: Route.ComponentProps) {
 	const [searchParams] = useSearchParams();
+	const registrationOpen = useRouteLoaderData<typeof rootLoader>('root')?.registrationOpen;
 	const oauthError = searchParams.get('error');
+	if (!registrationOpen) {
+		return (
+			<div className="ui-panel bg-surface p-6">
+				<h1 className="mb-4 text-2xl font-bold">Invitation required</h1>
+				<p className="mb-4">Open your invitation link to create an account.</p>
+				<Link to="/login" className="ui-link">
+					Sign in
+				</Link>
+			</div>
+		);
+	}
 	return (
 		<div className="ui-panel bg-surface p-6">
 			<h1 className="mb-4 text-2xl font-bold">Create your account</h1>

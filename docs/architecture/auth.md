@@ -246,3 +246,15 @@ session with the API before refreshing it. An action can forward replacement
 or cleared cookies from the API, and those cookie writes take precedence over
 automatic refresh. Loader data exposes display fields and public IDs required
 by the UI. The signed session stays in its HttpOnly cookie.
+
+## Registration mode
+
+New users need an invitation by default. Sign in to the admin portal and open
+**Users** to email an invitation or copy an invitation link. The recipient opens
+the link to set a password. Existing users can still sign in and recover their
+passwords.
+
+To enable public registration, set `REGISTRATION_MODE=open` in
+`packages/api/.env` for local development, or set
+`"REGISTRATION_MODE": "open"` in the API Wrangler `vars` for the hosted
+environment. Restart the local API or redeploy the hosted API after the change.

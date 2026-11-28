@@ -1,3 +1,4 @@
+import { isRegistrationOpen } from './registration';
 import { and, eq, isNull, sql } from 'drizzle-orm';
 import { EmailDeliveryError, sendTemplate } from '@ak5/email';
 import { COOKIE_TOKEN, PASSWORD_MAX_LENGTH, publicId, TIME_MS } from '@ak5/shared';
@@ -29,8 +30,9 @@ type AuthWorkflowResult<TBody> =
 			body: { error: string };
 	  };
 
-export function preLoginAuthOptions() {
+export function preLoginAuthOptions(env: Env) {
 	return {
+		registrationOpen: isRegistrationOpen(env),
 		password: {
 			minLength: 8,
 			maxLength: PASSWORD_MAX_LENGTH
@@ -48,6 +50,9 @@ export async function registerUserPreAuth(
 	env: Env,
 	input: RegisterInput
 ): Promise<AuthWorkflowResult<{ ok: true; publicId: string; verificationEmailSent: boolean }>> {
+	if (!isRegistrationOpen(env))
+		return { ok: false, status: 403, body: { error: 'registration_closed' } };
+
 	const { email, password, username } = input;
 
 	const existingUser = await db.query.users.findFirst({

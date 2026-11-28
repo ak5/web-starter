@@ -22,9 +22,11 @@ export default function Home() {
 						) : (
 							<>
 								<div className="flex justify-center gap-3">
-									<Link to="/register" className="ui-button ui-button-primary">
-										Get started
-									</Link>
+									{data?.registrationOpen && (
+										<Link to="/register" className="ui-button ui-button-primary">
+											Get started
+										</Link>
+									)}
 									<Link to="/login" className="ui-button ui-button-quiet">
 										Sign in
 									</Link>

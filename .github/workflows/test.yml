@@ -82,6 +82,7 @@ jobs:
       - run: nice -n 10 pnpm install --frozen-lockfile
       - run: nice -n 10 pnpm test:install
       - run: nice -n 10 pnpm dev:init
+      - run: sed -i 's/^REGISTRATION_MODE=.*/REGISTRATION_MODE=open/' packages/api/.env
       - run: nice -n 10 pnpm db:migrate
       - run: |
           echo "127.0.0.1 api.ak5.localhost web.ak5.localhost admin.ak5.localhost mock.ak5.localhost preview.ak5.localhost" | sudo tee -a /etc/hosts

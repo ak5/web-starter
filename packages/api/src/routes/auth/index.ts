@@ -46,7 +46,7 @@ import { authJson, authJsonWithCookies } from '../../lib/auth-response';
 // ============================================================================
 
 export const userPreAuth = new Hono<AppContext>()
-	.get('/options', (c) => c.json(preLoginAuthOptions()))
+	.get('/options', (c) => c.json(preLoginAuthOptions(c.env)))
 	.post(
 		'/register',
 		rateLimit({ key: 'register', maxAttempts: 5, windowSeconds: 300 }),

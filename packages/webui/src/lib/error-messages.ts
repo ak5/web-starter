@@ -27,6 +27,7 @@ const MESSAGES: Record<string, string> = {
 	access_denied: 'Discord sign-in was cancelled.',
 	discord_already_connected: 'That Discord login belongs to another account.',
 	verified_discord_email_required: 'Verify your email in Discord before signing up.',
+	registration_closed: 'You need an invitation to create an account.',
 	email_already_registered: 'An account with that email exists. Sign in to it first.',
 	missing_code: 'Missing OAuth code.',
 	no_profile: 'Could not load your profile from the provider.'

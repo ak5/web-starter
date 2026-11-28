@@ -3,5 +3,14 @@ import { api } from './api.server';
 
 export async function loadAppShell(event: ApiRequestEvent) {
 	const shell = await loadShell(event, () => api(event).me.$get());
-	return { ...shell, apiUrl: requestState(event.context).env.PUBLIC_API_URL };
+	const options = shell.viewer
+		? null
+		: await api(event)
+				.auth.options.$get()
+				.catch(() => null);
+	return {
+		...shell,
+		apiUrl: requestState(event.context).env.PUBLIC_API_URL,
+		registrationOpen: options?.ok ? (await options.json()).registrationOpen : false
+	};
 }

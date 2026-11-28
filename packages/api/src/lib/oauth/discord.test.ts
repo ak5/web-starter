@@ -26,6 +26,7 @@ function provider(t: TestContext) {
 }
 
 const env = {
+	REGISTRATION_MODE: 'open',
 	TOKEN_ENCRYPTION_KEY: 'ab'.repeat(32),
 	PUBLIC_API_URL: 'https://api.example.test',
 	EMAIL: {
@@ -135,4 +136,17 @@ test('Discord signup rejects an email reserved by an active account without a lo
 		kind: 'redirect',
 		redirectTo: '/login?error=email_already_registered'
 	});
+});
+
+test('invite-only rejects a new Discord identity before writing an account', async (t) => {
+	provider(t);
+	const result = await handleDiscordOAuthCallback({
+		db: {
+			query: { authDiscord: { findFirst: async () => undefined } }
+		} as unknown as Database,
+		env: { ...env, REGISTRATION_MODE: undefined },
+		auth: null,
+		code: 'test-code'
+	});
+	assert.deepEqual(result, { kind: 'redirect', redirectTo: '/login?error=registration_closed' });
 });

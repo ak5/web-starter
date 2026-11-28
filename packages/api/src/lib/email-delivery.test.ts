@@ -22,6 +22,7 @@ const auth: JwtPayload = {
 	recentAuthAt: 1
 };
 const baseEnv = {
+	REGISTRATION_MODE: 'open',
 	JWT_SECRET: 'test-secret',
 	COOKIE_ORIGIN: 'localhost',
 	PUBLIC_APP_URL: 'https://example.test',

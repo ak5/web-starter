@@ -110,7 +110,7 @@ test('rebrand can remove Discord OAuth from the React Router starter', (t) => {
 	assert.equal(result.status, 0, result.stderr);
 	for (const file of files.slice(1, 3)) {
 		const route = readFileSync(join(directory, file), 'utf8');
-		assert.doesNotMatch(route, /OAuthLogin|rootLoader|useRouteLoaderData|apiUrl/);
+		assert.doesNotMatch(route, /OAuthLogin|apiUrl/);
 		assert.match(route, /export const action/);
 	}
 	assert.doesNotMatch(readFileSync(join(directory, files[3]), 'utf8'), /oauthRoutes/);

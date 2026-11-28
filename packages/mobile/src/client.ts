@@ -104,6 +104,9 @@ export function createClient(baseUrl: string, storage: SessionStorage, transport
 			if (!token) throw new ApiError(502, 'The server did not return a session. Please retry.');
 			return viewer();
 		},
+		async registrationOpen() {
+			return (await read(await api.auth.options.$get())).registrationOpen;
+		},
 		async register(email: string, password: string, username: string) {
 			await storage.clear();
 			token = null;

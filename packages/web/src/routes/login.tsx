@@ -1,11 +1,13 @@
 import type { Route } from './+types/login';
-import { Form, Link, useSearchParams } from 'react-router';
+import { Form, Link, useSearchParams, useRouteLoaderData } from 'react-router';
 import { errorMessage } from '@ak5/webui';
 import OAuthLogin from '../lib/OAuthLogin';
 import { loginAction } from '../lib/login.server';
+import type { loader as rootLoader } from '../root';
 export const action = loginAction;
 export default function Login({ actionData: form }: Route.ComponentProps) {
 	const [searchParams] = useSearchParams();
+	const registrationOpen = useRouteLoaderData<typeof rootLoader>('root')?.registrationOpen;
 	const oauthError = searchParams.get('error');
 	return (
 		<div className="ui-panel bg-surface p-6">
@@ -47,12 +49,14 @@ export default function Login({ actionData: form }: Route.ComponentProps) {
 				Forgot password?
 			</Link>
 			<OAuthLogin />
-			<p className="mt-4 text-sm text-ink/70">
-				No account?{' '}
-				<Link to="/register" className="ui-link">
-					Create one
-				</Link>
-			</p>
+			{registrationOpen && (
+				<p className="mt-4 text-sm text-ink/70">
+					No account?{' '}
+					<Link to="/register" className="ui-link">
+						Create one
+					</Link>
+				</p>
+			)}
 		</div>
 	);
 }

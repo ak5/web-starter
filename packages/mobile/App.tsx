@@ -42,6 +42,7 @@ function MobileApp() {
 	const running = useRef(false);
 	const [error, setError] = useState('');
 	const [notice, setNotice] = useState('');
+	const [registrationOpen, setRegistrationOpen] = useState(false);
 	const [registering, setRegistering] = useState(false);
 	const [email, setEmail] = useState('');
 	const [username, setUsername] = useState('');
@@ -81,11 +82,13 @@ function MobileApp() {
 			} catch (cause) {
 				if (cause instanceof ApiError && cause.status === 401) resetSession();
 				setError(
-					cause instanceof ApiError && cause.message === 'email_delivery_failed'
-						? 'Email could not be sent. Use Resend code to retry.'
-						: cause instanceof ApiError || cause instanceof InputError
-							? cause.message
-							: 'Something went wrong. Please retry.'
+					cause instanceof ApiError && cause.message === 'registration_closed'
+						? 'You need an invitation to create an account.'
+						: cause instanceof ApiError && cause.message === 'email_delivery_failed'
+							? 'Email could not be sent. Use Resend code to retry.'
+							: cause instanceof ApiError || cause instanceof InputError
+								? cause.message
+								: 'Something went wrong. Please retry.'
 				);
 			} finally {
 				running.current = false;
@@ -99,6 +102,7 @@ function MobileApp() {
 		void run(async () => {
 			try {
 				setUser(await client.restore());
+				setRegistrationOpen(await client.registrationOpen().catch(() => false));
 			} finally {
 				setReady(true);
 			}
@@ -170,10 +174,11 @@ function MobileApp() {
 						onChangeText={setPassword}
 					/>
 					{button(registering ? 'Create account' : 'Sign in', authenticate)}
-					{button(registering ? 'Have an account? Sign in' : 'Create an account', () => {
-						setRegistering(!registering);
-						setError('');
-					})}
+					{registrationOpen &&
+						button(registering ? 'Have an account? Sign in' : 'Create an account', () => {
+							setRegistering(!registering);
+							setError('');
+						})}
 					{button(
 						'Recover password',
 						() =>

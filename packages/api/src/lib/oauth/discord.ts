@@ -1,3 +1,4 @@
+import { isRegistrationOpen } from '../registration';
 /** Discord login and account linking; refresh tokens are encrypted at rest. */
 import type { Context } from 'hono';
 import { and, eq, isNull } from 'drizzle-orm';
@@ -269,6 +270,9 @@ export async function handleDiscordOAuthCallback(args: {
 			})
 			.where(eq(authDiscord.id, existing.id));
 	} else {
+		if (!isRegistrationOpen(args.env)) {
+			return { kind: 'redirect', redirectTo: '/login?error=registration_closed' };
+		}
 		if (!profile.email || !profile.verified) {
 			return { kind: 'redirect', redirectTo: '/register?error=verified_discord_email_required' };
 		}
