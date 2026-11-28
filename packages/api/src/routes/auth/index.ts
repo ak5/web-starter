@@ -1,3 +1,4 @@
+import { z } from 'zod';
 /**
  * Auth routes — split into pre-login (URL carries the role since there is no
  * JWT yet) and post-login (single set, JWT carries the role).
@@ -10,6 +11,7 @@ import { requireAuth, requireRecentAuth } from '../../middleware/auth';
 import { activeAuth } from '../../lib/auth-context';
 import {
 	acceptInviteSchema,
+	emailSchema,
 	changePasswordSchema,
 	forgotPasswordSchema,
 	loginSchema,
@@ -29,6 +31,8 @@ import {
 } from '../../lib/auth-prelogin';
 import {
 	authSubjectSummary,
+	requestEmailChange,
+	confirmEmailChange,
 	changePasswordPostAuth,
 	logoutPostAuth,
 	magicLoginPostAuthWithInput,
@@ -129,6 +133,53 @@ export const postAuth = new Hono<AppContext>()
 		return authJsonWithCookies(c, result);
 	})
 	.use(requireAuth())
+	.post(
+		'/request-email-change',
+		requireRecentAuth(),
+		rateLimit({
+			key: 'request_email_change',
+			scope: 'account',
+			maxAttempts: 3,
+			windowSeconds: 600
+		}),
+		zValidator('json', z.object({ newEmail: emailSchema })),
+		async (c) => {
+			c.header('Cache-Control', 'no-store');
+			return authJson(
+				c,
+				await requestEmailChange(c.var.db, c.env, activeAuth(c), c.req.valid('json').newEmail)
+			);
+		}
+	)
+	.post(
+		'/confirm-email-change',
+		requireRecentAuth(),
+		rateLimit({
+			key: 'confirm_email_change',
+			scope: 'account',
+			maxAttempts: 5,
+			windowSeconds: 600
+		}),
+		zValidator(
+			'json',
+			z.object({
+				code: z
+					.string()
+					.trim()
+					.toUpperCase()
+					.regex(/^[A-Z2-9]{6}$/)
+			})
+		),
+		async (c) => {
+			c.header('Cache-Control', 'no-store');
+			return authJson(
+				c,
+				await confirmEmailChange(c.var.db, c.env, activeAuth(c), c.req.valid('json').code, (task) =>
+					c.executionCtx.waitUntil(task)
+				)
+			);
+		}
+	)
 	.get('/me', async (c) => {
 		return c.json(authSubjectSummary(activeAuth(c)));
 	})

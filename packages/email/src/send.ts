@@ -3,6 +3,7 @@ import { render } from 'react-email';
 import VerifyEmail from './templates/verify-email.js';
 import ResetPassword from './templates/reset-password.js';
 import LoginWith from './templates/login-with.js';
+import EmailChange from './templates/email-change.js';
 import InviteAccount from './templates/invite-account.js';
 import type {
 	VerifyEmailProps,
@@ -39,13 +40,16 @@ export interface EmailLogger {
 	log(level: 'info' | 'warn' | 'error', message: string, data?: Record<string, unknown>): void;
 }
 
-export type TemplateName = 'VerifyEmail' | 'ResetPassword' | 'LoginWith' | 'InviteAccount';
+export type TemplateName =
+	'VerifyEmail' | 'ResetPassword' | 'LoginWith' | 'InviteAccount' | 'EmailChange' | 'EmailChanged';
 
 export interface TemplateProps {
 	VerifyEmail: VerifyEmailProps;
 	ResetPassword: ResetPasswordProps;
 	LoginWith: LoginWithProps;
 	InviteAccount: InviteAccountProps;
+	EmailChange: { code: string };
+	EmailChanged: Record<string, never>;
 }
 
 const TEMPLATE_REGISTRY: {
@@ -57,7 +61,9 @@ const TEMPLATE_REGISTRY: {
 	VerifyEmail: { component: VerifyEmail, subject: 'Verify Email' },
 	ResetPassword: { component: ResetPassword, subject: 'Reset Password' },
 	LoginWith: { component: LoginWith, subject: 'Account Access Attempt' },
-	InviteAccount: { component: InviteAccount, subject: 'You are invited' }
+	InviteAccount: { component: InviteAccount, subject: 'You are invited' },
+	EmailChange: { component: EmailChange, subject: 'Confirm your email change' },
+	EmailChanged: { component: EmailChange, subject: 'Your sign-in email changed' }
 };
 
 export type { VerifyEmailProps, ResetPasswordProps, LoginWithProps, InviteAccountProps };

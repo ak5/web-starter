@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Form, Link, useFetcher, useNavigation } from 'react-router';
 import { DELETE_CONFIRMATION } from '@ak5/webui';
+import EmailChangeForm from '@ak5/webui/components/EmailChangeForm';
 import ConfirmationDialog from '@ak5/webui/components/ConfirmationDialog';
 import { loadProfile, updateProfile } from '../lib/profile.server';
 import type { Route } from './+types/account';
@@ -82,6 +83,7 @@ export default function Account({ loaderData, actionData }: Route.ComponentProps
 				<Link to="/account/password" className="ui-link">
 					Password settings
 				</Link>
+				{security.hasEmailAuth && !impersonated && <EmailChangeForm email={security.email} />}
 			</section>
 			{!impersonated && (
 				<section className="ui-panel grid gap-3 p-5">

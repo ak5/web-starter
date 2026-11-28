@@ -28,6 +28,8 @@ const MESSAGES: Record<string, string> = {
 	discord_already_connected: 'That Discord login belongs to another account.',
 	verified_discord_email_required: 'Verify your email in Discord before signing up.',
 	registration_closed: 'You need an invitation to create an account.',
+	email_unchanged: 'Enter a different email address.',
+	invalid_email_change_code: 'That code is invalid or expired. Request a new code.',
 	email_already_registered: 'An account with that email exists. Sign in to it first.',
 	missing_code: 'Missing OAuth code.',
 	no_profile: 'Could not load your profile from the provider.'

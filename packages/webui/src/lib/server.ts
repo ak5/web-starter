@@ -15,3 +15,4 @@ export { renderDocument } from './render-document.js';
 export { errorMessage } from './error-messages.js';
 export { createFrontendWorker } from './frontend-worker.js';
 export { loadShell } from './app-shell.js';
+export { emailChangeAction } from './email-change-action.js';
