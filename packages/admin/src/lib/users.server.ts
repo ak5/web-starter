@@ -69,5 +69,5 @@ export async function deleteUser(event: ApiRequestEvent, form: FormData) {
 	const response = await api(event).admin.users[':publicId'].$delete({ param: { publicId } });
 	if (!response.ok)
 		return data({ message: 'Could not delete the user.' }, { status: response.status, headers });
-	return data({ deleted: true }, { headers });
+	return data({ deletedId: publicId }, { headers });
 }

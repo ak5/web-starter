@@ -20,7 +20,8 @@ export default function Users({ loaderData: page, actionData }: Route.ComponentP
 	const [target, setTarget] = useState<{ id: string; name: string } | null>(null);
 	const deletion = useFetcher<typeof action>();
 	const pending = deletion.state !== 'idle';
-	const deleted = !pending && deletion.data && 'deleted' in deletion.data && deletion.data.deleted;
+	const deletedId =
+		!pending && deletion.data && 'deletedId' in deletion.data ? deletion.data.deletedId : undefined;
 	function selectDeletion(id: string, name: string) {
 		deletion.reset();
 		setTarget({ id, name });
@@ -35,7 +36,7 @@ export default function Users({ loaderData: page, actionData }: Route.ComponentP
 		actionData !== previousInvite &&
 		actionData &&
 		!('message' in actionData) &&
-		!('deleted' in actionData)
+		!('deletedId' in actionData)
 			? actionData
 			: undefined;
 	const inviteUrl = invite?.inviteUrl;
@@ -67,6 +68,7 @@ export default function Users({ loaderData: page, actionData }: Route.ComponentP
 					aria-disabled={navigation.state !== 'idle'}
 					onClick={() => {
 						if (navigation.state !== 'idle') return;
+						setTarget(null);
 						deletion.reset();
 						setPreviousInvite(actionData);
 						setCopiedUrl('');
@@ -92,7 +94,7 @@ export default function Users({ loaderData: page, actionData }: Route.ComponentP
 						</button>
 					)}
 				/>
-				{deleted && <p role="status">User deleted.</p>}
+				{deletedId && <p role="status">User deleted.</p>}
 				<Pagination pagination={page.pagination} />
 			</div>
 			<AccountTable
@@ -209,7 +211,7 @@ export default function Users({ loaderData: page, actionData }: Route.ComponentP
 				)}
 			</Modal>
 			<ConfirmationDialog
-				open={Boolean(target) && !deleted}
+				open={Boolean(target) && target?.id !== deletedId}
 				title={`Delete ${target?.name ?? 'this user'}’s account?`}
 				description="This revokes sign-in and removes the account from the user list. Stored data and uploads are retained."
 				requiredText={DELETE_CONFIRMATION}
@@ -227,8 +229,8 @@ export default function Users({ loaderData: page, actionData }: Route.ComponentP
 					if (!pending) setTarget(null);
 				}}
 				onClosed={() => {
-					if (deleted) {
-						setTarget(null);
+					if (target && target.id === deletedId) {
+						setTarget((current) => (current?.id === deletedId ? null : current));
 						heading.current?.focus();
 					}
 				}}

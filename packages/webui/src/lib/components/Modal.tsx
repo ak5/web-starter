@@ -39,6 +39,10 @@ export default function Modal({
 			aria-labelledby={title ? titleId : undefined}
 			aria-label={title ? undefined : 'Dialog'}
 			className="m-auto max-h-[90vh] w-[calc(100%-1rem)] max-w-md overflow-hidden rounded-2xl border border-raised bg-canvas text-ink shadow-2xl backdrop:bg-raised/80 backdrop:backdrop-blur-sm"
+			closedby={dismissDisabled ? 'none' : undefined}
+			onKeyDown={(event) => {
+				if (dismissDisabled && event.key === 'Escape') event.preventDefault();
+			}}
 			onClose={onClosed}
 			onCancel={(event) => {
 				event.preventDefault();

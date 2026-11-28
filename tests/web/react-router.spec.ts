@@ -121,13 +121,16 @@ test('item form intents update the server list and clear a successful creation',
 		await confirmation.fill('DELETE');
 		await confirm.click();
 		await expect(dialog.getByRole('alert')).toHaveText('Type DELETE to confirm.');
+		await expect(confirm).toBeEnabled();
 		await expect(row).toBeVisible();
 		try {
 			await dialog.locator('form').evaluate((form: HTMLFormElement) => {
 				form.requestSubmit();
 				form.requestSubmit();
 			});
+			await expect.poll(() => attempts).toBe(2);
 			await expect(dialog.getByRole('button', { name: 'Working…' })).toBeDisabled();
+			await expect(dialog).toHaveAttribute('closedby', 'none');
 			await page.keyboard.press('Escape');
 			await expect(dialog).toBeVisible();
 		} finally {
@@ -149,6 +152,7 @@ test('item form intents update the server list and clear a successful creation',
 		await page.reload();
 		await page.getByRole('link', { name: 'Next page' }).click();
 		await expect(page).toHaveURL(`${webUrl}/items?page=1`);
+		await expect(page.getByRole('button', { name: 'Use dark theme' }).first()).toBeEnabled();
 		const lastRow = page.getByRole('row').filter({ hasText: /Page item \d+/ });
 		await expect(lastRow).toHaveCount(1);
 		const lastTitle = (await lastRow.getByRole('cell').first().innerText()).trim();
