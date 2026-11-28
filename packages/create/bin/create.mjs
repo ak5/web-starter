@@ -117,7 +117,7 @@ export function createProject(
 		writeFileSync(manifestPath, JSON.stringify(manifest, null, '\t') + '\n');
 		run('git', ['init', '--quiet', '--initial-branch=main'], destination);
 		console.log(
-			`\nCreated ${destination} (${mobile ? 'web + mobile' : 'website only'}).\nNext: cd ${JSON.stringify(destination)}\n  mise trust\n  mise install\n  pnpm install\n  pnpm dev:init\n  pnpm db:migrate\n  pnpm dev:auto\n\nMobile can be enabled later with: pnpm mobile enable`
+			`\nCreated ${destination} (${mobile ? 'web + mobile' : 'website only'}).\nNext: cd ${JSON.stringify(destination)}\n  mise trust\n  mise install\n  pnpm install\n  pnpm dev:init\n  pnpm db:migrate\n  pnpm create:admin admin@example.test adminname '<local-password>'\n  pnpm dev:auto\n\nOpen PUBLIC_ADMIN_URL from .env.dev-slot and sign in. In Users, select Invite, then Create and copy invite link. Open the link to set the first user's password.\n\nMobile can be enabled later with: pnpm mobile enable`
 		);
 		return destination;
 	} finally {

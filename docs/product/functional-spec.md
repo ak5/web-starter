@@ -21,7 +21,7 @@ It links to the auth flow.
 The full email + password account lifecycle, served by the api and the web
 surface:
 
-- **Register** — create an account with email + password.
+- **Register** — create an account by invitation. Public email and password signup is available when `REGISTRATION_MODE=open`.
 - **Verify email** — a six-character alphanumeric code is mailed on register; entering it at
   `/account/verify` marks the email verified. Unverified accounts can sign in but are nudged to verify.
 - **Login** — email + password; issues the session cookie.
@@ -37,30 +37,24 @@ core — present but deletable without touching the email + password path.
 ## Authed user dashboard
 
 After login, the dashboard confirms the session, shows the user's name, email and
-verification status, and links to email verification when needed. The navigation
-links to password settings, the items demo and notes. Profile editing, avatar
-upload and account deletion are API operations; the starter has no screens for
-them. Build those into your product's account UI as needed.
+verification status, and links to email verification when needed. The navigation links to Account settings, items, and notes. Account settings
+supports profile edits, WebP avatar upload, verification status, password
+settings, and account deletion after recent sign-in.
 
 ## Admin portal
 
-A separate React Router app uses its own admin identity table. Its screens provide
-sign-in, password recovery/settings, a read-only list of the latest 100 active
-or banned users, and a read-only items view. The user list has no search or page
-controls. Deleted users are excluded.
+A separate React Router app uses its own admin identity table. Its Users screen supports search, filters, pagination, invitations, and
+invitation replacement for regular users and admins. Deleted users are excluded.
+The Audit Log shows recorded admin actions. The Items page is read-only.
 
-The authenticated admin API additionally supports these operations. They do not
-yet have admin screens:
+Other admin API capabilities include:
 
 - **Create accounts** — create a user or admin with an initial password.
-- **Invite** — invite a new user (or admin) by email.
 - **Ban / unban** — toggle a user's `banned_at`; banned users are rejected at the
   post-login guard, which DB-checks ban/deletion as the source of truth.
 - **Impersonate** — act as a user for support/debugging. The admin's own token is
   parked aside, the user token carries an `impersonatedBy` marker, an audit-log row
   is written on start and stop, and stopping swaps the cookies back.
-- **Audit log** — paginated records of invitations, bans, unbans, deletions and
-  impersonation start/stop. Direct account creation is not currently audited.
 - **Diagnostics** — database health, Cloudflare Workers, and local development
   services and token metadata.
 

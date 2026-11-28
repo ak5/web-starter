@@ -14,7 +14,8 @@ auth wiring.
 | --------------------- | ---------------------- | -------------------------------------- |
 | `/`                   | public                 | Starter overview and author credit     |
 | `/login`              | guest                  | Sign in (email + password)             |
-| `/register`           | guest                  | Create an account                      |
+| `/register`           | guest                  | Create an account when registration is open |
+| `/account` | user | Profile, avatar, security and account deletion |
 | `/account/verify`     | user                   | Enter verification code or resend      |
 | `/dashboard`          | user                   | Authed example dashboard (protected)   |
 | `/notes`              | user                   | Local SQLite notes with LiveStore sync |

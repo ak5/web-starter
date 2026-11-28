@@ -24,8 +24,14 @@ mise install
 pnpm install
 pnpm dev:init
 pnpm db:migrate
+pnpm create:admin admin@example.test adminname '<local-password>'
 pnpm dev:auto
 ```
+
+Open `PUBLIC_ADMIN_URL` from `.env.dev-slot` and sign in as the new admin.
+In **Users**, select **Invite**, enter a test email and username, and choose
+**Create and copy invite link**. Open the link, set a password, then sign out
+and sign back in on the web app. This flow works without an email sender.
 
 The generated app does not contain the creator package or its bootstrap tests.
 Rebranding preserves dependency integrity hashes, upstream attribution and local

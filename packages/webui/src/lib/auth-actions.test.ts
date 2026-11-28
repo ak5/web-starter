@@ -69,3 +69,34 @@ test('sign-in returns to browser-owned MCP consent with a document navigation', 
 			error.headers.get('X-Remix-Reload-Document') === 'true'
 	);
 });
+
+test('redeeming a password link forwards the session and loads a fresh document', async () => {
+	const cookies = new Headers();
+	await assert.rejects(
+		accountPasswordAction({
+			session: {},
+			request: new Request('https://app.example.test/account/password?t=fixture', {
+				method: 'POST',
+				body: new URLSearchParams({ token: 'fixture', newPassword: 'new', password2: 'new' })
+			}),
+			cookies,
+			acceptInvite: async () =>
+				Response.json(
+					{ redirectTo: '/dashboard' },
+					{ headers: { 'set-cookie': 'ak5_token=fixture; Path=/' } }
+				),
+			changePassword: async () => {
+				throw new Error('unexpected password change');
+			},
+			setPassword: async () => {
+				throw new Error('unexpected first password');
+			},
+			failures: { changePassword: 'failed', acceptInvite: 'failed', setPassword: 'failed' }
+		}),
+		(error: unknown) =>
+			error instanceof Response &&
+			error.headers.get('Location') === '/dashboard' &&
+			error.headers.get('X-Remix-Reload-Document') === 'true'
+	);
+	assert.deepEqual(cookies.getSetCookie(), ['ak5_token=fixture; Path=/']);
+});
