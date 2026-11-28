@@ -31,6 +31,9 @@ mise.local.toml
 .DS_Store
 *.log
 
+# Local agent instructions
+/AGENTS.override.md
+
 # Scratch pad — contents never committed, dir kept
 tmp/*
 !tmp/.gitkeep
