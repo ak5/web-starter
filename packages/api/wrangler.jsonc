@@ -58,12 +58,6 @@
 			"bucket_name": "ak5"
 		}
 	],
-	"kv_namespaces": [
-		{
-			"binding": "KV",
-			"id": "REPLACE_WITH_KV_NAMESPACE_ID"
-		}
-	],
 	"triggers": {
 		"crons": ["0 * * * *"]
 	},
@@ -107,12 +101,6 @@
 					"binding": "R2",
 					"bucket_name": "ak5-web-starter-dev"
 				}
-			],
-			"kv_namespaces": [
-				{
-					"binding": "KV",
-					"id": "REPLACE_WITH_KV_NAMESPACE_ID"
-				}
 			]
 		},
 		"staging": {
@@ -153,12 +141,6 @@
 				{
 					"binding": "R2",
 					"bucket_name": "ak5-web-starter-staging"
-				}
-			],
-			"kv_namespaces": [
-				{
-					"binding": "KV",
-					"id": "REPLACE_WITH_KV_NAMESPACE_ID"
 				}
 			]
 		}

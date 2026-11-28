@@ -1,5 +1,6 @@
 import type { Route } from './+types/items';
 import ItemsTable from '@ak5/webui/components/ItemsTable';
+import Pagination from '@ak5/webui/components/Pagination';
 import { loadAdminItems } from '../lib/items.server';
 export const loader = loadAdminItems;
 export default function Items({ loaderData: data }: Route.ComponentProps) {
@@ -11,6 +12,7 @@ export default function Items({ loaderData: data }: Route.ComponentProps) {
 				the same component the web app uses for a single user's items.
 			</p>
 			<ItemsTable items={data.items} showOwner />
+			<Pagination pagination={data.pagination} />
 		</section>
 	);
 }

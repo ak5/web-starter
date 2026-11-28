@@ -3,18 +3,23 @@
  * Server-side throughout so the JWT cookie travels to the api; the route module
  * just re-exports these (keeps the route thin per the split-boundary audit).
  */
-import { data } from 'react-router';
+import { data, redirect } from 'react-router';
 import type { ApiRequestEvent } from '@ak5/webui/server';
 import { apiLoadJson } from '@ak5/webui/server';
 import { api } from './api.server';
 
 export const loadItems = async (event: ApiRequestEvent) => {
+	const url = new URL(event.request.url);
 	const body = await apiLoadJson(
-		await api(event).items.$get(),
+		await api(event).items.$get({ query: { page: url.searchParams.get('page') ?? '0' } }),
 		'Could not load items. Please retry.'
 	);
 	if (!('items' in body)) throw data('Could not load items. Please retry.', { status: 502 });
-	return { items: body.items };
+	if (body.pagination.page >= body.pagination.totalPages) {
+		url.searchParams.set('page', String(body.pagination.totalPages - 1));
+		throw redirect(url.pathname + url.search);
+	}
+	return { items: body.items, pagination: body.pagination };
 };
 
 export const itemsActions = {

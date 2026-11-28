@@ -62,7 +62,8 @@ test('item form intents update the server list and clear a successful creation',
 	try {
 		await registerUser(api);
 		await context.addCookies((await api.storageState()).cookies);
-		await page.goto('/items');
+		await page.goto('/items?page=1');
+		await expect(page).toHaveURL(`${webUrl}/items?page=0`);
 		const title = page.getByRole('textbox', { name: 'New item title' });
 		await expect(page.getByRole('button', { name: 'Use dark theme' }).first()).toBeEnabled();
 		await title.fill('Starter item');
@@ -72,6 +73,16 @@ test('item form intents update the server list and clear a successful creation',
 		await expect(title).toHaveValue('');
 		await row.getByRole('button', { name: 'Delete' }).click();
 		await expect(row).toHaveCount(0);
+		for (let index = 0; index < 51; index++) {
+			const response = await api.post('/items', {
+				data: { data: { title: `Page item ${index}` } }
+			});
+			expect(response.status()).toBe(201);
+		}
+		await page.reload();
+		await page.getByRole('link', { name: 'Next page' }).click();
+		await expect(page).toHaveURL(`${webUrl}/items?page=1`);
+		await expect(page.getByRole('row').filter({ hasText: 'Page item 0' })).toBeVisible();
 	} finally {
 		await api.dispose();
 	}

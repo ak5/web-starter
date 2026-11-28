@@ -92,3 +92,15 @@ for (const role of ['user', 'admin']) {
 		);
 	});
 }
+
+test('account overview returns to a valid page and keeps the admin section', async ({ page }) => {
+	await page.goto('/?page=999999');
+	await expect(page).toHaveURL(/\?page=\d+$/);
+	expect(new URL(page.url()).searchParams.get('page')).not.toBe('999999');
+	await expect(page.getByRole('table', { name: 'Regular users', exact: true })).toBeVisible();
+	const admin = page
+		.getByRole('table', { name: 'Admins', exact: true })
+		.getByRole('row')
+		.filter({ hasText: adminEmail });
+	await expect(admin.getByRole('cell', { name: 'Verified', exact: true })).toBeVisible();
+});

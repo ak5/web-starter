@@ -42,15 +42,6 @@ jobs:
           EMAIL_FROM: ${{ vars.EMAIL_FROM }}
         run: node scripts/configure-email-sender.mjs
 
-      # Per-project binding ids come from a GitHub variable so the committed
-      # wrangler.jsonc stays template-clean (and survives the example's auto-sync).
-      # Set vars.KV_NAMESPACE_ID to wire the api's KV binding at deploy time;
-      # leave it unset if you filled the id into wrangler.jsonc directly.
-      # (account_id auto-detects from a single-account API token.)
-      - name: Wire per-project binding ids
-        if: ${{ vars.KV_NAMESPACE_ID != '' }}
-        run: sed -i "s|REPLACE_WITH_KV_NAMESPACE_ID|${{ vars.KV_NAMESPACE_ID }}|g" packages/api/wrangler.jsonc
-
       # Prod custom domain comes from a GitHub variable so the committed
       # wrangler.jsonc stays domain-agnostic (and survives `pnpm rebrand`). Set
       # vars.PROD_DOMAIN (e.g. example.com) → prod binds api/www/admin/cdn.<it> as
@@ -64,19 +55,7 @@ jobs:
       - name: Configure non-production asset URL
         env:
           R2_PUBLIC_URL: ${{ vars.R2_PUBLIC_URL }}
-        run: |
-          node --input-type=module <<'JS'
-          import { readFileSync, writeFileSync } from 'node:fs';
-          const path = 'packages/api/wrangler.jsonc';
-          const config = JSON.parse(readFileSync(path, 'utf8'));
-          const target = process.env.TARGET || 'development';
-          if (target !== 'production') {
-            const url = new URL(process.env.R2_PUBLIC_URL);
-            if (url.protocol !== 'https:') throw new Error("Set R2_PUBLIC_URL to this environment's HTTPS bucket URL");
-            config.env[target].vars.PUBLIC_R2_URL = url.origin;
-            writeFileSync(path, JSON.stringify(config, null, '\t') + '\n');
-          }
-          JS
+        run: node scripts/configure-asset-url.mjs
 
       - name: Configure optional MCP
         env:

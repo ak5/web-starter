@@ -7,16 +7,16 @@ checks its generation with the API before accepting or refreshing it.
 
 ## Routes
 
-| Route                 | Auth                   | Purpose                           |
-| --------------------- | ---------------------- | --------------------------------- |
-| `/`                   | admin                  | Regular users and admins          |
-| `/login`              | guest                  | Admin sign in                     |
-| `/logout`             | admin                  | Clear the session (POST) → `/`    |
-| `/forgot-password`    | public                 | Request a reset link by email     |
-| `/account/password`   | session or reset token | Set, reset or change password     |
-| `/invite`             | public                 | Open the invitation password form |
-| `/auth/magic/[token]` | session                | Confirm a reauthentication link   |
-| `/items`              | session                | Example item list and CRUD        |
+| Route                 | Auth                   | Purpose                            |
+| --------------------- | ---------------------- | ---------------------------------- |
+| `/`                   | admin                  | Paginated regular users and admins |
+| `/login`              | guest                  | Admin sign in                      |
+| `/logout`             | admin                  | Clear the session (POST) → `/`     |
+| `/forgot-password`    | public                 | Request a reset link by email      |
+| `/account/password`   | session or reset token | Set, reset or change password      |
+| `/invite`             | public                 | Open the invitation password form  |
+| `/auth/magic/[token]` | session                | Confirm a reauthentication link    |
+| `/items`              | session                | Paginated read-only item list      |
 
 Recovery and invitation pages accept emailed tokens while signed out.
 `/account/password` requires either a session or a reset token; the route loader

@@ -24,7 +24,7 @@ auth wiring.
 | `/account/password`   | session or reset token | Set, reset or change password          |
 | `/invite`             | public                 | Open the invitation password form      |
 | `/auth/magic/[token]` | session                | Confirm a reauthentication link        |
-| `/items`              | session                | Example item list and CRUD             |
+| `/items`              | session                | Paginated item list and CRUD           |
 
 Recovery and invitation pages accept emailed tokens while signed out.
 `/account/password` requires either a session or a reset token; the route loader

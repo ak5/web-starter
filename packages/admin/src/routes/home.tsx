@@ -1,4 +1,5 @@
 import Modal from '@ak5/webui/components/Modal';
+import Pagination from '@ak5/webui/components/Pagination';
 import type { Route } from './+types/home';
 import { useEffect, useState } from 'react';
 import { data, Form, useNavigation } from 'react-router';
@@ -52,7 +53,10 @@ export default function Users({ loaderData: page, actionData }: Route.ComponentP
 					Invite
 				</button>
 			</div>
-			<AccountTable title="Regular users" rows={page.users} empty="No users yet." />
+			<div className="mb-6">
+				<AccountTable title="Regular users" rows={page.users} empty="No users yet." />
+				<Pagination pagination={page.pagination} />
+			</div>
 			<AccountTable
 				title="Admins"
 				rows={page.admins.map((admin) => ({

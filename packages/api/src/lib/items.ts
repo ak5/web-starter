@@ -43,7 +43,7 @@ export async function listItems(
 	const [rows, total] = await Promise.all([
 		db.query.items.findMany({
 			where: eq(items.userId, userId),
-			orderBy: [desc(items.createdAt)],
+			orderBy: [desc(items.createdAt), desc(items.publicId)],
 			limit,
 			offset
 		}),
@@ -67,7 +67,7 @@ export async function listItems(
 export async function listAllItems(db: Database, page: number, offset: number, limit: number) {
 	const [rows, total] = await Promise.all([
 		db.query.items.findMany({
-			orderBy: [desc(items.createdAt)],
+			orderBy: [desc(items.createdAt), desc(items.publicId)],
 			limit,
 			offset,
 			with: { user: { columns: { username: true } } }

@@ -25,7 +25,7 @@ pnpm cli login user@example.com password           # sign in (user)
 pnpm cli login admin@example.com pw --type admin   # sign in (admin)
 pnpm cli -i admin whoami                            # use the "admin" persona
 pnpm cli token                                      # raw JWT (Playwright injection)
-pnpm cli admin users                                # admin: list users
+pnpm cli admin users 0                              # admin: list users (zero-based page)
 pnpm cli emails to user@example.com                 # query the mock email server
 pnpm cli verify user@example.com                    # auto-extract PIN + verify
 ```

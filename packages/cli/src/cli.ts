@@ -215,7 +215,7 @@ Commands:
   list-identities                      — list stored personas
   whoami                               — print current persona info (GET /auth/me)
   token                                — print raw JWT (for Playwright injection)
-  admin users                          — admin: list users
+  admin users [page]                   — admin: list users (zero-based page)
   emails to <addr>                     — list emails captured by mock server
   emails pin <addr>                    — extract verify PIN from latest email
   verify <addr>                        — auto-extract PIN + post /auth/verify-email
@@ -339,7 +339,9 @@ async function main() {
 	if (cmd === 'admin') {
 		const sub = flags.positional[1];
 		if (sub === 'users') {
-			const r = await callApi('GET', '/admin/users', identity);
+			const page = flags.positional[2];
+			const query = page === undefined ? '' : '?' + new URLSearchParams({ page });
+			const r = await callApi('GET', '/admin/users' + query, identity);
 			out(r.data, flags.pretty);
 			return;
 		}

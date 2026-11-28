@@ -1,5 +1,5 @@
 #!/usr/bin/env tsx
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { getPlatformProxy } from 'wrangler';
 import { and, eq, isNull, sql } from 'drizzle-orm';
@@ -13,66 +13,75 @@ if (!email || !username || !password || flags.some((flag) => flag !== '--remote'
 	throw new Error('usage: pnpm create:admin <email> <username> <password> [--remote]');
 }
 const remote = flags.includes('--remote');
-let directory: string | undefined;
-let configPath = resolve('wrangler.jsonc');
-if (remote) {
-	const id = process.env.D1_DATABASE_ID;
-	if (!id || !/^[a-f\d]{8}(?:-[a-f\d]{4}){3}-[a-f\d]{12}$/i.test(id) || /^00000000-/.test(id)) {
-		throw new Error('--remote requires the actual D1_DATABASE_ID and Wrangler authentication.');
-	}
-	mkdirSync('.wrangler', { recursive: true });
-	directory = mkdtempSync('.wrangler/admin-');
-	configPath = join(directory, 'wrangler.json');
+const config = JSON.parse(readFileSync('wrangler.jsonc', 'utf8'));
+const binding = config.d1_databases.find(
+	(database: { binding: string }) => database.binding === 'DB'
+);
+if (!binding) throw new Error('Expected the API DB binding.');
+const id = process.env.D1_DATABASE_ID;
+if (
+	remote &&
+	(!id || !/^[a-f\d]{8}(?:-[a-f\d]{4}){3}-[a-f\d]{12}$/i.test(id) || /^00000000-/.test(id))
+) {
+	throw new Error('--remote requires the actual D1_DATABASE_ID and Wrangler authentication.');
+}
+
+mkdirSync('.wrangler', { recursive: true });
+const directory = mkdtempSync('.wrangler/admin-');
+const configPath = join(directory, 'wrangler.json');
+try {
 	writeFileSync(
 		configPath,
 		JSON.stringify({
 			name: 'admin-bootstrap',
-			compatibility_date: '2025-03-19',
-			d1_databases: [{ binding: 'DB', database_name: 'bootstrap', database_id: id, remote: true }]
+			compatibility_date: config.compatibility_date,
+			d1_databases: [{ ...binding, ...(remote && { database_id: id, remote: true }) }]
 		})
 	);
-}
-const runtime = await getPlatformProxy<{ DB: D1Database }>({
-	configPath,
-	envFiles: [],
-	remoteBindings: remote
-});
-try {
-	const database = db(runtime.env.DB);
-	const existing = await database.query.adminUsers.findFirst({
-		where: and(eq(adminUsers.email, email), isNull(adminUsers.deletedAt))
+	const runtime = await getPlatformProxy<{ DB: D1Database }>({
+		configPath,
+		envFiles: [],
+		persist: remote ? false : { path: resolve('.wrangler/state/v3') },
+		remoteBindings: remote
 	});
-	const id = existing?.id ?? crypto.randomUUID().replaceAll('-', '').slice(0, 21);
-	const pub = existing?.publicId ?? publicId('admin');
-	const identity = await database.query.authEmail.findFirst({
-		where: and(eq(authEmail.subjectType, 'admin'), eq(authEmail.subjectId, id))
-	});
-	const passwordHashed = await hashPassword(password);
-	await database.batch([
-		database
-			.insert(adminUsers)
-			.values({ id, publicId: pub, email, username })
-			.onConflictDoNothing({ target: adminUsers.id }),
-		identity
-			? database
-					.update(authEmail)
-					.set({ passwordHashed, verified: true })
-					.where(eq(authEmail.id, identity.id))
-			: database
-					.insert(authEmail)
-					.values({ subjectType: 'admin', subjectId: id, email, passwordHashed, verified: true }),
-		...(existing
-			? [
-					database
-						.update(adminUsers)
-						.set({ sessionVersion: sql`${adminUsers.sessionVersion} + 1` })
-						.where(eq(adminUsers.id, id)),
-					database.delete(tokens).where(eq(tokens.adminId, id))
-				]
-			: [])
-	]);
-	console.log(`publicId=${pub}`);
+	try {
+		const database = db(runtime.env.DB);
+		const existing = await database.query.adminUsers.findFirst({
+			where: and(eq(adminUsers.email, email), isNull(adminUsers.deletedAt))
+		});
+		const id = existing?.id ?? crypto.randomUUID().replaceAll('-', '').slice(0, 21);
+		const pub = existing?.publicId ?? publicId('admin');
+		const identity = await database.query.authEmail.findFirst({
+			where: and(eq(authEmail.subjectType, 'admin'), eq(authEmail.subjectId, id))
+		});
+		const passwordHashed = await hashPassword(password);
+		await database.batch([
+			database
+				.insert(adminUsers)
+				.values({ id, publicId: pub, email, username, emailVerified: true })
+				.onConflictDoNothing({ target: adminUsers.id }),
+			identity
+				? database
+						.update(authEmail)
+						.set({ passwordHashed, verified: true })
+						.where(eq(authEmail.id, identity.id))
+				: database
+						.insert(authEmail)
+						.values({ subjectType: 'admin', subjectId: id, email, passwordHashed, verified: true }),
+			...(existing
+				? [
+						database
+							.update(adminUsers)
+							.set({ emailVerified: true, sessionVersion: sql`${adminUsers.sessionVersion} + 1` })
+							.where(eq(adminUsers.id, id)),
+						database.delete(tokens).where(eq(tokens.adminId, id))
+					]
+				: [])
+		]);
+		console.log(`publicId=${pub}`);
+	} finally {
+		await runtime.dispose();
+	}
 } finally {
-	await runtime.dispose();
-	if (directory) rmSync(directory, { recursive: true, force: true });
+	rmSync(directory, { recursive: true, force: true });
 }
