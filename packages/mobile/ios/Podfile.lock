@@ -63,7 +63,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - ExpoModulesJSI (58.0.19):
+  - ExpoModulesJSI (58.0.23):
     - React-Core
     - ReactCommon
   - ExpoModulesWorklets (58.0.24):
@@ -1891,16 +1891,16 @@ PODS:
 DEPENDENCIES:
   - boost (from `build/rndeps-facades/boost`)
   - DoubleConversion (from `build/rndeps-facades/DoubleConversion`)
-  - "EXConstants (from `../../../node_modules/.pnpm/expo-constants@58.0.16_@typescript+typescript6@6.0.2_expo@58.0.17_@babel+core@7.29.7_su_9887831ef5fa357c484b2135a9bb38bf/node_modules/expo-constants/ios`)"
-  - "Expo (from `../../../node_modules/.pnpm/expo@58.0.17_@babel+core@7.29.7_supports-color@10.2.2__@typescript+typescript6@6.0.2_re_b399275a912f003ad30cfee42969f0f4/node_modules/expo`)"
-  - "ExpoApplication (from `../../../node_modules/.pnpm/expo-application@58.1.2_expo@58.0.17_@babel+core@7.29.7_supports-color@10.2.2__@typescr_b66cf1d695485f50d8d041a68b27f8ee/node_modules/expo-application/ios`)"
-  - "ExpoAsset (from `../../../node_modules/.pnpm/expo-asset@58.0.18_@typescript+typescript6@6.0.2_expo@58.0.17_@babel+core@7.29.7_suppor_b9e34c9a46ac27bd43d718485355fcef/node_modules/expo-asset/ios`)"
-  - "ExpoCrypto (from `../../../node_modules/.pnpm/expo-crypto@58.0.7_expo@58.0.17_@babel+core@7.29.7_supports-color@10.2.2__@typescript+t_e051556000d17e2dbe1a15f70a3cb34d/node_modules/expo-crypto/ios`)"
-  - "ExpoModulesCore (from `../../../node_modules/.pnpm/expo-modules-core@58.0.24_patch_hash=b596a878cda015b9d142bccc887635f98544efc7fc1b2dd88f_18eb75bc186fb0752a03f5eec3a93977/node_modules/expo-modules-core`)"
-  - "ExpoModulesJSI (from `../../../node_modules/.pnpm/expo-modules-jsi@58.0.19_react-native@0.88.0_@babel+core@7.29.7_supports-color@10.2.2___2db04fb2ad2dd795d467ad6b3b2cb020/node_modules/expo-modules-jsi/apple`)"
-  - "ExpoModulesWorklets (from `../../../node_modules/.pnpm/expo-modules-core@58.0.24_patch_hash=b596a878cda015b9d142bccc887635f98544efc7fc1b2dd88f_18eb75bc186fb0752a03f5eec3a93977/node_modules/expo-modules-core`)"
-  - "ExpoSecureStore (from `../../../node_modules/.pnpm/expo-secure-store@58.0.2_expo@58.0.17_@babel+core@7.29.7_supports-color@10.2.2__@typesc_3ab0406974ae13db0fbe21588985b7d8/node_modules/expo-secure-store/ios`)"
-  - "ExpoSQLite (from `../../../node_modules/.pnpm/expo-sqlite@58.0.13_expo@58.0.17_@babel+core@7.29.7_supports-color@10.2.2__@typescript+_ff4e111b55ab5d662a9eb2bca46acd13/node_modules/expo-sqlite/ios`)"
+  - "EXConstants (from `../../../node_modules/.pnpm/expo-constants@58.0.16_@typescript+typescript6@6.0.2_expo@58.0.17_@babel+core@7.29.13_s_56d012b41198ce364d9b2206cbcfed57/node_modules/expo-constants/ios`)"
+  - "Expo (from `../../../node_modules/.pnpm/expo@58.0.17_@babel+core@7.29.13_supports-color@10.2.2__@typescript+typescript6@6.0.2_r_fd88f18c6adceaaa7ab2fe2f5d8de3cf/node_modules/expo`)"
+  - "ExpoApplication (from `../../../node_modules/.pnpm/expo-application@58.1.2_expo@58.0.17_@babel+core@7.29.13_supports-color@10.2.2__@typesc_e83543b35cc8c69512e8cce17ef3aed3/node_modules/expo-application/ios`)"
+  - "ExpoAsset (from `../../../node_modules/.pnpm/expo-asset@58.0.18_@typescript+typescript6@6.0.2_expo@58.0.17_@babel+core@7.29.13_suppo_3c9b21c2991c574f9ab15899b1bb99a2/node_modules/expo-asset/ios`)"
+  - "ExpoCrypto (from `../../../node_modules/.pnpm/expo-crypto@58.0.7_expo@58.0.17_@babel+core@7.29.13_supports-color@10.2.2__@typescript+_ff97da0a4558d6a62d9f9b0bdf2c3716/node_modules/expo-crypto/ios`)"
+  - "ExpoModulesCore (from `../../../node_modules/.pnpm/expo-modules-core@58.0.24_patch_hash=b596a878cda015b9d142bccc887635f98544efc7fc1b2dd88f_7f3aff44d742994b8446ee88e52fbf1a/node_modules/expo-modules-core`)"
+  - "ExpoModulesJSI (from `../../../node_modules/.pnpm/expo-modules-jsi@58.0.23_react-native@0.88.0_@babel+core@7.29.13_supports-color@10.2.2__b90b0e068341fe9b9dcf71d3309b0279/node_modules/expo-modules-jsi/apple`)"
+  - "ExpoModulesWorklets (from `../../../node_modules/.pnpm/expo-modules-core@58.0.24_patch_hash=b596a878cda015b9d142bccc887635f98544efc7fc1b2dd88f_7f3aff44d742994b8446ee88e52fbf1a/node_modules/expo-modules-core`)"
+  - "ExpoSecureStore (from `../../../node_modules/.pnpm/expo-secure-store@58.0.2_expo@58.0.17_@babel+core@7.29.13_supports-color@10.2.2__@types_10f3f40ffa744baad442712382debf11/node_modules/expo-secure-store/ios`)"
+  - "ExpoSQLite (from `../../../node_modules/.pnpm/expo-sqlite@58.0.13_expo@58.0.17_@babel+core@7.29.13_supports-color@10.2.2__@typescript_ab3e66848541c539728b47e2eac44165/node_modules/expo-sqlite/ios`)"
   - fast_float (from `build/rndeps-facades/fast_float`)
   - FBLazyVector (from `build/rncore-facades/FBLazyVector`)
   - fmt (from `build/rndeps-facades/fmt`)
@@ -1947,7 +1947,7 @@ DEPENDENCIES:
   - React-Mapbuffer (from `../node_modules/react-native/ReactCommon`)
   - React-microtasksnativemodule (from `../node_modules/react-native/ReactCommon/react/nativemodule/microtasks`)
   - React-mutationobservernativemodule (from `../node_modules/react-native/ReactCommon/react/nativemodule/mutationobserver`)
-  - "react-native-safe-area-context (from `../../../node_modules/.pnpm/react-native-safe-area-context@5.10.1_react-native@0.88.0_@babel+core@7.29.7_supports-c_f8f468a287525f805324857c4ef1fd20/node_modules/react-native-safe-area-context`)"
+  - "react-native-safe-area-context (from `../../../node_modules/.pnpm/react-native-safe-area-context@5.10.1_react-native@0.88.0_@babel+core@7.29.13_supports-_8db9d86410f705d4670648922bf58fa8/node_modules/react-native-safe-area-context`)"
   - React-NativeModulesApple (from `../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
   - React-networking (from `../node_modules/react-native/ReactCommon/react/networking`)
   - React-oscompat (from `../node_modules/react-native/ReactCommon/oscompat`)
@@ -1994,25 +1994,25 @@ EXTERNAL SOURCES:
   DoubleConversion:
     :path: build/rndeps-facades/DoubleConversion
   EXConstants:
-    :path: "../../../node_modules/.pnpm/expo-constants@58.0.16_@typescript+typescript6@6.0.2_expo@58.0.17_@babel+core@7.29.7_su_9887831ef5fa357c484b2135a9bb38bf/node_modules/expo-constants/ios"
+    :path: "../../../node_modules/.pnpm/expo-constants@58.0.16_@typescript+typescript6@6.0.2_expo@58.0.17_@babel+core@7.29.13_s_56d012b41198ce364d9b2206cbcfed57/node_modules/expo-constants/ios"
   Expo:
-    :path: "../../../node_modules/.pnpm/expo@58.0.17_@babel+core@7.29.7_supports-color@10.2.2__@typescript+typescript6@6.0.2_re_b399275a912f003ad30cfee42969f0f4/node_modules/expo"
+    :path: "../../../node_modules/.pnpm/expo@58.0.17_@babel+core@7.29.13_supports-color@10.2.2__@typescript+typescript6@6.0.2_r_fd88f18c6adceaaa7ab2fe2f5d8de3cf/node_modules/expo"
   ExpoApplication:
-    :path: "../../../node_modules/.pnpm/expo-application@58.1.2_expo@58.0.17_@babel+core@7.29.7_supports-color@10.2.2__@typescr_b66cf1d695485f50d8d041a68b27f8ee/node_modules/expo-application/ios"
+    :path: "../../../node_modules/.pnpm/expo-application@58.1.2_expo@58.0.17_@babel+core@7.29.13_supports-color@10.2.2__@typesc_e83543b35cc8c69512e8cce17ef3aed3/node_modules/expo-application/ios"
   ExpoAsset:
-    :path: "../../../node_modules/.pnpm/expo-asset@58.0.18_@typescript+typescript6@6.0.2_expo@58.0.17_@babel+core@7.29.7_suppor_b9e34c9a46ac27bd43d718485355fcef/node_modules/expo-asset/ios"
+    :path: "../../../node_modules/.pnpm/expo-asset@58.0.18_@typescript+typescript6@6.0.2_expo@58.0.17_@babel+core@7.29.13_suppo_3c9b21c2991c574f9ab15899b1bb99a2/node_modules/expo-asset/ios"
   ExpoCrypto:
-    :path: "../../../node_modules/.pnpm/expo-crypto@58.0.7_expo@58.0.17_@babel+core@7.29.7_supports-color@10.2.2__@typescript+t_e051556000d17e2dbe1a15f70a3cb34d/node_modules/expo-crypto/ios"
+    :path: "../../../node_modules/.pnpm/expo-crypto@58.0.7_expo@58.0.17_@babel+core@7.29.13_supports-color@10.2.2__@typescript+_ff97da0a4558d6a62d9f9b0bdf2c3716/node_modules/expo-crypto/ios"
   ExpoModulesCore:
-    :path: "../../../node_modules/.pnpm/expo-modules-core@58.0.24_patch_hash=b596a878cda015b9d142bccc887635f98544efc7fc1b2dd88f_18eb75bc186fb0752a03f5eec3a93977/node_modules/expo-modules-core"
+    :path: "../../../node_modules/.pnpm/expo-modules-core@58.0.24_patch_hash=b596a878cda015b9d142bccc887635f98544efc7fc1b2dd88f_7f3aff44d742994b8446ee88e52fbf1a/node_modules/expo-modules-core"
   ExpoModulesJSI:
-    :path: "../../../node_modules/.pnpm/expo-modules-jsi@58.0.19_react-native@0.88.0_@babel+core@7.29.7_supports-color@10.2.2___2db04fb2ad2dd795d467ad6b3b2cb020/node_modules/expo-modules-jsi/apple"
+    :path: "../../../node_modules/.pnpm/expo-modules-jsi@58.0.23_react-native@0.88.0_@babel+core@7.29.13_supports-color@10.2.2__b90b0e068341fe9b9dcf71d3309b0279/node_modules/expo-modules-jsi/apple"
   ExpoModulesWorklets:
-    :path: "../../../node_modules/.pnpm/expo-modules-core@58.0.24_patch_hash=b596a878cda015b9d142bccc887635f98544efc7fc1b2dd88f_18eb75bc186fb0752a03f5eec3a93977/node_modules/expo-modules-core"
+    :path: "../../../node_modules/.pnpm/expo-modules-core@58.0.24_patch_hash=b596a878cda015b9d142bccc887635f98544efc7fc1b2dd88f_7f3aff44d742994b8446ee88e52fbf1a/node_modules/expo-modules-core"
   ExpoSecureStore:
-    :path: "../../../node_modules/.pnpm/expo-secure-store@58.0.2_expo@58.0.17_@babel+core@7.29.7_supports-color@10.2.2__@typesc_3ab0406974ae13db0fbe21588985b7d8/node_modules/expo-secure-store/ios"
+    :path: "../../../node_modules/.pnpm/expo-secure-store@58.0.2_expo@58.0.17_@babel+core@7.29.13_supports-color@10.2.2__@types_10f3f40ffa744baad442712382debf11/node_modules/expo-secure-store/ios"
   ExpoSQLite:
-    :path: "../../../node_modules/.pnpm/expo-sqlite@58.0.13_expo@58.0.17_@babel+core@7.29.7_supports-color@10.2.2__@typescript+_ff4e111b55ab5d662a9eb2bca46acd13/node_modules/expo-sqlite/ios"
+    :path: "../../../node_modules/.pnpm/expo-sqlite@58.0.13_expo@58.0.17_@babel+core@7.29.13_supports-color@10.2.2__@typescript_ab3e66848541c539728b47e2eac44165/node_modules/expo-sqlite/ios"
   fast_float:
     :path: build/rndeps-facades/fast_float
   FBLazyVector:
@@ -2105,7 +2105,7 @@ EXTERNAL SOURCES:
   React-mutationobservernativemodule:
     :path: "../node_modules/react-native/ReactCommon/react/nativemodule/mutationobserver"
   react-native-safe-area-context:
-    :path: "../../../node_modules/.pnpm/react-native-safe-area-context@5.10.1_react-native@0.88.0_@babel+core@7.29.7_supports-c_f8f468a287525f805324857c4ef1fd20/node_modules/react-native-safe-area-context"
+    :path: "../../../node_modules/.pnpm/react-native-safe-area-context@5.10.1_react-native@0.88.0_@babel+core@7.29.13_supports-_8db9d86410f705d4670648922bf58fa8/node_modules/react-native-safe-area-context"
   React-NativeModulesApple:
     :path: "../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios"
   React-networking:
@@ -2194,7 +2194,7 @@ SPEC CHECKSUMS:
   ExpoAsset: 9548991f0332bd8ed8819299e0b413d713104a1a
   ExpoCrypto: 33ede543a3747abbef071c3bd747135ccc4e4fd5
   ExpoModulesCore: 41c9493da93ace34714079457745229de389b871
-  ExpoModulesJSI: d9f7f7a1625c1a29cb116a6c264f1752230d4783
+  ExpoModulesJSI: 6684bdf9d04f2e5e39f6b90189dcb0def22a55d6
   ExpoModulesWorklets: 1ffcd69fa7269a878dbc5ee7acd4e32af85c0406
   ExpoSecureStore: 64e1fe78b5b0a1edb61beff044bb2cad03084f9c
   ExpoSQLite: 7fe5c25b7bcc15897c67d1e2e7bc5a1d108921e8
@@ -2278,7 +2278,7 @@ SPEC CHECKSUMS:
   React-viewtransitionnativemodule: 8505b253586f792c6c722869a664889797ecae3e
   React-webperformancenativemodule: 67f32fde92ed7e8470ee1c669bdb7c2fcb760141
   ReactAppDependencyProvider: 782ee9546c9cd3b53b73f1e9e3dd728540085fc7
-  ReactCodegen: ddb5bb62acac25250a1eabd4ab1ed7c366170e95
+  ReactCodegen: 162b7d9fa9c9f0ea83d0e78a6a7bcd31f13999c8
   ReactCommon: 145a14b942b19fc2fe38927f261955ada56978aa
   ReactNativeDependencies: d3b7423ba1e52525e42085c8470109abde583d2e
   SocketRocket: 37aec555668fb852ec12e3c0de59a86ca58f0871
