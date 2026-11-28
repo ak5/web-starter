@@ -18,7 +18,8 @@ export default function Items({ loaderData: data, actionData: form }: Route.Comp
 	const [target, setTarget] = useState<{ id: string; name: string } | null>(null);
 	const deletion = useFetcher<typeof action>();
 	const pending = deletion.state !== 'idle';
-	const deleted = !pending && deletion.data && 'deleted' in deletion.data && deletion.data.deleted;
+	const deletedId =
+		!pending && deletion.data && 'deletedId' in deletion.data ? deletion.data.deletedId : undefined;
 	function selectDeletion(id: string, name: string) {
 		deletion.reset();
 		setTarget({ id, name });
@@ -64,10 +65,10 @@ export default function Items({ loaderData: data, actionData: form }: Route.Comp
 					</button>
 				)}
 			/>
-			{deleted && <p role="status">Item deleted.</p>}
+			{deletedId && <p role="status">Item deleted.</p>}
 			<Pagination pagination={data.pagination} />
 			<ConfirmationDialog
-				open={Boolean(target) && !deleted}
+				open={Boolean(target) && target?.id !== deletedId}
 				title={`Delete ${target?.name ?? 'this item'}?`}
 				description="This permanently removes the item."
 				requiredText={DELETE_CONFIRMATION}
@@ -85,8 +86,8 @@ export default function Items({ loaderData: data, actionData: form }: Route.Comp
 					if (!pending) setTarget(null);
 				}}
 				onClosed={() => {
-					if (deleted) {
-						setTarget(null);
+					if (target && target.id === deletedId) {
+						setTarget((current) => (current?.id === deletedId ? null : current));
 						heading.current?.focus();
 					}
 				}}

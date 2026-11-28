@@ -38,6 +38,6 @@ export const itemsActions = {
 		if (!id) return data({ message: 'Missing item id.' }, { status: 400 });
 		const res = await api(event).items[':id'].$delete({ param: { id } });
 		if (!res.ok) return data({ message: 'Could not delete the item.' }, { status: res.status });
-		return { deleted: true };
+		return { deletedId: id };
 	}
 };
