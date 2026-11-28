@@ -69,6 +69,18 @@ test('rejects validator responses before requesting or caching a signup viewer',
 	assert.equal(f.requests.length, 1);
 });
 
+test('preserves the status of non-JSON auth failures', async () => {
+	for (const status of [401, 403]) {
+		const f = fixture([new Response('<html>Access denied</html>', { status })], 'saved');
+		await assert.rejects(
+			f.client.restore(),
+			(error: unknown) => error instanceof ApiError && error.status === status
+		);
+		assert.equal(f.saved(), null);
+		assert.equal(f.client.sessionCookie(), '');
+	}
+});
+
 test('clears rejected restored sessions, but preserves them on temporary failure', async () => {
 	const f = fixture(
 		[json({ error: 'unavailable' }, 503), json({ error: 'unauthorized' }, 401)],

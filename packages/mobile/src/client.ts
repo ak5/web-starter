@@ -56,12 +56,15 @@ export function createClient(baseUrl: string, storage: SessionStorage, transport
 	async function read<R extends { ok: boolean; status: number; json(): Promise<unknown> }>(
 		response: R
 	) {
-		const body = await response.json();
 		if (!response.ok) {
+			const body = await response.json().catch(() => null);
 			const error = body && typeof body === 'object' && 'error' in body ? body.error : null;
 			throw new ApiError(response.status, typeof error === 'string' ? error : 'Request failed');
 		}
-		return body as Exclude<Awaited<ReturnType<R['json']>>, { error: string } | { success: false }>;
+		return (await response.json()) as Exclude<
+			Awaited<ReturnType<R['json']>>,
+			{ error: string } | { success: false }
+		>;
 	}
 
 	async function viewer() {
