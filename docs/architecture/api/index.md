@@ -92,6 +92,7 @@ responses omit internal record IDs. Audit actors and token subjects use account
 public IDs. Token diagnostics expose purpose, expiry, attempt counts and payload
 key names, never token hashes or payload values. These are read-only lists;
 records are not addressed by a returned database primary key.
+Log and audit pages use zero-based offsets. An invalid page falls back to page zero.
 
 ## LiveStore sync
 

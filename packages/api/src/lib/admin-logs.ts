@@ -19,7 +19,7 @@ function logMessageLabel(data: unknown) {
 
 export async function adminLogList(db: Database, query: AdminLogListQuery) {
 	const limit = queryLimit(query.limit, 50, 100);
-	const page = queryOffsetPage(query.page);
+	const page = queryOffsetPage(query.page, limit);
 	const [rows, total] = await Promise.all([
 		db.query.logs.findMany({
 			orderBy: [desc(logs.timestamp)],

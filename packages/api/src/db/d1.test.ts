@@ -326,6 +326,13 @@ test('D1 preserves identity constraints, atomic writes and auth workflows', asyn
 		}
 	);
 
+	await t.test('invalid admin log offsets fall back to the first page', async () => {
+		for (const page of ['1e308', String(Number.MAX_SAFE_INTEGER)]) {
+			assert.equal((await adminLogList(db, { page })).page, 0);
+			assert.equal((await adminAuditLog(db, { page })).page, 0);
+		}
+	});
+
 	await t.test(
 		'admin diagnostic responses omit internal record IDs and token secrets',
 		async () => {

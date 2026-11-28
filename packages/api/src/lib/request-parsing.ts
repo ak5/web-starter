@@ -11,9 +11,9 @@ export function optionalEnum<T extends readonly string[]>(
 	return value && values.includes(value) ? value : undefined;
 }
 
-export function queryOffsetPage(value?: string) {
+export function queryOffsetPage(value: string | undefined, limit: number) {
 	const page = Number(value ?? 0);
-	return Number.isInteger(page) && page >= 0 ? page : 0;
+	return Number.isInteger(page) && page >= 0 && Number.isSafeInteger(page * limit) ? page : 0;
 }
 
 export function queryLimit(value?: string, fallback = 24, max = 100) {
