@@ -150,3 +150,28 @@ test('invite-only rejects a new Discord identity before writing an account', asy
 	});
 	assert.deepEqual(result, { kind: 'redirect', redirectTo: '/login?error=registration_closed' });
 });
+
+test('Discord routes require both credentials before starting or exchanging OAuth', async () => {
+	const { oauthRoutes } = await import('../../routes/oauth/index');
+	const { preLoginAuthOptions } = await import('../auth-prelogin');
+	const configured = {
+		...env,
+		DISCORD_CLIENT_ID: 'test-id',
+		DISCORD_CLIENT_SECRET: 'test-secret',
+		COOKIE_ORIGIN: 'localhost'
+	};
+	for (const key of ['DISCORD_CLIENT_ID', 'DISCORD_CLIENT_SECRET'] as const) {
+		const missing = { ...configured, [key]: ' ' };
+		assert.equal(preLoginAuthOptions(missing).discordEnabled, false);
+		for (const path of ['/discord', '/discord/callback?code=test']) {
+			const response = await oauthRoutes.request(path, {}, missing);
+			assert.equal(response.status, 503);
+			assert.deepEqual(await response.json(), { error: 'discord_unavailable' });
+			assert.equal(response.headers.has('set-cookie'), false);
+		}
+	}
+	assert.equal(preLoginAuthOptions(configured).discordEnabled, true);
+	const response = await oauthRoutes.request('/discord', {}, configured);
+	assert.equal(response.status, 302);
+	assert.equal(new URL(response.headers.get('location')!).searchParams.get('client_id'), 'test-id');
+});

@@ -96,7 +96,8 @@ test('rebrand can remove Discord OAuth from the React Router starter', (t) => {
 		'packages/web/src/lib/OAuthLogin.tsx',
 		'packages/web/src/routes/login.tsx',
 		'packages/web/src/routes/register.tsx',
-		'packages/api/src/app.ts'
+		'packages/api/src/app.ts',
+		'packages/api/src/lib/auth-prelogin.ts'
 	];
 	for (const file of files) {
 		mkdirSync(join(directory, file, '..'), { recursive: true });
@@ -114,4 +115,5 @@ test('rebrand can remove Discord OAuth from the React Router starter', (t) => {
 		assert.match(route, /export const action/);
 	}
 	assert.doesNotMatch(readFileSync(join(directory, files[3]), 'utf8'), /oauthRoutes/);
+	assert.match(readFileSync(join(directory, files[4]), 'utf8'), /discordEnabled: false/);
 });

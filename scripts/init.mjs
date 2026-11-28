@@ -69,6 +69,14 @@ function removeOAuthOverlay() {
 			.join('\n');
 		writeFileSync(appPath, out);
 	}
+	const authOptionsPath = join(ROOT, 'packages/api/src/lib/auth-prelogin.ts');
+	if (existsSync(authOptionsPath)) {
+		const authOptions = readFileSync(authOptionsPath, 'utf8')
+			.replace("import { isDiscordConfigured } from './discord-config';\n", '')
+			.replace('discordEnabled: isDiscordConfigured(env),', 'discordEnabled: false,');
+		writeFileSync(authOptionsPath, authOptions);
+	}
+	rmSync(join(ROOT, 'packages/api/src/lib/discord-config.ts'), { force: true });
 	rmSync(join(ROOT, 'packages/web/src/lib/OAuthLogin.tsx'), { force: true });
 	for (const page of [
 		'packages/web/src/routes/login.tsx',

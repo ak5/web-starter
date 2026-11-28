@@ -8,9 +8,11 @@ export async function loadAppShell(event: ApiRequestEvent) {
 		: await api(event)
 				.auth.options.$get()
 				.catch(() => null);
+	const authOptions = options?.ok ? await options.json().catch(() => null) : null;
 	return {
 		...shell,
 		apiUrl: requestState(event.context).env.PUBLIC_API_URL,
-		registrationOpen: options?.ok ? (await options.json()).registrationOpen : false
+		registrationOpen: authOptions?.registrationOpen ?? false,
+		discordEnabled: authOptions?.discordEnabled ?? false
 	};
 }

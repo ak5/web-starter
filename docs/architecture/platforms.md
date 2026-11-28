@@ -6,6 +6,8 @@ same recipe below. The core never imports from the overlay, so the whole thing
 can be deleted (`pnpm rebrand --no-oauth`, or by hand) without breaking auth.
 This doc is the recipe for adding a provider.
 
+The sign-in button appears when the API has both Discord OAuth credentials.
+
 ## The pieces
 
 A login provider needs four things:
