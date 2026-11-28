@@ -31,8 +31,10 @@ export default function ConfirmationDialog({
 	const descriptionId = useId();
 	const [text, setText] = useState('');
 	const [submitting, setSubmitting] = useState(false);
+	const [submitFailed, setSubmitFailed] = useState(false);
 	const inFlight = useRef(false);
 	const busy = pending || submitting;
+	const message = submitFailed ? 'Could not complete this action. Please try again.' : error;
 	const canConfirm = !busy && (requiredText === undefined || text === requiredText);
 
 	function dismiss() {
@@ -49,6 +51,7 @@ export default function ConfirmationDialog({
 			onClose={dismiss}
 			onClosed={() => {
 				setText('');
+				setSubmitFailed(false);
 				onClosed?.();
 			}}
 		>
@@ -59,8 +62,11 @@ export default function ConfirmationDialog({
 					if (!open || !canConfirm || inFlight.current) return;
 					inFlight.current = true;
 					setSubmitting(true);
+					setSubmitFailed(false);
 					try {
 						await onConfirm(text);
+					} catch {
+						setSubmitFailed(true);
 					} finally {
 						inFlight.current = false;
 						setSubmitting(false);
@@ -85,9 +91,9 @@ export default function ConfirmationDialog({
 						/>
 					</label>
 				)}
-				{error && (
+				{message && (
 					<p role="alert" className="ui-message ui-message-error">
-						{error}
+						{message}
 					</p>
 				)}
 				<div className="flex flex-wrap gap-2">
