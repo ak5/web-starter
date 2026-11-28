@@ -176,7 +176,8 @@ export async function acceptInviteAction(event: AcceptInviteEvent) {
 
 	const body = await responseJsonBody<{ redirectTo: string }>(res, { redirectTo: '/' });
 	forwardSetCookie(res, event.cookies);
-	throw redirect(body.redirectTo, 303);
+	// Load the destination without the token page’s no-referrer policy.
+	throw redirectDocument(body.redirectTo, 303);
 }
 
 export async function forgotPasswordAction(event: ForgotPasswordEvent) {
@@ -246,7 +247,8 @@ export async function accountPasswordAction(event: AccountPasswordEvent) {
 		}
 		const body = await responseJsonBody<{ redirectTo: string }>(res, { redirectTo: '/' });
 		forwardSetCookie(res, event.cookies);
-		throw redirect(body.redirectTo, 303);
+		// Load the destination without the token page’s no-referrer policy.
+		throw redirectDocument(body.redirectTo, 303);
 	}
 
 	if (!event.session.auth) {

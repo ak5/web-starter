@@ -54,7 +54,8 @@ PR that adds the router, and link it from here.
 
 `POST /auth/register` accepts `email`, `password` and `username`. The starter does
 not require or record policy acceptance. `GET /auth/options` returns password and
-username constraints. Add application policy handling across all signup paths as
+username constraints and `registrationOpen`. Public registration requires
+`REGISTRATION_MODE=open`; the default is invite-only. Add application policy handling across all signup paths as
 described in [auth](../auth.md#signup-policies).
 
 ## Email delivery responses
@@ -67,7 +68,9 @@ forgot-password responses do not disclose account existence or delivery failure.
 
 `GET /admin/users` returns regular users in `users` and non-deleted admin accounts
 in `admins`. Pass a zero-based `page` to access later pages of regular users. The
-response includes `pagination` for the 100-user pages. Admin entries include their
+response includes `pagination` for the 100-user pages. Use `q` to search email,
+username, or public ID, and `status` to filter by `all`, `active`, `banned`, or
+`pending`. Admin entries include their
 public ID, username, email, and email verification status.
 
 `POST /admin/invite` accepts `delivery: "email"` (the default) or `delivery: "link"`
@@ -76,8 +79,10 @@ response. Email mode with missing sender or transport returns
 `503 {error: "invite_email_unavailable"}` before creating an account.
 
 `POST /admin/invite` returns `503 {error: "invitation_delivery_failed"}` if mail
-fails after the account, token, and creation audit commit. Do not repeat creation;
-the recipient can request a password reset. See [auth](../auth.md).
+fails after the account, token, and creation audit commit. Use
+`POST /admin/invite/:publicId/replace` with `delivery` to replace the pending
+invitation and invalidate the previous link. Admin invitations are email-only.
+See [auth](../auth.md).
 
 ## Cloudflare diagnostics
 

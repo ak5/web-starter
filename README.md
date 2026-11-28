@@ -52,8 +52,14 @@ mise install
 pnpm install
 pnpm dev:init
 pnpm db:migrate
+pnpm create:admin admin@example.test adminname '<local-password>'
 pnpm dev:auto
 ```
+
+Open `PUBLIC_ADMIN_URL` from `.env.dev-slot` and sign in as the new admin.
+In **Users**, select **Invite**, enter a test email and username, and choose
+**Create and copy invite link**. Open the link, set a password, then sign out
+and sign back in on the web app. This flow works without an email sender.
 
 Add `--mobile` to include iOS/Android source or `--no-oauth` to omit Discord login.
 Read `.env.dev-slot` for the selected local URLs. Local D1 needs no Cloudflare

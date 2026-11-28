@@ -9,13 +9,14 @@ checks its generation with the API before accepting or refreshing it.
 
 | Route                 | Auth                   | Purpose                            |
 | --------------------- | ---------------------- | ---------------------------------- |
-| `/`                   | admin                  | Paginated regular users and admins |
+| `/`                   | admin                  | Search, filter, and manage users and admins |
 | `/login`              | guest                  | Admin sign in                      |
 | `/logout`             | admin                  | Clear the session (POST) → `/`     |
 | `/forgot-password`    | public                 | Request a reset link by email      |
 | `/account/password`   | session or reset token | Set, reset or change password      |
 | `/invite`             | public                 | Open the invitation password form  |
 | `/auth/magic/[token]` | session                | Confirm a reauthentication link    |
+| `/audit-log` | admin | Filter and page through recorded admin actions |
 | `/items`              | session                | Paginated read-only item list      |
 
 Recovery and invitation pages accept emailed tokens while signed out.
@@ -38,3 +39,6 @@ For regular users, **Create and copy invite link** gives you a private URL to sh
 address unverified. If the browser blocks clipboard access, use **Copy invite
 link** or select the displayed URL manually. Both links expire after seven days
 and can be used once to set a password.
+
+Use **Pending invitations** to find users who still need to set a password.
+A replacement invalidates the previous invitation link.
