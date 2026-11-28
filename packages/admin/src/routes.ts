@@ -9,6 +9,7 @@ export default [
 	route('auth/magic/:token', 'routes/magic.tsx', { caseSensitive: true }),
 	route('forgot-password', 'routes/forgot-password.tsx', { caseSensitive: true }),
 	route('invite', 'routes/invite.tsx', { caseSensitive: true }),
+	route('audit-log', 'routes/audit-log.tsx', { caseSensitive: true }),
 	route('items', 'routes/items.tsx', { caseSensitive: true }),
 	route('logout', 'routes/logout.tsx', { caseSensitive: true }),
 	route('*', 'routes/not-found.tsx')

@@ -161,3 +161,19 @@ test('typed confirmation deletes a regular account and revokes its session', asy
 		await api.dispose();
 	}
 });
+
+test('audit log shows invitations and filters by record', async ({ page }) => {
+	await page.getByRole('button', { name: 'Invite', exact: true }).click();
+	await page.getByLabel('Email', { exact: true }).fill(uniqueEmail());
+	await page.getByLabel('Username', { exact: true }).fill(uniqueUsername());
+	await page.getByRole('button', { name: 'Send email invite' }).click();
+	await expect(page.getByRole('status')).toHaveText('Invitation sent.');
+	const response = await page.goto('/audit-log?action=user.invite');
+	expect(response?.headers()['cache-control']).toContain('no-store');
+	await expect(page.getByRole('cell', { name: 'user.invite', exact: true }).first()).toBeVisible();
+	await page.getByLabel('Record ID').fill('missing-record');
+	await page.getByRole('button', { name: 'Filter' }).click();
+	await expect(page.getByText('No audit entries found.')).toBeVisible();
+	await page.goto('/audit-log?action=user.invite&page=999999');
+	await expect(page).not.toHaveURL(/page=999999/);
+});

@@ -43,6 +43,9 @@ export default function App({ loaderData }: Route.ComponentProps) {
 								<Link to="/items" className="ui-button ui-button-quiet ui-button-small">
 									Items
 								</Link>
+								<Link to="/audit-log" className="ui-button ui-button-quiet ui-button-small">
+									Audit Log
+								</Link>
 								<Link to="/account/password" className="ui-button ui-button-quiet ui-button-small">
 									Password
 								</Link>
