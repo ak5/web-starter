@@ -66,7 +66,8 @@ export function createAuthMiddleware(policy: AuthPolicy): MiddlewareFunction<Res
 				pathname === '/invite' ||
 				pathname === '/forgot-password'
 			) {
-				headers.set('Cache-Control', 'no-store');
+				if (headers.get('Cache-Control') !== 'private, no-store')
+					headers.set('Cache-Control', 'no-store');
 			}
 			const actionCookies = state.cookies.getSetCookie();
 			const writes = [...headers.getSetCookie(), ...actionCookies];

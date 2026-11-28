@@ -4,7 +4,7 @@ import { getPlatformProxy } from 'wrangler';
 
 /** A disposable, real local D1 binding; never connects to an account or live database. */
 export async function createTestDatabase() {
-	const runtime = await getPlatformProxy<{ DB: D1Database }>({
+	const runtime = await getPlatformProxy<{ DB: D1Database; PRIVATE_ATTACHMENTS: R2Bucket }>({
 		configPath: fileURLToPath(new URL('../../wrangler.test.jsonc', import.meta.url)),
 		persist: false,
 		envFiles: [],
@@ -22,7 +22,11 @@ export async function createTestDatabase() {
 				.filter(Boolean);
 			await binding.batch(statements.map((statement) => binding.prepare(statement)));
 		}
-		return { binding: binding as unknown as D1Database, dispose: () => runtime.dispose() };
+		return {
+			binding: binding as unknown as D1Database,
+			privateAttachments: runtime.env.PRIVATE_ATTACHMENTS,
+			dispose: () => runtime.dispose()
+		};
 	} catch (error) {
 		await runtime.dispose();
 		throw error;

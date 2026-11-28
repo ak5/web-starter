@@ -1,8 +1,8 @@
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, exists, inArray, not, sql } from 'drizzle-orm';
 import { getPaginationMeta, type JwtPayload } from '@ak5/shared';
 
 import type { Database } from '../db';
-import { items, type Item } from '../db/schema';
+import { attachmentCleanup, itemAttachments, items, type Item } from '../db/schema';
 import { getActiveUserByAuth } from './auth-subject';
 import { publicId } from './public-id';
 import type { ItemCreate, ItemUpdate } from './items-validation';
@@ -26,6 +26,26 @@ function toItemDto(row: Item) {
 }
 
 export type ItemDto = ReturnType<typeof toItemDto>;
+
+async function attachMetadata(db: Database, rows: Item[]) {
+	if (!rows.length) return [];
+	const attachments = await db
+		.select({
+			itemId: itemAttachments.itemId,
+			name: itemAttachments.name,
+			contentType: itemAttachments.contentType,
+			size: itemAttachments.size
+		})
+		.from(itemAttachments)
+		.where(
+			inArray(
+				itemAttachments.itemId,
+				rows.map((item) => item.id)
+			)
+		);
+	const byItem = new Map(attachments.map(({ itemId, ...file }) => [itemId, file]));
+	return rows.map((row) => ({ ...toItemDto(row), attachment: byItem.get(row.id) ?? null }));
+}
 
 export async function listItems(
 	db: Database,
@@ -53,7 +73,9 @@ export async function listItems(
 	return {
 		ok: true as const,
 		result: {
-			items: rows.map(toItemDto),
+			items: auth.impersonatedBy
+				? rows.map((row) => ({ ...toItemDto(row), attachment: null }))
+				: await attachMetadata(db, rows),
 			pagination: getPaginationMeta(total, page, limit)
 		}
 	};
@@ -92,7 +114,12 @@ export async function getItem(db: Database, auth: JwtPayload, itemPublicId: stri
 	});
 	if (!row) return { ok: false as const, error: 'not_found' as const, status: 404 as const };
 
-	return { ok: true as const, result: toItemDto(row) };
+	return {
+		ok: true as const,
+		result: auth.impersonatedBy
+			? { ...toItemDto(row), attachment: null }
+			: (await attachMetadata(db, [row]))[0]!
+	};
 }
 
 export async function createItem(db: Database, auth: JwtPayload, input: ItemCreate) {
@@ -140,10 +167,36 @@ export async function deleteItem(db: Database, auth: JwtPayload, itemPublicId: s
 		return { ok: false as const, error: activeUser.error, status: activeUser.status };
 	}
 
-	const deleted = await db
-		.delete(items)
-		.where(and(eq(items.publicId, itemPublicId), eq(items.userId, activeUser.user.id)))
-		.returning({ id: items.id });
+	const owned = and(
+		eq(items.publicId, itemPublicId),
+		eq(items.userId, activeUser.user.id),
+		auth.impersonatedBy
+			? not(
+					exists(
+						db
+							.select({ id: itemAttachments.itemId })
+							.from(itemAttachments)
+							.where(eq(itemAttachments.itemId, items.id))
+					)
+				)
+			: undefined
+	);
+	const [, deleted] = await db.batch([
+		db
+			.insert(attachmentCleanup)
+			.select(
+				db
+					.select({
+						objectKey: itemAttachments.objectKey,
+						after: sql<number>`${Date.now()}`.as('after')
+					})
+					.from(itemAttachments)
+					.innerJoin(items, eq(items.id, itemAttachments.itemId))
+					.where(owned)
+			)
+			.onConflictDoNothing(),
+		db.delete(items).where(owned).returning({ id: items.id })
+	]);
 	if (deleted.length === 0) {
 		return { ok: false as const, error: 'not_found' as const, status: 404 as const };
 	}

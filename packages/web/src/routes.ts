@@ -11,6 +11,7 @@ export default [
 	route('auth/magic/:token', 'routes/magic.tsx', { caseSensitive: true }),
 	route('forgot-password', 'routes/forgot-password.tsx', { caseSensitive: true }),
 	route('invite', 'routes/invite.tsx', { caseSensitive: true }),
+	route('items/:id/attachment', 'routes/item-attachment.ts', { caseSensitive: true }),
 	route('items', 'routes/items.tsx', { caseSensitive: true }),
 	route('logout', 'routes/logout.tsx', { caseSensitive: true }),
 	route('account/verify', 'routes/verify.tsx', { caseSensitive: true }),

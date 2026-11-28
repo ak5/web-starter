@@ -37,6 +37,11 @@ jobs:
           EMAIL_FROM: ${{ vars.EMAIL_FROM }}
         run: node scripts/configure-email-sender.mjs
 
+      - name: Configure private attachments
+        env:
+          PRIVATE_ATTACHMENTS_BUCKET: ${{ vars.PRIVATE_ATTACHMENTS_BUCKET }}
+        run: node scripts/configure-private-attachments.mjs
+
       - name: Configure non-production asset URL
         env:
           R2_PUBLIC_URL: ${{ vars.R2_PUBLIC_URL }}

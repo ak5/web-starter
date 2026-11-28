@@ -1,3 +1,6 @@
+import { eq } from 'drizzle-orm';
+import { purgePrivateAttachments } from '../cron/jobs';
+import { Logger } from '../lib/logger';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -6,7 +9,7 @@ import { COOKIE_TOKEN, publicId, signJwt } from '@ak5/shared';
 
 import { app } from '../app';
 import { db as makeDb } from '../db';
-import { users } from '../db/schema';
+import { attachmentCleanup, users } from '../db/schema';
 import type { Env } from '../types';
 
 const JWT_SECRET = 'items-e2e-test-secret';
@@ -114,4 +117,113 @@ test('items: full CRUD + ownership scoping over HTTP', async (t) => {
 	// Delete, then it is gone.
 	assert.equal((await call('DELETE', `/items/${item.id}`, tokenA)).status, 200);
 	assert.equal((await call('GET', `/items/${item.id}`, tokenA)).status, 404);
+});
+
+test('private attachments keep ownership and retry deletion on local D1 and R2', async (t) => {
+	const local = await createTestDatabase();
+	t.after(local.dispose);
+	const db = makeDb(local.binding);
+	const bucket = local.privateAttachments;
+	const env = { DB: local.binding, PRIVATE_ATTACHMENTS: bucket, JWT_SECRET } as unknown as Env;
+	const sign = async (sub: string) => {
+		await db.insert(users).values({ publicId: sub, username: sub });
+		return signJwt(JWT_SECRET, {
+			sub,
+			email: '',
+			type: 'user',
+			hasPassword: true,
+			emailConfirmed: false,
+			recentAuthAt: Math.floor(Date.now() / 1000)
+		});
+	};
+	const owner = await sign('u-file-owner');
+	const stranger = await sign('u-file-stranger');
+	const call = (
+		method: string,
+		path: string,
+		token: string,
+		body?: BodyInit,
+		contentType?: string
+	) =>
+		app.request(
+			path,
+			{
+				method,
+				body,
+				headers: {
+					cookie: `${COOKIE_TOKEN}=${token}`,
+					...(contentType ? { 'content-type': contentType } : {})
+				}
+			},
+			env
+		);
+	const created = await call(
+		'POST',
+		'/items',
+		owner,
+		JSON.stringify({ data: {} }),
+		'application/json'
+	);
+	assert.equal(created.status, 201);
+	const { id } = (await created.json()) as { id: string };
+	const path = `/items/${id}/attachment`;
+	const upload = (contents: string, name: string, type: string, token = owner) => {
+		const form = new FormData();
+		form.set('file', new File([contents], name, { type }));
+		return call('POST', path, token, form);
+	};
+	const pdf = '%PDF-1.7\nfixture';
+	assert.equal((await upload(pdf, 'test.pdf', 'application/pdf', stranger)).status, 404);
+	assert.equal((await upload('<html>', 'fake.pdf', 'application/pdf')).status, 415);
+	assert.equal(
+		(await upload(pdf + 'x'.repeat(5 * 1024 * 1024), 'big.pdf', 'application/pdf')).status,
+		413
+	);
+	const candidates = await Promise.all([
+		upload(pdf, 'café.pdf', 'application/pdf'),
+		upload(pdf, 'other.pdf', 'application/pdf')
+	]);
+	assert.deepEqual(candidates.map(({ status }) => status).sort(), [201, 409]);
+	const list = await call('GET', '/items', owner);
+	const listed = await list.text();
+	assert.match(listed, /"attachment":\{/);
+	assert.doesNotMatch(listed, /objectKey|items\//);
+	assert.equal((await call('GET', path, stranger)).status, 404);
+	assert.equal((await call('DELETE', path, stranger)).status, 404);
+	const downloaded = await call('GET', path, owner);
+	assert.equal(downloaded.status, 200);
+	assert.equal(downloaded.headers.get('cache-control'), 'private, no-store');
+	assert.match(downloaded.headers.get('content-disposition') ?? '', /^attachment;/);
+	assert.equal(await downloaded.text(), pdf);
+	assert.equal((await call('DELETE', path, owner)).status, 200);
+	assert.equal((await call('GET', path, owner)).status, 404);
+	assert.equal((await upload('RIFF1234WEBP', 'image.webp', 'image/webp')).status, 201);
+	assert.equal((await call('GET', path, owner)).headers.get('content-type'), 'image/webp');
+	assert.equal((await call('DELETE', `/items/${id}`, owner)).status, 200);
+	assert.equal((await call('GET', path, owner)).status, 404);
+	const queued = await db.select().from(attachmentCleanup);
+	assert.equal(queued.length, 3);
+	for (const entry of queued)
+		await db
+			.update(attachmentCleanup)
+			.set({ after: new Date(0) })
+			.where(eq(attachmentCleanup.objectKey, entry.objectKey));
+	await purgePrivateAttachments({
+		db,
+		logger: new Logger(undefined, undefined),
+		privateAttachments: {
+			delete: async () => {
+				throw new Error('storage down');
+			}
+		} as unknown as R2Bucket
+	});
+	assert.equal((await db.select().from(attachmentCleanup)).length, 3);
+	await db.update(attachmentCleanup).set({ after: new Date(0) });
+	await purgePrivateAttachments({
+		db,
+		logger: new Logger(undefined, undefined),
+		privateAttachments: bucket
+	});
+	assert.equal((await db.select().from(attachmentCleanup)).length, 0);
+	assert.equal((await bucket.list()).objects.length, 0);
 });

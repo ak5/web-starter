@@ -8,6 +8,7 @@ export interface Env {
 	DB: D1Database;
 	NOTES_SYNC: DurableObjectNamespace;
 	R2: R2Bucket;
+	PRIVATE_ATTACHMENTS?: R2Bucket;
 	OAUTH_KV?: KVNamespace;
 
 	// Public/shared vars

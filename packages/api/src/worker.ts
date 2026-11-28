@@ -18,6 +18,8 @@ export default {
 	async scheduled(controller, env, ctx): Promise<void> {
 		const db = makeDb(env.DB);
 		const logger = new Logger(env.DISCORD_LOG_ENDPOINT, ctx);
-		ctx.waitUntil(runAllCronJobs(controller.cron, { db, logger }));
+		ctx.waitUntil(
+			runAllCronJobs(controller.cron, { db, logger, privateAttachments: env.PRIVATE_ATTACHMENTS })
+		);
 	}
 } satisfies ExportedHandler<Env>;

@@ -293,6 +293,26 @@ export const items = sqliteTable(
 	(t) => [index('items_user_idx').on(t.userId, t.createdAt)]
 );
 
+export const itemAttachments = sqliteTable('item_attachments', {
+	itemId: text('item_id')
+		.primaryKey()
+		.notNull()
+		.references(() => items.id, { onDelete: 'cascade' }),
+	objectKey: text('object_key').notNull().unique(),
+	name: text('name').notNull(),
+	contentType: text('content_type', { enum: ['application/pdf', 'image/webp'] }).notNull(),
+	size: integer('size').notNull()
+});
+
+export const attachmentCleanup = sqliteTable(
+	'attachment_cleanup',
+	{
+		objectKey: text('object_key').primaryKey().notNull(),
+		after: ts('after').notNull()
+	},
+	(t) => [index('attachment_cleanup_after_idx').on(t.after)]
+);
+
 // ============================================================================
 // Relations
 // ============================================================================

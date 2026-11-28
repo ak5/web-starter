@@ -7,14 +7,14 @@ type ItemRow = {
 	owner?: string | null;
 };
 
-export default function ItemsTable({
+export default function ItemsTable<Row extends ItemRow>({
 	items,
 	showOwner = false,
 	actions
 }: {
-	items: ItemRow[];
+	items: Row[];
 	showOwner?: boolean;
-	actions?: (item: ItemRow, displayTitle: string | null) => ReactNode;
+	actions?: (item: Row, displayTitle: string | null) => ReactNode;
 }) {
 	const colSpan = 2 + Number(showOwner) + Number(Boolean(actions));
 	return (

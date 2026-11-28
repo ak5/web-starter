@@ -10,19 +10,26 @@ export const loader = loadItems;
 export async function action(event: Route.ActionArgs) {
 	const form = await event.request.formData();
 	const intent = form.get('intent');
-	if (intent === 'create' || intent === 'delete') return itemsActions[intent](event, form);
+	if (intent === 'create') return itemsActions.create(event, form);
+	if (intent === 'delete' || intent === 'delete-attachment')
+		return itemsActions.delete(event, form);
 	return actionData({ message: 'Unknown action.' }, { status: 400 });
 }
 export default function Items({ loaderData: data, actionData: form }: Route.ComponentProps) {
 	const heading = useRef<HTMLHeadingElement>(null);
-	const [target, setTarget] = useState<{ id: string; name: string } | null>(null);
+	const [target, setTarget] = useState<{
+		id: string;
+		name: string;
+		attachment: boolean;
+		hasAttachment: boolean;
+	} | null>(null);
 	const deletion = useFetcher<typeof action>();
 	const pending = deletion.state !== 'idle';
 	const deletedId =
 		!pending && deletion.data && 'deletedId' in deletion.data ? deletion.data.deletedId : undefined;
-	function selectDeletion(id: string, name: string) {
+	function selectDeletion(id: string, name: string, attachment: boolean, hasAttachment = false) {
 		deletion.reset();
-		setTarget({ id, name });
+		setTarget({ id, name, attachment, hasAttachment });
 	}
 	const createForm = useRef<HTMLFormElement>(null);
 	useEffect(() => {
@@ -56,21 +63,56 @@ export default function Items({ loaderData: data, actionData: form }: Route.Comp
 			<ItemsTable
 				items={data.items}
 				actions={(item, title) => (
-					<button
-						type="button"
-						className="ui-button ui-button-quiet ui-button-small text-danger"
-						onClick={() => selectDeletion(item.id, title ?? 'this item')}
-					>
-						Delete
-					</button>
+					<>
+						{data.attachmentsEnabled &&
+							(item.attachment ? (
+								<div className="flex flex-wrap items-center justify-end gap-2">
+									<a className="ui-link" href={`/items/${item.id}/attachment`} download>
+										Download {item.attachment.name}
+									</a>
+									<button
+										type="button"
+										className="ui-button ui-button-small"
+										onClick={() =>
+											selectDeletion(item.id, item.attachment?.name ?? 'this attachment', true)
+										}
+									>
+										Delete attachment
+									</button>
+								</div>
+							) : (
+								<AttachmentUpload id={item.id} />
+							))}
+						<button
+							type="button"
+							className="ui-button ui-button-quiet ui-button-small text-danger"
+							onClick={() =>
+								selectDeletion(item.id, title ?? 'this item', false, Boolean(item.attachment))
+							}
+						>
+							Delete
+						</button>
+					</>
 				)}
 			/>
-			{deletedId && <p role="status">Item deleted.</p>}
+			{deletedId && (
+				<p role="status">
+					{deletion.data && 'attachment' in deletion.data && deletion.data.attachment
+						? 'Attachment deleted.'
+						: 'Item deleted.'}
+				</p>
+			)}
 			<Pagination pagination={data.pagination} />
 			<ConfirmationDialog
 				open={Boolean(target) && target?.id !== deletedId}
 				title={`Delete ${target?.name ?? 'this item'}?`}
-				description="This permanently removes the item."
+				description={
+					target?.attachment
+						? 'This removes the attachment from the item.'
+						: target?.hasAttachment
+							? 'This permanently removes the item and its attachment.'
+							: 'This permanently removes the item.'
+				}
 				requiredText={DELETE_CONFIRMATION}
 				confirmLabel="Delete permanently"
 				pending={pending}
@@ -78,7 +120,11 @@ export default function Items({ loaderData: data, actionData: form }: Route.Comp
 				onConfirm={async (confirmation) => {
 					if (target)
 						await deletion.submit(
-							{ intent: 'delete', id: target.id, confirmation },
+							{
+								intent: target.attachment ? 'delete-attachment' : 'delete',
+								id: target.id,
+								confirmation
+							},
 							{ method: 'post' }
 						);
 				}}
@@ -93,5 +139,33 @@ export default function Items({ loaderData: data, actionData: form }: Route.Comp
 				}}
 			/>
 		</section>
+	);
+}
+
+function AttachmentUpload({ id }: { id: string }) {
+	const upload = useFetcher<{ message?: string }>();
+	const busy = upload.state !== 'idle';
+	return (
+		<upload.Form
+			method="post"
+			encType="multipart/form-data"
+			action={`/items/${id}/attachment`}
+			className="flex flex-wrap items-center justify-end gap-2"
+		>
+			<label className="grid gap-1">
+				PDF or WebP up to 5 MiB
+				<input
+					aria-label="Attachment file"
+					type="file"
+					name="file"
+					accept=".pdf,.webp,application/pdf,image/webp"
+					required
+				/>
+			</label>
+			<button className="ui-button ui-button-small" disabled={busy}>
+				Attach file
+			</button>
+			{upload.data?.message && <p role="alert">{upload.data.message}</p>}
+		</upload.Form>
 	);
 }

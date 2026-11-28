@@ -16,7 +16,14 @@ export const middleware = [
 		allowedJwtType: 'user',
 		isProtectedPath: (path) =>
 			path !== '/account/password' &&
-			matchesPathPrefix(path, ['/dashboard', '/account', '/notes', '/sync', '/auth/magic']),
+			matchesPathPrefix(path, [
+				'/dashboard',
+				'/account',
+				'/notes',
+				'/items',
+				'/sync',
+				'/auth/magic'
+			]),
 		isAuthPage: (path) => path === '/login' || path === '/register',
 		loggedInHome: '/dashboard'
 	})

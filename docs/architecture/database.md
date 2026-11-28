@@ -76,3 +76,11 @@ Admin account deletion batches its audit entry with the soft-delete and credenti
 removal. A rejected audit write rolls the entire operation back. Soft deletion
 retains profile/domain rows and public uploaded objects; see
 [retention](security.md#avatar-uploads-and-retention).
+
+### Item attachments
+
+`item_attachments` records one private object per item. It stores the internal
+object key and the file's display name, type, and size. Removing an attachment
+or its item writes the object key to `attachment_cleanup` in the same D1 batch.
+An upload reserves a cleanup entry before writing to R2 and removes the entry
+when its metadata commits.
